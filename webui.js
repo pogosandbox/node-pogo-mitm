@@ -89,8 +89,9 @@ class WebUI {
                     if (req.type == POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
                         // decrypt signature
                         try {
-
-                            req.message = POGOProtos.Networking.Envelopes.Signature.decode();
+                            let buffer = req.message.encrypted_signature.toBuffer();
+                            let decrypted = pcrypt.decrypt(buffer);
+                            req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
                         } catch(e) {
                             req.message = 'Error while decrypting: ' + e.message;
                         }
