@@ -74,6 +74,12 @@ class WebUI {
             let raw = Buffer.from(data.data, 'base64');
             data.id = req.params.request;
             data.decoded = POGOProtos.Networking.Envelopes.RequestEnvelope.decode(raw);
+            _.each(data.decoded.requests, req => {
+                var reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r == req.request_type);
+                reqname = _.upperFirst(_.camelCase(reqname)) + "Message";
+                let requestType = POGOProtos.Networking.Requests.Messages[reqname];
+                req.request_message = requestType.decode(req.request_message);
+            });
             res.json(data);
         });
         

@@ -25,21 +25,21 @@ class MitmProxy {
             .listen({port: this.config.proxyPort});
     }
 
-    onRequest(ctx, callbaclk) {
+    onRequest(context, callback) {
         let config = this.config;
-        if (ctx.clientToProxyRequest.headers.host == `${config.ip}:${config.proxyPort}`) {
-            if (ctx.clientToProxyRequest.url == '/proxy.pac') {
+        if (context.clientToProxyRequest.headers.host == `${config.ip}:${config.proxyPort}`) {
+            if (context.clientToProxyRequest.url == '/proxy.pac') {
                 // get proxy.pac
-                let res = ctx.proxyToClientResponse;
+                let res = context.proxyToClientResponse;
                 fs.readFileAsync('proxy.pac', 'utf8').then(data => {
                     data = data.replace('##PROXY##', config.ip);
                     data = data.replace('##PORT##', config.proxyPort);
                     res.writeHead(200, {"Content-Type": "application/x-ns-proxy-autoconfig", "Content-Length": data.length});
                     res.end(data, 'utf8');
                 });
-            } else if (ctx.clientToProxyRequest.url == '/cert.crt') {
+            } else if (context.clientToProxyRequest.url == '/cert.crt') {
                 // get cert
-                let res = ctx.proxyToClientResponse;
+                let res = context.proxyToClientResponse;
                 let path = proxy.sslCaDir + '/certs/ca.pem';
                 fs.readFileAsync(path).then(data => {
                     res.writeHead(200, {"Content-Type": "application/x-x509-ca-cert", "Content-Length": data.length});
@@ -49,7 +49,7 @@ class MitmProxy {
                 res.end("what?", 'utf8');
             }
             
-        } else if (ctx.clientToProxyRequest.headers.host == endpoints.api) {
+        } else if (context.clientToProxyRequest.headers.host == endpoints.api) {
             let requestChunks = [];
             let responseChunks = [];
 

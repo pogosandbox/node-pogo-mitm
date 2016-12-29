@@ -27,3 +27,8 @@ Promise.promisifyAll(fs);
 //     let decoded = POGOProtos.Networking.Envelopes.RequestEnvelope.decode(data);
 //     return fs.writeFileAsync('data/20162812.161956/5.json', JSON.stringify(decoded, null, 4));
 // });
+
+let name = "DOWNLOAD_REMOTE_CONFIG_VERSION";
+name = _.upperFirst(_.camelCase(name)) + "Message";
+let requestType = POGOProtos.Networking.Requests.Messages[name];
+let a = 1;
