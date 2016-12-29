@@ -17,6 +17,9 @@ class Snorlax {
                     let folder = when.format('YYYYDDMM.HHmmss');
                     logger.info('Dest folder: data/%s', folder);
                     try {
+                        fs.mkdirSync('data');
+                    } catch(e) {}
+                    try {
                         fs.mkdirSync('data/' + folder);
                     } catch(e) {}
                     return {
