@@ -12,6 +12,7 @@ Promise.promisifyAll(dns);
 
 let Proxy = require('./proxy');
 let WebUI = require('./webui');
+let Utils = require('./utils');
 
 let config = {
     reqId: 0,
@@ -21,14 +22,15 @@ let config = {
 
 logger.level = "debug";
 
+let utils = new Utils(config);
+
 dns.lookupAsync(require('os').hostname())
 .then(add => {
     config.ip = add;
     logger.info('Listening to: %s:%s', add, config.port);
 })
 .then(() => {
-    config.datadir = 'data/' + moment().format('YYYYDDMM.HHmmss');
-    return fs.mkdirAsync(config.datadir);
+    return utils.initFolders();
 })
 .then(() => {
     let proxy = new Proxy(config);

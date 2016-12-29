@@ -8,13 +8,13 @@ $(function(){
     function viewSession(id) {
         console.log(id);
         $("#requests tr.item").empty();
+        $("#requests").data("session", id);
         $.getJSON("/api/session/" + id, function(data) {
-            console.log(data);
             let first = data[0];
             $(".info-session").text("Session started at " + moment(first.when).format("llll"));
             data.forEach(d => {
                 let item = $("#request-template").clone().show().addClass("item");
-                item.find(".id").text(d.id);
+                item.find(".id").data("id", d.id).text(d.id);
                 let duration = moment.duration(d.when - first.when).asSeconds().toFixed(1);
                 item.find(".when").text("+" + duration + "s");
                 // item.find(".id").text(d.id);
@@ -22,6 +22,15 @@ $(function(){
             });
         });
     }
+
+    $("#requests").on('click', '.id', function() {
+        let session = $("#requests").data("session");
+        let request = $(this).data('id');
+        $.getJSON(`/api/request/${session}/${request}`, function(data) {
+            $('#jsonViewer').JSONView(JSON.stringify(data.decoded));
+        });
+        return false;
+    });
 
     // attach handler for session selection
     $.getJSON("/api/sessions", function(data) {

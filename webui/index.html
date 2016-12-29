@@ -3,11 +3,13 @@
     <head>
         <title>PoGo Mitm Proxy</title>
         <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.css" />
         <link href="/css/main.css" rel="stylesheet">
 
         <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/moment.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.js"></script>
         <script src="/js/app.js"></script>
 
         <link rel="icon" type="image/png" href="favicon.png" />
@@ -45,30 +47,30 @@
         </nav>
         <div class="container-fluid">
             <div class="row">
-                <div class="col-xs-6 col-md-4 rawContextsContainer">
+                <div class="col-xs-6 col-md-4">
                     <div class="info-session"></div>
                     <table class="table table-condensed">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Time</th>
-                                <th>Methods</th>
+                                <!--<th>Methods</th>-->
                             </tr>
                         </thead>
                         <tbody id="requests">
                             <tr id="request-template" style="display:none">
-                                <td class="id"></td>
+                                <td><a class="id" href=""></a></td>
                                 <td class="when"></td>
-                                <td class="what"></td>
+                                <!--<td class="what"></td>-->
                             </tr>
                         </tbody>
                     </table>
                     <div style="text-align: center">
-                        <!--<button class="btn btn-default btn-xs" onclick="copyRawContextListItemsAsMarkdown()">Copy to clipboard as markdown</button>
-                    </div>-->
+                        <!--<button class="btn btn-default btn-xs" onclick="copyRawContextListItemsAsMarkdown()">Copy to clipboard as markdown</button>-->
+                    </div>
                 </div>
                 <div class="col-xs-12 col-md-8">
-                    <div class="jsonViewerToolbar clearfix">
+                    <!--<div class="jsonViewerToolbar clearfix">
                         <div class="btn-toolbar pull-right" role="toolbar">
                             <a data-bind="attr: {href: toolbarDownloadRawRequest}, css:{disabled: toolbarDownloadRawRequestEnabled() == false}" class="btn btn-default btn-xs btn-success">Raw Request</a>
                             <a data-bind="attr: {href: toolbarDownloadDecodedRequest}, css:{disabled: toolbarDownloadDecodedRequestEnabled() == false}" class="btn btn-default btn-xs btn-success">Decoded Request</a>
@@ -78,8 +80,8 @@
                             <a data-bind="attr: {href: toolbarDownloadJson}, css:{disabled: toolbarDownloadJsonEnabled() == false}" class="btn btn-default btn-xs">Download Json</a>
                             <a data-bind="attr: {href: toolbarS2Map}, css:{disabled: toolbarS2MapEnabled() == false}" class="btn btn-default btn-xs" target="_blank">S2 Map</a>
                         </div>
-                    </div>
-                    <div class="jsonViewer"></div>
+                    </div>-->
+                    <div id="jsonViewer"></div>
                 </div>
             </div>
         </div>

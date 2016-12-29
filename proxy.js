@@ -37,7 +37,7 @@ class MitmProxy {
                     res.writeHead(200, {"Content-Type": "application/x-ns-proxy-autoconfig", "Content-Length": data.length});
                     res.end(data, 'utf8');
                 });
-            } else {
+            } else if (ctx.clientToProxyRequest.url == '/cert.crt') {
                 // get cert
                 let res = ctx.proxyToClientResponse;
                 let path = proxy.sslCaDir + '/certs/ca.pem';
@@ -45,10 +45,13 @@ class MitmProxy {
                     res.writeHead(200, {"Content-Type": "application/x-x509-ca-cert", "Content-Length": data.length});
                     res.end(data, 'binary');
                 });
+            } else {
+                res.end("what?", 'utf8');
             }
             
         } else if (ctx.clientToProxyRequest.headers.host == endpoints.api) {
             let requestChunks = [];
+            let responseChunks = [];
 
             context.onRequestData((ctx, chunk, callback) => {
                 requestChunks.push(chunk);
@@ -65,6 +68,23 @@ class MitmProxy {
                     callback();
                 });
             });
+
+            context.onResponseData((ctx, chunk, callback) => {
+                responseChunks.push(chunk);
+                return callback();
+            });
+
+            context.onResponseEnd((ctx, callback) => {
+                let buffer = Buffer.concat(responseChunks);
+                let url = ctx.clientToProxyRequest.url;
+
+                this.handleApiResponse(ctx, buffer, url)
+                .finally(() => {
+                    ctx.proxyToClientResponse.write(buffer);
+                    callback(false);
+                });
+            });
+
             callback();
 
         } else {
@@ -83,7 +103,7 @@ class MitmProxy {
             headers: ctx.proxyToServerRequest._headers,
             data: buffer.toString('base64'),
         }
-        return fs.writeFileAsync(`${config.datadir}/${id}.bin`, JSON.stringify(data, null, 4), 'utf8');
+        return fs.writeFileAsync(`${config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
     }
 
     onError(ctx, err) {
