@@ -19,7 +19,7 @@ class MitmProxy {
 
     launch() {
         this.proxy = mitmproxy()
-            .use(Proxy.gunzip)
+            .use(mitmproxy.gunzip)
             .onError(_.bind(this.onError, this))
             .onRequest(_.bind(this.onRequest, this))
             .listen({port: this.config.proxyPort});
