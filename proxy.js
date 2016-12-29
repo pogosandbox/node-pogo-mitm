@@ -28,9 +28,9 @@ class MitmProxy {
     onRequest(context, callback) {
         let config = this.config;
         if (context.clientToProxyRequest.headers.host == `${config.ip}:${config.proxyPort}`) {
+            let res = context.proxyToClientResponse;
             if (context.clientToProxyRequest.url == '/proxy.pac') {
                 // get proxy.pac
-                let res = context.proxyToClientResponse;
                 fs.readFileAsync('proxy.pac', 'utf8').then(data => {
                     data = data.replace('##PROXY##', config.ip);
                     data = data.replace('##PORT##', config.proxyPort);
@@ -39,7 +39,6 @@ class MitmProxy {
                 });
             } else if (context.clientToProxyRequest.url == '/cert.crt') {
                 // get cert
-                let res = context.proxyToClientResponse;
                 let path = proxy.sslCaDir + '/certs/ca.pem';
                 fs.readFileAsync(path).then(data => {
                     res.writeHead(200, {"Content-Type": "application/x-x509-ca-cert", "Content-Length": data.length});
@@ -76,9 +75,8 @@ class MitmProxy {
 
             context.onResponseEnd((ctx, callback) => {
                 let buffer = Buffer.concat(responseChunks);
-                let url = ctx.clientToProxyRequest.url;
 
-                this.handleApiResponse(ctx, buffer, url)
+                this.handleApiResponse(ctx, buffer)
                 .finally(() => {
                     ctx.proxyToClientResponse.write(buffer);
                     callback(false);
@@ -95,7 +93,7 @@ class MitmProxy {
 
     handleApiRequest(ctx, buffer, url) {
         logger.info('Pogo request: %s', url);
-        let id = _.padStart(++config.reqId, 4, 0);
+        let id = _.padStart(++this.config.reqId, 4, 0);
         let data = {
             id: id,
             when: +moment(),
@@ -103,7 +101,11 @@ class MitmProxy {
             headers: ctx.proxyToServerRequest._headers,
             data: buffer.toString('base64'),
         }
-        return fs.writeFileAsync(`${config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
+        return fs.writeFileAsync(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
+    }
+
+    handleApiResponse(ctx, buffer) {
+        return Promise.resolve();
     }
 
     onError(ctx, err) {
