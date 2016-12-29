@@ -27,7 +27,7 @@ let utils = new Utils(config);
 dns.lookupAsync(require('os').hostname())
 .then(add => {
     config.ip = add;
-    logger.info('Listening to: %s:%s', add, config.port);
+    logger.info('Listening to: %s:%s', add, config.proxyPort);
 })
 .then(() => {
     return utils.initFolders();
