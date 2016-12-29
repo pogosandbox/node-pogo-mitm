@@ -1,5 +1,3 @@
-let logger = require('winston');
-let _ = require('lodash');
 let fs = require('fs');
 let moment = require('moment');
 let Promise = require('bluebird');
@@ -19,18 +17,22 @@ class Utils {
     }
 
     cleanDataFolders() {
+        try {
+            fs.mkdirSync('data');
+        } catch(e) {}
+
         return fs.readdirAsync('data')
-        .then(data => {
-            return Promise.filter(data, dir => {
-                return fs.readdirAsync(`data/${dir}`)
-                        .then(d => d.length == 0);
-            });
-        })
-        .then(data => {
-            return Promise.map(data, dir => {
-                return fs.rmdirAsync(`data/${dir}`);
-            });
-        });
+                .then(data => {
+                    return Promise.filter(data, dir => {
+                        return fs.readdirAsync(`data/${dir}`)
+                                .then(d => d.length == 0);
+                    });
+                })
+                .then(data => {
+                    return Promise.map(data, dir => {
+                        return fs.rmdirAsync(`data/${dir}`);
+                    });
+                });
     }
 }
 

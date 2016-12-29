@@ -1,9 +1,9 @@
 let logger = require('winston');
-let Proxy = require('http-mitm-proxy');
+let mitmproxy = require('http-mitm-proxy');
 let _ = require('lodash');
 let fs = require('fs');
 let moment = require('moment');
-let Promise = require('bluebird');
+// let Promise = require('bluebird');
 
 let endpoints = {
     api: 'pgorelease.nianticlabs.com',
@@ -18,7 +18,7 @@ class MitmProxy {
     }
 
     launch() {
-        this.proxy = Proxy()
+        this.proxy = mitmproxy()
             .use(Proxy.gunzip)
             .onError(_.bind(this.onError, this))
             .onRequest(_.bind(this.onRequest, this))
@@ -34,20 +34,20 @@ class MitmProxy {
                 fs.readFileAsync('proxy.pac', 'utf8').then(data => {
                     data = data.replace('##PROXY##', config.ip);
                     data = data.replace('##PORT##', config.proxyPort);
-                    res.writeHead(200, {"Content-Type": "application/x-ns-proxy-autoconfig", "Content-Length": data.length});
+                    res.writeHead(200, {'Content-Type': 'application/x-ns-proxy-autoconfig', 'Content-Length': data.length});
                     res.end(data, 'utf8');
                 });
             } else if (context.clientToProxyRequest.url == '/cert.crt') {
                 // get cert
-                let path = proxy.sslCaDir + '/certs/ca.pem';
+                let path = this.proxy.sslCaDir + '/certs/ca.pem';
                 fs.readFileAsync(path).then(data => {
-                    res.writeHead(200, {"Content-Type": "application/x-x509-ca-cert", "Content-Length": data.length});
+                    res.writeHead(200, {'Content-Type': 'application/x-x509-ca-cert', 'Content-Length': data.length});
                     res.end(data, 'binary');
                 });
             } else {
-                res.end("what?", 'utf8');
+                res.end('what?', 'utf8');
             }
-            
+
         } else if (context.clientToProxyRequest.headers.host == endpoints.api) {
             let requestChunks = [];
             let responseChunks = [];
@@ -101,7 +101,7 @@ class MitmProxy {
             endpoint: url,
             headers: ctx.proxyToServerRequest._headers,
             data: buffer.toString('base64'),
-        }
+        };
         return fs.writeFileAsync(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
     }
 

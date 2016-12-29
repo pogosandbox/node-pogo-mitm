@@ -16,6 +16,11 @@
     "lodash": "^4.17.3",
     "moment": "^2.17.1",
     "node-pogo-protos": "https://github.com/cyraxx/node-pogo-protos",
+    "pcrypt": "https://github.com/laverdet/pcrypt",
     "winston": "^2.3.0"
+  },
+  "devDependencies": {
+    "eslint": "^3.12.2",
+    "eslint-config-google": "^0.7.1"
   }
 }

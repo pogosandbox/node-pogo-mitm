@@ -16,7 +16,7 @@ let Utils = require('./utils');
 
 let config = {
     reqId: 0,
-    proxyPort: process.env.PROXY_PORT || 8081,
+    proxyPort: process.env.PROXY_PORT || 8888,
     webuiPort: process.env.WEBUI_PORT || 8080,
 }
 

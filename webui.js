@@ -6,6 +6,7 @@ let Promise = require('bluebird');
 let _ = require('lodash');
 let moment = require('moment');
 let POGOProtos = require('node-pogo-protos');
+let pcrypt = require('pcrypt');
 
 Promise.promisifyAll(fs);
 
@@ -15,8 +16,8 @@ class WebUI {
     }
 
     launch() {
-        var app = express();
-        app.set("etag", false);
+        let app = express();
+        app.set('etag', false);
 
         app.get('/api/sessions', this.getSessions);
         app.get('/api/session/:session', this.getRequests);
@@ -26,18 +27,18 @@ class WebUI {
         app.use(express.static(path.resolve(__dirname, 'webui')));
 
         app.listen(this.config.webuiPort, () => {
-            logger.info("UI started.");
+            logger.info('UI started.');
         });
     }
 
     getSessions(req, res) {
-        logger.info("Getting all sessions.");
+        logger.info('Getting all sessions.');
         return fs.readdirAsync('data')
         .then(data => {
             data = _.map(data, d => {
                 return {
                     id: d,
-                    title: moment(d, 'YYYYDDMM.HHmmss').format("DD MMM YY - HH:mm:ss")
+                    title: moment(d, 'YYYYDDMM.HHmmss').format('DD MMM YY - HH:mm:ss'),
                 };
             });
             res.json(data);
@@ -45,17 +46,17 @@ class WebUI {
     }
 
     getRequests(req, res) {
-        logger.info("Getting requests for session %s", req.params.session);
+        logger.info('Getting requests for session %s', req.params.session);
         return fs.readdirAsync(`data/${req.params.session}`)
-        .then(data => _.filter(data, d => _.endsWith(d, ".req.bin")))
+        .then(data => _.filter(data, d => _.endsWith(d, '.req.bin')))
         .then(data => {
             return Promise.map(data, file => {
-                return fs.readFileAsync(`data/${req.params.session}/${file}`, "utf8")
+                return fs.readFileAsync(`data/${req.params.session}/${file}`, 'utf8')
                         .then(content => {
                             return JSON.parse(content);
                         })
                         .then(req => {
-                            req.id = _.trimEnd(file, ".req.bin");
+                            req.id = _.trimEnd(file, '.req.bin');
                             return req;
                         });
             });
@@ -67,7 +68,7 @@ class WebUI {
     }
 
     decryptRequest(req, res) {
-        logger.info("Decrypting session %d, request %s", req.params.session, req.params.request);
+        logger.info('Decrypting session %d, request %s', req.params.session, req.params.request);
         return fs.readFileAsync(`data/${req.params.session}/${req.params.request}.req.bin`, 'utf8')
         .then(content => {
             let data = JSON.parse(content);
@@ -79,15 +80,16 @@ class WebUI {
 
             // decode plateform requests
             _.each(data.decoded.platform_requests, req => {
-                var reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r == req.type);
+                let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r == req.type);
                 req.request_name = reqname;
-                reqname = _.upperFirst(_.camelCase(reqname)) + "Request";
+                reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
                 let requestType = POGOProtos.Networking.Platform.Requests[reqname];
                 if (requestType) {
                     req.message = requestType.decode(req.request_message);
                     if (req.type == POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
                         // decrypt signature
                         try {
+
                             req.message = POGOProtos.Networking.Envelopes.Signature.decode();
                         } catch(e) {
                             req.message = 'Error while decrypting: ' + e.message;
@@ -101,9 +103,9 @@ class WebUI {
 
             // decode requests
             _.each(data.decoded.requests, req => {
-                var reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r == req.request_type);
+                let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r == req.request_type);
                 req.request_name = reqname;
-                reqname = _.upperFirst(_.camelCase(reqname)) + "Message";
+                reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
                 let requestType = POGOProtos.Networking.Requests.Messages[reqname];
                 req.message = requestType.decode(req.request_message);
                 delete req.request_message;
@@ -118,17 +120,16 @@ class WebUI {
             res.status(500).send(e);
 
         });
-        
     }
 
     decryptResponse(req, res) {
-        logger.info("Decrypting session %d, response %s", req.params.session, req.params.request);
+        logger.info('Decrypting session %d, response %s', req.params.session, req.params.request);
         Promise.all([
             fs.readFileAsync(`data/${req.params.session}/${req.params.request}.req.json`, 'utf8'),
             fs.readFileAsync(`data/${req.params.session}/${req.params.request}.res.bin`, 'utf8'),
         ])
         .then(results => {
-            var request = JSON.parse(results[0]).decoded;
+            let request = JSON.parse(results[0]).decoded;
 
             let allRequests = _.map(request.requests, r => _.upperFirst(_.camelCase(r.request_name)));
 
@@ -154,8 +155,8 @@ class WebUI {
             // });
 
             decoded.responses = _.map(decoded.returns, (buffer, i) => {
-                var request = allRequests[i];
-                let responseType = POGOProtos.Networking.Responses[request + "Response"];
+                let request = allRequests[i];
+                let responseType = POGOProtos.Networking.Responses[request + 'Response'];
                 return responseType.decode(buffer);
             });
             delete decoded.returns;
@@ -175,7 +176,6 @@ class WebUI {
             res.status(500).send(e);
 
         });
-        
     }
 }
 
