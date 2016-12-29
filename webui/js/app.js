@@ -13,7 +13,7 @@ $(function(){
             let first = data[0];
             $(".info-session").text("Session started at " + moment(first.when).format("llll"));
             data.forEach(d => {
-                let item = $("#request-template").clone().show().addClass("item");
+                let item = $("#request-template").clone().show().addClass("item").attr('id', d.id);
                 item.find(".id").data("id", d.id).text(d.id);
                 let duration = moment.duration(d.when - first.when).asSeconds().toFixed(1);
                 item.find(".when").text("+" + duration + "s");
@@ -26,7 +26,10 @@ $(function(){
     $("#requests").on('click', '.id', function() {
         let session = $("#requests").data("session");
         let request = $(this).data('id');
+        $('#jsonViewer').html("");
+        $("#requests .success").removeClass("success");
         $.getJSON(`/api/request/${session}/${request}`, function(data) {
+            $("#" + request).addClass("success");
             $('#jsonViewer').JSONView(JSON.stringify(data.decoded));
         });
         return false;

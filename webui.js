@@ -74,13 +74,41 @@ class WebUI {
             let raw = Buffer.from(data.data, 'base64');
             data.id = req.params.request;
             data.decoded = POGOProtos.Networking.Envelopes.RequestEnvelope.decode(raw);
+
+            // decode requests
             _.each(data.decoded.requests, req => {
                 var reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r == req.request_type);
+                req.request_name = reqname;
                 reqname = _.upperFirst(_.camelCase(reqname)) + "Message";
                 let requestType = POGOProtos.Networking.Requests.Messages[reqname];
-                req.request_message = requestType.decode(req.request_message);
+                req.message = requestType.decode(req.request_message);
+                delete req.request_message;
             });
+
+            // decode plateform requests
+            _.each(data.decoded.platform_requests, req => {
+                var reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r == req.type);
+                req.request_name = reqname;
+                reqname = _.upperFirst(_.camelCase(reqname)) + "Request";
+                let requestType = POGOProtos.Networking.Platform.Requests[reqname];
+                req.message = requestType.decode(req.request_message);
+                delete req.request_message;
+                if (req.type == POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
+                    // decrypt signature
+                    try {
+                        req.message = POGOProtos.Networking.Envelopes.Signature.decode();
+                    } catch(e) {
+                        req.message = 'Error while decrypting: ' + e.message;
+                    }
+                }
+            });
+
             res.json(data);
+
+        }).catch(e => {
+            logger.error(e);
+            res.status(500).send(e);
+
         });
         
     }
