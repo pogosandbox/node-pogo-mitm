@@ -77,6 +77,7 @@ class MitmProxy {
         logger.info('Pogo request: %s', url);
         let id = _.padStart(++config.reqId, 4, 0);
         let data = {
+            id: id,
             when: +moment(),
             endpoint: url,
             headers: ctx.proxyToServerRequest._headers,
