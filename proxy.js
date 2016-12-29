@@ -52,6 +52,8 @@ class MitmProxy {
             let requestChunks = [];
             let responseChunks = [];
 
+            let requestId = _.padStart(++this.config.reqId, 4, 0);
+
             context.onRequestData((ctx, chunk, callback) => {
                 requestChunks.push(chunk);
                 return callback(null, null);
@@ -61,7 +63,7 @@ class MitmProxy {
                 let buffer = Buffer.concat(requestChunks);
                 let url = ctx.clientToProxyRequest.url;
 
-                this.handleApiRequest(ctx, buffer, url)
+                this.handleApiRequest(requestId, ctx, buffer, url)
                 .finally(() => {
                     ctx.proxyToServerRequest.write(buffer);
                     callback();
@@ -76,7 +78,7 @@ class MitmProxy {
             context.onResponseEnd((ctx, callback) => {
                 let buffer = Buffer.concat(responseChunks);
 
-                this.handleApiResponse(ctx, buffer)
+                this.handleApiResponse(requestId, ctx, buffer)
                 .finally(() => {
                     ctx.proxyToClientResponse.write(buffer);
                     callback(false);
@@ -91,9 +93,8 @@ class MitmProxy {
         }
     }
 
-    handleApiRequest(ctx, buffer, url) {
+    handleApiRequest(id, ctx, buffer, url) {
         logger.info('Pogo request: %s', url);
-        let id = _.padStart(++this.config.reqId, 4, 0);
         let data = {
             id: id,
             when: +moment(),
@@ -104,8 +105,8 @@ class MitmProxy {
         return fs.writeFileAsync(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
     }
 
-    handleApiResponse(ctx, buffer) {
-        return Promise.resolve();
+    handleApiResponse(id, ctx, buffer) {
+        return fs.writeFileAsync(`${this.config.datadir}/${id}.res.bin`, buffer.toString('base64'), 'utf8');
     }
 
     onError(ctx, err) {
