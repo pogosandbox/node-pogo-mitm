@@ -8,14 +8,21 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceRoot}\\index.js",
+            "program": "${workspaceRoot}/index.js",
             "cwd": "${workspaceRoot}"
         },
         {
             "type": "node",
             "request": "launch",
             "name": "Launch Decode",
-            "program": "${workspaceRoot}\\decode.js",
+            "program": "${workspaceRoot}/decode.js",
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Import Snorlax",
+            "program": "${workspaceRoot}/import/snorlax.js",
             "cwd": "${workspaceRoot}"
         }
     ]
