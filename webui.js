@@ -6,7 +6,11 @@ let Promise = require('bluebird');
 let _ = require('lodash');
 let moment = require('moment');
 let POGOProtos = require('node-pogo-protos');
-let pcrypt = require('pcrypt');
+
+const Decoder = require('./decoder.js');
+const Utils = require('./utils.js');
+let decoder = new Decoder();
+let utils = new Utils();
 
 Promise.promisifyAll(fs);
 
@@ -19,10 +23,10 @@ class WebUI {
         let app = express();
         app.set('etag', false);
 
-        app.get('/api/sessions', this.getSessions);
-        app.get('/api/session/:session', this.getRequests);
-        app.get('/api/request/:session/:request', this.decryptRequest);
-        app.get('/api/response/:session/:request', this.decryptResponse);
+        app.get('/api/sessions', _.bind(this.getSessions, this));
+        app.get('/api/session/:session', _.bind(this.getRequests, this));
+        app.get('/api/request/:session/:request', _.bind(this.decodeRequest, this));
+        app.get('/api/response/:session/:request', _.bind(this.decodeResponse, this));
 
         app.use(express.static(path.resolve(__dirname, 'webui')));
 
@@ -33,7 +37,7 @@ class WebUI {
 
     getSessions(req, res) {
         logger.info('Getting all sessions.');
-        return fs.readdirAsync('data')
+        return utils.getSessionFolders()
         .then(data => {
             data = _.map(data, d => {
                 return {
@@ -67,56 +71,11 @@ class WebUI {
         .catch(e => res.status(500).send(e));
     }
 
-    decryptRequest(req, res) {
+    decodeRequest(req, res) {
         logger.info('Decrypting session %d, request %s', req.params.session, req.params.request);
-        return fs.readFileAsync(`data/${req.params.session}/${req.params.request}.req.bin`, 'utf8')
-        .then(content => {
-            let data = JSON.parse(content);
-            if (data.endpoint == '/plfe/version') {
-                data.decoded = {request: 'check version', checkVersion: true};
-
-            } else {
-                let raw = Buffer.from(data.data, 'base64');
-                delete data.data;
-
-                data.id = req.params.request;
-                data.decoded = POGOProtos.Networking.Envelopes.RequestEnvelope.decode(raw);
-
-                // decode plateform requests
-                _.each(data.decoded.platform_requests, req => {
-                    let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r == req.type);
-                    req.request_name = reqname;
-                    reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
-                    let requestType = POGOProtos.Networking.Platform.Requests[reqname];
-                    if (requestType) {
-                        req.message = requestType.decode(req.request_message);
-                        if (req.type == POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
-                            // decrypt signature
-                            try {
-                                let buffer = req.message.encrypted_signature.toBuffer();
-                                let decrypted = pcrypt.decrypt(buffer);
-                                req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
-                            } catch(e) {
-                                req.message = 'Error while decrypting: ' + e.message;
-                            }
-                        }
-                    } else {
-                        req.message = `unable to decode ${reqname}`;
-                    }
-                    delete req.request_message;
-                });
-
-                // decode requests
-                _.each(data.decoded.requests, req => {
-                    let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r == req.request_type);
-                    req.request_name = reqname;
-                    reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
-                    let requestType = POGOProtos.Networking.Requests.Messages[reqname];
-                    req.message = requestType.decode(req.request_message);
-                    delete req.request_message;
-                });
-            }
-
+        return decoder.decodeRequest(`data/${req.params.session}/${req.params.request}.req.bin`)
+        .then(data => {
+            data.id = req.params.request;
             res.json(data);
             return fs.writeFileAsync(`data/${req.params.session}/${req.params.request}.req.json`, JSON.stringify(data, null, 4), 'utf8');
 
@@ -127,7 +86,7 @@ class WebUI {
         });
     }
 
-    decryptResponse(req, res) {
+    decodeResponse(req, res) {
         logger.info('Decrypting session %d, response %s', req.params.session, req.params.request);
         Promise.all([
             fs.readFileAsync(`data/${req.params.session}/${req.params.request}.req.json`, 'utf8'),

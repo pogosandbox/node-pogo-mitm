@@ -2,6 +2,8 @@ let fs = require('fs');
 let moment = require('moment');
 let Promise = require('bluebird');
 
+Promise.promisifyAll(fs);
+
 class Utils {
     constructor(config) {
         this.config = config;
@@ -16,12 +18,17 @@ class Utils {
         return fs.mkdirAsync(this.config.datadir);
     }
 
+    getSessionFolders() {
+        return fs.readdirAsync('data')
+                .then(files => Promise.filter(files, file => fs.statAsync('data/' + file).then(r => r.isDirectory())));
+    }
+
     cleanDataFolders() {
         try {
             fs.mkdirSync('data');
         } catch(e) {}
 
-        return fs.readdirAsync('data')
+        return this.getSessionFolders()
                 .then(data => {
                     return Promise.filter(data, dir => {
                         return fs.readdirAsync(`data/${dir}`)

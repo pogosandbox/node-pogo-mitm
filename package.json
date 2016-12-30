@@ -13,6 +13,7 @@
     "dotenv": "^2.0.0",
     "express": "^4.14.0",
     "http-mitm-proxy": "git+https://github.com/joeferner/node-http-mitm-proxy.git",
+    "json2csv": "^3.7.3",
     "lodash": "^4.17.3",
     "moment": "^2.17.1",
     "node-pogo-protos": "https://github.com/cyraxx/node-pogo-protos",

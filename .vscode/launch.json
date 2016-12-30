@@ -14,15 +14,15 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Decode",
-            "program": "${workspaceRoot}/decode.js",
+            "name": "Launch Import Snorlax",
+            "program": "${workspaceRoot}/import/snorlax.js",
             "cwd": "${workspaceRoot}"
         },
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Import Snorlax",
-            "program": "${workspaceRoot}/import/snorlax.js",
+            "name": "Launch CSV Export",
+            "program": "${workspaceRoot}/export/csv.js",
             "cwd": "${workspaceRoot}"
         }
     ]

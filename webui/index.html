@@ -26,48 +26,39 @@
                     </button>
                     <a class="navbar-brand" href="/">PoGo Mitm</a>
                 </div>
-
-                <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                     <ul class="nav navbar-nav">
-                        <li class="active" data-bind="css:{active: activeMenuItem() == 'live'}">
-                            <a href="#" id="last-session" class="viewSession" data-session="">Latest Session</a>
+                        <li class="active">
+                            <a href="#" id="last-session" class="viewSession live" data-session="">Latest Session</a>
                         </li>
-                        <li class="dropdown" data-bind="css:{active: activeMenuItem() == 'previous'}">
+                        <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Previous Sessions <span class="caret"></span></a>
-                            <ul id='session-dropdown' class="dropdown-menu">
-                                
-                            </ul>
+                            <ul id='session-dropdown' class="dropdown-menu"></ul>
                         </li>
                     </ul>
                 </div>
-                <!-- /.navbar-collapse -->
             </div>
-            <!-- /.container-fluid -->
         </nav>
         <div class="container-fluid">
             <div class="row">
                 <div class="col-xs-6 col-md-4">
                     <div class="info-session"></div>
-                    <table class="table table-condensed table-striped">
+                    <table class="table table-striped">
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Time</th>
-                                <!--<th>Methods</th>-->
+                                <th>from start</th>
+                                <th>from previous</th>
                             </tr>
                         </thead>
                         <tbody id="requests">
                             <tr id="request-template" style="display:none">
                                 <td><a class="id" href=""></a></td>
                                 <td class="when"></td>
-                                <!--<td class="what"></td>-->
+                                <td class="prev"></td>
                             </tr>
                         </tbody>
                     </table>
-                    <div style="text-align: center">
-                        <!--<button class="btn btn-default btn-xs" onclick="copyRawContextListItemsAsMarkdown()">Copy to clipboard as markdown</button>-->
-                    </div>
                 </div>
                 <div class="col-xs-12 col-md-8">
                     <!--<div class="jsonViewerToolbar clearfix">

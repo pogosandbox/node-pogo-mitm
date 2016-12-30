@@ -1,7 +1,18 @@
 $(function() {
     // session selection
     $('.navbar-nav').on('click', '.viewSession', function() {
+        let live = $(this).hasClass('live');
         let session = $(this).data('session');
+
+        clearInterval(window.live);
+        if (live) {
+            console.log('live');
+            window.live = setInterval(() => viewSession(session), 1000);
+        }
+
+        $('.navbar-nav .active').removeClass('active');
+        $(this).parent('li').addClass('active');
+
         viewSession(session);
     });
 
@@ -12,7 +23,7 @@ $(function() {
         let session = $('#requests').data('session');
         let request = $('#requests .success').attr('id');
         let which = $(this).find('.request').hasClass('btn-primary') ? 'request' : 'response';
-        viewRequestDetail(which, session, request);
+        if (session && request) viewRequestDetail(which, session, request);
     });
 
     // view a session
@@ -23,13 +34,17 @@ $(function() {
         $.getJSON('/api/session/' + id, function(data) {
             if (data.length) {
                 let first = data[0];
+                let previous = data[0];
                 $('.info-session').text('Session started at ' + moment(first.when).format('llll'));
                 data.forEach(d => {
                     let item = $('#request-template').clone().show().addClass('item').attr('id', d.id);
                     item.find('.id').data('id', d.id).text(d.id);
-                    let duration = moment.duration(d.when - first.when).asSeconds().toFixed(1);
-                    item.find('.when').text('+' + duration + 's');
+                    let fromStart = moment.duration(d.when - first.when).asSeconds().toFixed(1);
+                    item.find('.when').text('+' + fromStart + 's');
+                    let fromPrev = moment.duration(d.when - previous.when).asSeconds().toFixed(1);
+                    item.find('.prev').text('+' + fromPrev + 's');
                     item.appendTo('#requests');
+                    previous = d;
                 });
             }
         });
@@ -65,5 +80,6 @@ $(function() {
             `);
         });
         viewSession(last.id);
+        window.live = setInterval(() => viewSession(last.id), 1000);
     });
 });
