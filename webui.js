@@ -27,7 +27,7 @@ class WebUI {
         app.use(express.static(path.resolve(__dirname, 'webui')));
 
         app.listen(this.config.webuiPort, () => {
-            logger.info('UI started.');
+            logger.info('UI started, port %s.', this.config.webuiPort);
         });
     }
 
@@ -72,48 +72,52 @@ class WebUI {
         return fs.readFileAsync(`data/${req.params.session}/${req.params.request}.req.bin`, 'utf8')
         .then(content => {
             let data = JSON.parse(content);
-            let raw = Buffer.from(data.data, 'base64');
-            delete data.data;
+            if (data.endpoint == '/plfe/version') {
+                data.decoded = {request: 'check version', checkVersion: true};
 
-            data.id = req.params.request;
-            data.decoded = POGOProtos.Networking.Envelopes.RequestEnvelope.decode(raw);
+            } else {
+                let raw = Buffer.from(data.data, 'base64');
+                delete data.data;
 
-            // decode plateform requests
-            _.each(data.decoded.platform_requests, req => {
-                let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r == req.type);
-                req.request_name = reqname;
-                reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
-                let requestType = POGOProtos.Networking.Platform.Requests[reqname];
-                if (requestType) {
-                    req.message = requestType.decode(req.request_message);
-                    if (req.type == POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
-                        // decrypt signature
-                        try {
-                            let buffer = req.message.encrypted_signature.toBuffer();
-                            let decrypted = pcrypt.decrypt(buffer);
-                            req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
-                        } catch(e) {
-                            req.message = 'Error while decrypting: ' + e.message;
+                data.id = req.params.request;
+                data.decoded = POGOProtos.Networking.Envelopes.RequestEnvelope.decode(raw);
+
+                // decode plateform requests
+                _.each(data.decoded.platform_requests, req => {
+                    let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r == req.type);
+                    req.request_name = reqname;
+                    reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
+                    let requestType = POGOProtos.Networking.Platform.Requests[reqname];
+                    if (requestType) {
+                        req.message = requestType.decode(req.request_message);
+                        if (req.type == POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
+                            // decrypt signature
+                            try {
+                                let buffer = req.message.encrypted_signature.toBuffer();
+                                let decrypted = pcrypt.decrypt(buffer);
+                                req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
+                            } catch(e) {
+                                req.message = 'Error while decrypting: ' + e.message;
+                            }
                         }
+                    } else {
+                        req.message = `unable to decode ${reqname}`;
                     }
-                } else {
-                    req.message = `unable to decode ${reqname}`;
-                }
-                delete req.request_message;
-            });
+                    delete req.request_message;
+                });
 
-            // decode requests
-            _.each(data.decoded.requests, req => {
-                let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r == req.request_type);
-                req.request_name = reqname;
-                reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
-                let requestType = POGOProtos.Networking.Requests.Messages[reqname];
-                req.message = requestType.decode(req.request_message);
-                delete req.request_message;
-            });
+                // decode requests
+                _.each(data.decoded.requests, req => {
+                    let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r == req.request_type);
+                    req.request_name = reqname;
+                    reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
+                    let requestType = POGOProtos.Networking.Requests.Messages[reqname];
+                    req.message = requestType.decode(req.request_message);
+                    delete req.request_message;
+                });
+            }
 
             res.json(data);
-
             return fs.writeFileAsync(`data/${req.params.session}/${req.params.request}.req.json`, JSON.stringify(data, null, 4), 'utf8');
 
         }).catch(e => {
@@ -131,6 +135,11 @@ class WebUI {
         ])
         .then(results => {
             let request = JSON.parse(results[0]).decoded;
+            if (request.checkVersion) {
+                return res.json({
+                    decoded: {response: Buffer.from(results[1], 'base64').toString('utf8')},
+                });
+            }
 
             let allRequests = _.map(request.requests, r => _.upperFirst(_.camelCase(r.request_name)));
 
@@ -161,14 +170,6 @@ class WebUI {
                 return responseType.decode(buffer);
             });
             delete decoded.returns;
-
-            // decode response
-            // _.each(decoded.returns, (req, i) => {
-            //     var request = allRequests[i];
-            //     let responseType = POGOProtos.Networking.Responses[request + "Response"];
-            //     req.message = responseType.decode(req.buffer);
-            //     delete req.buffer;
-            // });
 
             res.json({decoded: decoded});
 

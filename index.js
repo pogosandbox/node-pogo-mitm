@@ -1,9 +1,7 @@
 require('dotenv').config({silent: true});
 
 let logger = require('winston');
-let _ = require('lodash');
 let fs = require('fs');
-let moment = require('moment');
 let Promise = require('bluebird');
 let dns = require('dns');
 
@@ -18,9 +16,9 @@ let config = {
     reqId: 0,
     proxyPort: process.env.PROXY_PORT || 8888,
     webuiPort: process.env.WEBUI_PORT || 8080,
-}
+};
 
-logger.level = "debug";
+logger.level = 'debug';
 
 let utils = new Utils(config);
 
