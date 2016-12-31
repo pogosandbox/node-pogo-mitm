@@ -8,10 +8,10 @@ let dns = require('dns');
 Promise.promisifyAll(fs);
 Promise.promisifyAll(dns);
 
-let Config = require('./config');
-let Proxy = require('./proxy');
-let WebUI = require('./webui');
-let Utils = require('./utils');
+let Config = require('./lib/config');
+let Proxy = require('./lib/proxy');
+let WebUI = require('./lib/webui');
+let Utils = require('./lib/utils');
 
 let config = new Config().load();
 

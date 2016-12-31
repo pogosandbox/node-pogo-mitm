@@ -6,6 +6,11 @@ let _ = require('lodash');
 
 Promise.promisifyAll(fs);
 
+let Config = require('./../lib/config');
+let config = new Config().load();
+
+logger.loglevel = config.loglevel;
+
 class Snorlax {
     convert() {
         return fs.readdirAsync('snorlax')

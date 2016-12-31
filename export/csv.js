@@ -4,11 +4,16 @@ let Promise = require('bluebird');
 let _ = require('lodash');
 let json2csv = require('json2csv');
 
-let Utils = require('./../utils');
-let utils = new Utils();
+let Config = require('./../lib/config');
+let config = new Config().load();
 
-let Decoder = require('./../decoder.js');
-let decoder = new Decoder();
+logger.loglevel = config.loglevel;
+
+let Utils = require('./../lib/utils');
+let utils = new Utils(config);
+
+let Decoder = require('./../lib/decoder.js');
+let decoder = new Decoder(config);
 
 class Csv {
     exportRequestsSignature() {
