@@ -17,7 +17,7 @@ proxy:
 # Web UI config.
 # Port is the port the ui will listen to, 8080 if not defined.
 ui:
-    port: 8081
+    port: 8080
 
 # Log level, 'info' if not defined. 
 loglevel: debug
