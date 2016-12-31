@@ -8,24 +8,21 @@ let dns = require('dns');
 Promise.promisifyAll(fs);
 Promise.promisifyAll(dns);
 
+let Config = require('./config');
 let Proxy = require('./proxy');
 let WebUI = require('./webui');
 let Utils = require('./utils');
 
-let config = {
-    reqId: 0,
-    proxyPort: process.env.PROXY_PORT || 8888,
-    webuiPort: process.env.WEBUI_PORT || 8080,
-};
+let config = new Config().load();
 
-logger.level = 'debug';
+logger.level = config.loglevel;
 
 let utils = new Utils(config);
 
 dns.lookupAsync(require('os').hostname())
 .then(add => {
     config.ip = add;
-    logger.info('Listening to: %s:%s', add, config.proxyPort);
+    logger.info('Listening to: %s:%s', add, config.proxy.port);
 })
 .then(() => {
     return utils.initFolders();

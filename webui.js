@@ -30,8 +30,8 @@ class WebUI {
 
         app.use(express.static(path.resolve(__dirname, 'webui')));
 
-        app.listen(this.config.webuiPort, () => {
-            logger.info('UI started, port %s.', this.config.webuiPort);
+        app.listen(this.config.ui.port, () => {
+            logger.info('UI started, port %s.', this.config.ui.port);
         });
     }
 

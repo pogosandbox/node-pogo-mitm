@@ -22,7 +22,7 @@ class MitmProxy {
             .use(mitmproxy.gunzip)
             .onError(_.bind(this.onError, this))
             .onRequest(_.bind(this.onRequest, this))
-            .listen({port: this.config.proxyPort});
+            .listen({port: this.config.proxy.port});
     }
 
     onRequest(context, callback) {
