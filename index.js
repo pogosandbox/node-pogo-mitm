@@ -19,14 +19,7 @@ logger.level = config.loglevel;
 
 let utils = new Utils(config);
 
-dns.lookupAsync(require('os').hostname())
-.then(add => {
-    config.ip = add;
-    logger.info('Listening to: %s:%s', add, config.proxy.port);
-})
-.then(() => {
-    return utils.initFolders();
-})
+utils.initFolders()
 .then(() => {
     let proxy = new Proxy(config);
     proxy.launch();

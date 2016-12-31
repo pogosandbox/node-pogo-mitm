@@ -10,9 +10,16 @@
 ##############################################################################
 
 # Proxy config.
-# Port is the port the proxy will listen to, 8888 if not defined.
+# - port=8888 is the port the proxy will listen to
 proxy:
     port: 8888
+
+# Use ngrok to publish proxy online. Allows mitm while walking out of your network
+# - activated=false true to activated
+# - region=eu change ngrok region (us, eu, au, ap)
+ngrok: 
+    activated: true
+    region: eu
 
 # Web UI config.
 # Port is the port the ui will listen to, 8080 if not defined.

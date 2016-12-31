@@ -14,6 +14,7 @@
     "json2csv": "^3.7.3",
     "lodash": "^4.17.3",
     "moment": "^2.17.1",
+    "ngrok": "^2.2.4",
     "node-pogo-protos": "cyraxx/node-pogo-protos",
     "pcrypt": "laverdet/pcrypt",
     "winston": "^2.3.0"

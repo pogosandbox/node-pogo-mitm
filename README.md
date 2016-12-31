@@ -9,3 +9,5 @@ On iOS:
  - add cert to your phone by going to http://[ip]:[port]/cert.crt
  - then modify ios proxy settings to http://[ip]:[port]/proxy.pac
  
+## Troubleshoot
+ - Sometime iOS do not reload proxy.pac, try to forget your wifi and reconfigure it
