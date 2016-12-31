@@ -51,11 +51,13 @@ $(function() {
     }
 
     function viewRequestDetail(which, session, request) {
+        console.log('View request ' + request);
         $('#jsonViewer').html('<h3>loading...</h3>');
+        $('#' + request).addClass('success');
         $.getJSON(`/api/${which}/${session}/${request}`, function(data) {
-            $('#' + request).addClass('success');
-            $('#jsonViewer').JSONView(JSON.stringify(data.decoded)); // eslint-disable-line
-            $('#jsonViewer').JSONView('collapse', 2); // eslint-disable-line
+            $('#jsonViewer').jsonViewer(data.decoded, {collapsed: true});
+            $('#jsonViewer a').first().click();
+            // $('#jsonViewer').JSONView('collapse', 2); // eslint-disable-line
         });
     }
 

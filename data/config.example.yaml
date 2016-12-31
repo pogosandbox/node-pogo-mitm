@@ -17,9 +17,11 @@ proxy:
 # Use ngrok to publish proxy online. Allows mitm while walking out of your network
 # - activated=false true to activated
 # - region=eu change ngrok region (us, eu, au, ap)
+# - token=null use your ngrok token if you have one
 ngrok: 
     activated: true
     region: eu
+    token:
 
 # Web UI config.
 # Port is the port the ui will listen to, 8080 if not defined.

@@ -3,13 +3,14 @@
     <head>
         <title>PoGo Mitm Proxy</title>
         <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.css" />
+        <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.css" />-->
+        <link rel='stylesheet' href='https://rawgit.com/abodelot/jquery.json-viewer/master/json-viewer/jquery.json-viewer.css' />
         <link href="/css/main.css" rel="stylesheet">
-
         <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/moment.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.js"></script>
+        <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-jsonview/1.2.3/jquery.jsonview.min.js"></script>-->
+        <script src='https://rawgit.com/abodelot/jquery.json-viewer/master/json-viewer/jquery.json-viewer.js'></script>
         <script src="/js/app.js"></script>
 
         <link rel="icon" type="image/png" href="favicon.png" />
@@ -61,22 +62,11 @@
                     </table>
                 </div>
                 <div class="col-xs-12 col-md-8">
-                    <!--<div class="jsonViewerToolbar clearfix">
-                        <div class="btn-toolbar pull-right" role="toolbar">
-                            <a data-bind="attr: {href: toolbarDownloadRawRequest}, css:{disabled: toolbarDownloadRawRequestEnabled() == false}" class="btn btn-default btn-xs btn-success">Raw Request</a>
-                            <a data-bind="attr: {href: toolbarDownloadDecodedRequest}, css:{disabled: toolbarDownloadDecodedRequestEnabled() == false}" class="btn btn-default btn-xs btn-success">Decoded Request</a>
-                            <a data-bind="attr: {href: toolbarDownloadRawResponse}, css:{disabled: toolbarDownloadRawResponseEnabled() == false}" class="btn btn-default btn-xs btn-success">Raw Response</a>
-                            <a data-bind="attr: {href: toolbarDownloadDecodedResponse}, css:{disabled: toolbarDownloadDecodedResponseEnabled() == false}" class="btn btn-default btn-xs btn-success">Decoded Response</a>
-                            <a data-bind="attr: {href: toolbarDownloadDecryptedRawSignature}, css:{disabled: toolbarDownloadDecryptedRawSignatureEnabled() == false}" class="btn btn-default btn-xs btn-success">Decrypted Raw Signature</a>
-                            <a data-bind="attr: {href: toolbarDownloadJson}, css:{disabled: toolbarDownloadJsonEnabled() == false}" class="btn btn-default btn-xs">Download Json</a>
-                            <a data-bind="attr: {href: toolbarS2Map}, css:{disabled: toolbarS2MapEnabled() == false}" class="btn btn-default btn-xs" target="_blank">S2 Map</a>
-                        </div>
-                    </div>-->
                     <div class="btn-group viewRequestResponse" role="group">
                         <button type="button" class="request btn btn-default btn-primary">Request</button>
                         <button type="button" class="response btn btn-default">Response</button>
                     </div>
-                    <div id="jsonViewer"></div>
+                    <pre id="jsonViewer"></pre>
                 </div>
             </div>
         </div>
