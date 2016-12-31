@@ -1,14 +1,14 @@
 $(function() {
     // session selection
     $('.navbar-nav').on('click', '.viewSession', function() {
-        let live = $(this).hasClass('live');
         let session = $(this).data('session');
 
-        clearInterval(window.live);
-        if (live) {
-            console.log('live');
-            window.live = setInterval(() => viewSession(session), 1000);
-        }
+        // let live = $(this).hasClass('live');
+        // clearInterval(window.live);
+        // if (live) {
+        //     console.log('live');
+        //     window.live = setInterval(() => viewSession(session), 1000);
+        // }
 
         $('.navbar-nav .active').removeClass('active');
         $(this).parent('li').addClass('active');
@@ -80,6 +80,6 @@ $(function() {
             `);
         });
         viewSession(last.id);
-        window.live = setInterval(() => viewSession(last.id), 1000);
+        // window.live = setInterval(() => viewSession(last.id), 1000);
     });
 });
