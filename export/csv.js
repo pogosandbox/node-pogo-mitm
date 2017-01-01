@@ -92,6 +92,7 @@ class Csv {
                 'signature.device_info.firmware_brand',
                 'signature.device_info.firmware_type',
             ],
+            del: config.export.csv.separator,
         });
         return fs.writeFileAsync('data/request.device_info.csv', csv, 'utf8');
     }
@@ -116,6 +117,7 @@ class Csv {
                 'signature.location_fix[0].floor',
                 'signature.location_fix[0].location_type',
             ],
+            del: config.export.csv.separator,
         });
         return fs.writeFileAsync('data/request.location_fix.csv', csv, 'utf8');
     }
@@ -145,6 +147,7 @@ class Csv {
                 'signature.sensor_info[0].gravity_y',
                 'signature.sensor_info[0].gravity_z',
             ],
+            del: config.export.csv.separator,
         });
         return fs.writeFileAsync('data/request.sensor_info.csv', csv, 'utf8');
     }
@@ -165,6 +168,7 @@ class Csv {
                 'signature.activity_status.tilting',
                 'signature.activity_status.cycling',
             ],
+            del: config.export.csv.separator,
         });
         return fs.writeFileAsync('data/request.activity_status.csv', csv, 'utf8');
     }
@@ -177,4 +181,7 @@ csv.exportRequestsSignature('data/exports.csv')
 })
 .catch(e => {
     logger.error(e);
+})
+.finally(() => {
+    process.exit();
 });
