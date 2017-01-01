@@ -27,5 +27,8 @@ ngrok:
 ui:
     port: 8080
 
-# Log level, 'info' if not defined. 
-loglevel: debug
+# Logging config
+# - level=info, log level (debug, info, warn, error)
+# - file=null, if set, log to a file 
+logger: 
+    level: info
