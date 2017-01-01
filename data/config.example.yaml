@@ -19,12 +19,11 @@ proxy:
 # - region=eu change ngrok region (us, eu, au, ap)
 # - token=null use your ngrok token if you have one
 ngrok: 
-    activated: true
+    active: false
     region: eu
-    token:
 
 # Web UI config.
-# Port is the port the ui will listen to, 8080 if not defined.
+# - port=8080 is the port the ui will listen to
 ui:
     port: 8080
 
