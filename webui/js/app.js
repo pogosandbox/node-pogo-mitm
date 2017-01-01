@@ -57,7 +57,7 @@ $(function() {
         $.getJSON(`/api/${which}/${session}/${request}`, function(data) {
             $('#jsonViewer').jsonViewer(data.decoded, {collapsed: true});
             $('#jsonViewer a').first().click();
-            // $('#jsonViewer').JSONView('collapse', 2); // eslint-disable-line
+            window.scrollTo(0, 0);
         });
     }
 
