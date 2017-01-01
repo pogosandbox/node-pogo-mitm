@@ -34,6 +34,19 @@ class Csv {
                     });
                 })
                 .then(folders => _.flatten(folders))
+                .then(folders => {
+                    return Promise.map(folders, folder => {
+                        if (fs.existsSync(`data/${folder.session}/.info`)) {
+                            return fs.readFileAsync(`data/${folder.session}/.info`, 'utf8')
+                            .then(content => {
+                                folder.info = content;
+                                return folder;
+                            });
+                        } else {
+                            return folder;
+                        }
+                    });
+                })
                 .then(files => {
                     // we now have an array of files with requests dump, let's decrypt
                     return Promise.map(files, file => {
@@ -45,6 +58,7 @@ class Csv {
                                 .then(signature => {
                                     return {
                                         session: file.session,
+                                        info: file.info,
                                         request: file.request,
                                         signature: signature,
                                     };
@@ -68,6 +82,7 @@ class Csv {
             data: signatures,
             fields: [
                 'session',
+                'info',
                 'request',
                 'signature.device_info.device_brand',
                 'signature.device_info.device_model',
@@ -87,6 +102,7 @@ class Csv {
             data: signatures,
             fields: [
                 'session',
+                'info',
                 'request',
                 'signature.location_fix[0].provider',
                 'signature.location_fix[0].altitude',
@@ -110,6 +126,7 @@ class Csv {
             data: signatures,
             fields: [
                 'session',
+                'info',
                 'request',
                 'signature.sensor_info[0].linear_acceleration_x',
                 'signature.sensor_info[0].linear_acceleration_y',
@@ -138,6 +155,7 @@ class Csv {
             data: signatures,
             fields: [
                 'session',
+                'info',
                 'request',
                 'signature.activity_status.unknown_status',
                 'signature.activity_status.walking',
