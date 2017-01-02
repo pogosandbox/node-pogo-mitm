@@ -11,9 +11,9 @@
   },
   "dependencies": {
     "bluebird": "^3.4.7",
+    "cookie-session": "^2.0.0-alpha.2",
     "dotenv": "^2.0.0",
     "express": "^4.14.0",
-    "express-session": "^1.14.2",
     "http-mitm-proxy": "joeferner/node-http-mitm-proxy",
     "js-yaml": "^3.7.0",
     "json2csv": "^3.7.3",

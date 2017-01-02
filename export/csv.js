@@ -7,7 +7,10 @@ let json2csv = require('json2csv');
 let Config = require('./../lib/config');
 let config = new Config().load();
 
-logger.loglevel = config.loglevel;
+logger.level = config.logger.level;
+if (config.logger.file) {
+    logger.add(logger.transports.File, {filename: config.logger.file, json: false});
+}
 
 let Utils = require('./../lib/utils');
 let utils = new Utils(config);
