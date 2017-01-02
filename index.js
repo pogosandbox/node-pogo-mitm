@@ -14,12 +14,6 @@ let WebUI = require('./lib/webui');
 let Utils = require('./lib/utils');
 
 let config = new Config().load();
-
-logger.level = config.logger.level;
-if (config.logger.file) {
-    logger.add(logger.transports.File, {filename: config.logger.file, json: false});
-}
-
 let utils = new Utils(config);
 
 utils.initFolders()

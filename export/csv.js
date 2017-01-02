@@ -5,23 +5,20 @@ let _ = require('lodash');
 let json2csv = require('json2csv');
 
 let Config = require('./../lib/config');
-let config = new Config().load();
-
-logger.level = config.logger.level;
-if (config.logger.file) {
-    logger.add(logger.transports.File, {filename: config.logger.file, json: false});
-}
-
 let Utils = require('./../lib/utils');
-let utils = new Utils(config);
 
 let Decoder = require('./../lib/decoder.js');
 let decoder = new Decoder(config);
 
 class Csv {
+    constructor(config) {
+        this.config = config || new Config().load();
+        this.utils = new Utils(this.config);
+    }
+
     exportRequestsSignature() {
-        return utils.cleanDataFolders()
-                .then(() => utils.getSessionFolders())
+        return this.utils.cleanDataFolders()
+                .then(() => this.utils.getSessionFolders())
                 .then(folders => {
                     // parse all session folder and get only requests
                     return Promise.map(folders, folder => {
@@ -95,7 +92,7 @@ class Csv {
                 'signature.device_info.firmware_brand',
                 'signature.device_info.firmware_type',
             ],
-            del: config.export.csv.separator,
+            del: this.config.export.csv.separator,
         });
         return fs.writeFileAsync('data/request.device_info.csv', csv, 'utf8');
     }
@@ -120,7 +117,7 @@ class Csv {
                 'signature.location_fix[0].floor',
                 'signature.location_fix[0].location_type',
             ],
-            del: config.export.csv.separator,
+            del: this.config.export.csv.separator,
         });
         return fs.writeFileAsync('data/request.location_fix.csv', csv, 'utf8');
     }
@@ -150,7 +147,7 @@ class Csv {
                 'signature.sensor_info[0].gravity_y',
                 'signature.sensor_info[0].gravity_z',
             ],
-            del: config.export.csv.separator,
+            del: this.config.export.csv.separator,
         });
         return fs.writeFileAsync('data/request.sensor_info.csv', csv, 'utf8');
     }
@@ -171,7 +168,7 @@ class Csv {
                 'signature.activity_status.tilting',
                 'signature.activity_status.cycling',
             ],
-            del: config.export.csv.separator,
+            del: this.config.export.csv.separator,
         });
         return fs.writeFileAsync('data/request.activity_status.csv', csv, 'utf8');
     }
