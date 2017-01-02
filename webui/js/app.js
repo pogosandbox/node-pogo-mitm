@@ -32,11 +32,17 @@ $(function() {
         $('#requests tr.item').empty();
         $('#requests').data('session', id);
         $.getJSON('/api/session/' + id, function(data) {
-            if (data.length) {
-                let first = data[0];
-                let previous = data[0];
-                $('.info-session').text('Session started at ' + moment(first.when).format('llll'));
-                data.forEach(d => {
+            $('.info-session').html(`
+                <div>${data.title}</div>
+            `);
+            if (data.files.length) {
+                let first = data.files[0];
+                let previous = data.files[0];
+                $('.info-session').html(`
+                    <div>Session started at ${moment(first.when).format('llll')}</div>
+                    <div>${data.title}</div>
+                `);
+                data.files.forEach(d => {
                     let item = $('#request-template').clone().show().addClass('item').attr('id', d.id);
                     item.find('.id').data('id', d.id).text(d.id);
                     let fromStart = moment.duration(d.when - first.when).asSeconds().toFixed(1);
