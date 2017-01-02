@@ -30,4 +30,10 @@ utils.initFolders()
 .then(() => {
     let webui = new WebUI(config);
     webui.launch();
+})
+.then(() => {
+    logger.info('App ready.');
+})
+.catch(e => {
+    logger.error(e);
 });
