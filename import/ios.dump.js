@@ -13,7 +13,17 @@ logger.loglevel = config.loglevel;
 
 class IOSDump {
     convert() {
+        try {
+            fs.mkdirSync('data');
+        } catch(e) {}
         return fs.readdirAsync('ios.dump')
+                .then(sessions => {
+                    return Promise.map(sessions, _.bind(this.handleSession, this));
+                });
+    }
+
+    handleSession(session) {
+      return fs.readdirAsync(`ios.dump/${session}`)
                 .then(files => _.filter(files, f => _.endsWith(f, 'req.raw.bin')))
                 .then(files => {
                     if (files.length == 0) throw new Error('no file to import');
@@ -23,9 +33,6 @@ class IOSDump {
                     let folder = when.format('YYYYDDMM.HHmmss');
                     logger.info('Dest folder: data/%s', folder);
 
-                    try {
-                        fs.mkdirSync('data');
-                    } catch(e) {}
                     try {
                         fs.mkdirSync('data/' + folder);
                     } catch(e) {}
@@ -54,16 +61,16 @@ class IOSDump {
                 })
                 .then(files => {
                     let reqId = 0;
-                    return Promise.map(files.files, file => this.handleReqFile(++reqId, files.folder, file));
+                    return Promise.map(files.files, file => this.handleReqFile(++reqId, session, file, files.folder));
                 })
                 .then(files => {
                     return files.length;
                 });
     }
 
-    handleReqFile(reqId, folder, file) {
+    handleReqFile(reqId, session, file, folder) {
         logger.info('Convert file %s in folder %s', file.file, folder);
-        return fs.readFileAsync(`ios.dump/${file.file}`)
+        return fs.readFileAsync(`ios.dump/${session}/${file.file}`)
                 .then(data => {
                     return {
                         id: reqId,
@@ -78,10 +85,10 @@ class IOSDump {
                 .then(() => this.handleResFile(reqId, folder, file));
     }
 
-    handleResFile(reqId, folder, file) {
+    handleResFile(reqId, session, file, folder) {
         let resfile = _.trimEnd(file.file, '.req.raw.bin') + '.res.raw.bin';
-        if (fs.existsSync(`ios.dump/${resfile}`)) {
-            return fs.readFileAsync(`ios.dump/${resfile}`)
+        if (fs.existsSync(`ios.dump/${session}/${resfile}`)) {
+            return fs.readFileAsync(`ios.dump/${session}/${resfile}`)
                     .then(data => Buffer.from(data).toString('base64'))
                     .then(data => {
                         let id = _.padStart(reqId, 5, 0);

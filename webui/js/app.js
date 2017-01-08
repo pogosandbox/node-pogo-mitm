@@ -29,6 +29,9 @@ $(function() {
     // view a session
     function viewSession(id) {
         console.log(id);
+        $('#view-request').hide();
+        $('#view-session-info').show();
+        $('#jsonViewer').html('');
         $('#requests tr.item').empty();
         $('#requests').data('session', id);
         $.getJSON('/api/session/' + id, function(data) {
@@ -53,11 +56,26 @@ $(function() {
                     previous = d;
                 });
             }
+            viewSessionInfo(data);
         });
+    }
+
+    function viewSessionInfo(data) {
+        if (window.mapobj) window.mapobj.remove();
+        if (data.files.length > 0 && data.steps.length > 0) {
+            let map = window.mapobj = L.map('map').setView([51.505, -0.09], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            let pts = Array.from(data.steps, pt => L.latLng(pt.lat, pt.lng));
+            let path = L.polyline(pts, {color: 'red'}).addTo(map);
+            let bounds = path.getBounds();
+            map.fitBounds(bounds);
+        }
     }
 
     function viewRequestDetail(which, session, request) {
         console.log('View request ' + request);
+        $('#view-request').show();
+        $('#view-session-info').hide();
         $('#jsonViewer').html('<h3>loading...</h3>');
         $('#' + request).addClass('success');
         $.getJSON(`/api/${which}/${session}/${request}`, function(data) {
