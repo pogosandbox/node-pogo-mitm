@@ -82,7 +82,7 @@ class IOSDump {
                     let id = _.padStart(reqId, 5, 0);
                     return fs.writeFileAsync(`data/${folder}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
                 })
-                .then(() => this.handleResFile(reqId, folder, file));
+                .then(() => this.handleResFile(reqId, session, file, folder));
     }
 
     handleResFile(reqId, session, file, folder) {
