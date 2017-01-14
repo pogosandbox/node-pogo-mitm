@@ -80,9 +80,30 @@ $(function() {
         $('#' + request).addClass('success');
         $.getJSON(`/api/${which}/${session}/${request}`, function(data) {
             $('#jsonViewer').jsonViewer(data.decoded, {collapsed: true});
-            $('#jsonViewer a').first().click();
+            displayNicely();
             window.scrollTo(0, 0);
         });
+    }
+
+    function displayNicely() {
+        $('#jsonViewer a').first().click();
+        let res = $('#jsonViewer a:contains("requests")');
+        res = res.filter(function() {
+            return $(this).text() === 'requests';
+        }).first();
+        if (res.length == 1) {
+            res.click();
+            res.parent().find('ol').first().find('a').first().click();
+        } else {
+            res = $('#jsonViewer a:contains("responses")');
+            res = res.filter(function() {
+                return $(this).text() === 'responses';
+            }).first();
+            if (res.length == 1) {
+                res.click();
+                res.parent().find('ol').first().find('a').first().click();
+            }
+        }
     }
 
     // display a specific request
