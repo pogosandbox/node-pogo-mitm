@@ -15,6 +15,7 @@ class Snorlax {
     convert() {
         return fs.readdirAsync('snorlax')
                 .then(files => {
+                    files = _.filter(files, file => file.match(/.ENVELOPE_(REQUEST|RESPONSE).log$/));
                     if (files.length == 0) throw new Error('no file to import');
 
                     let date = files[0].substring(0, files[0].indexOf('.'));
@@ -29,7 +30,8 @@ class Snorlax {
                     } catch(e) {}
                     return {
                                 folder: folder,
-                                files: files,
+                                files: _.filter(files, f => f.indexOf('REQUEST') >= 0),
+                                responses: _.filter(files, f => f.indexOf('RESPONSE') >= 0),
                             };
                 })
                 .then(data => {
@@ -45,19 +47,21 @@ class Snorlax {
                         return {
                             folder: data.folder,
                             files: files,
+                            responses: data.responses,
                         };
                     });
                 })
                 .then(files => {
                     let reqId = 0;
-                    return Promise.map(files.files, file => this.handleFile(++reqId, files.folder, file));
+                    return Promise.map(files.files, (file, idx) => this.handleReqFile(++reqId, files, file, idx));
                 })
                 .then(files => {
                     return files.length;
                 });
     }
 
-    handleFile(reqId, folder, file) {
+    handleReqFile(reqId, files, file, idx) {
+        let folder = files.folder;
         logger.info('Convert file %s in folder %s', file.file, folder);
         return fs.readFileAsync(`snorlax/${file.file}`)
                 .then(data => {
@@ -69,7 +73,16 @@ class Snorlax {
                 })
                 .then(data => {
                     let id = _.padStart(reqId, 5, 0);
-                    return fs.writeFileAsync(`data/${folder}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
+                    return fs.writeFileAsync(`data/${folder}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8')
+                            .then(() => id);
+                })
+                .then(id => {
+                    let response = files.responses[idx];
+                    return fs.readFileAsync(`snorlax/${response}`)
+                            .then(data => Buffer.from(data).toString('base64'))
+                            .then(data => {
+                                return fs.writeFileAsync(`data/${folder}/${id}.res.bin`, data, 'utf8');
+                            });
                 });
     }
 }
