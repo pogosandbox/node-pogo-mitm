@@ -25,7 +25,7 @@ class Preload {
     }
 
     preloadSession(folder) {
-        if (fs.existsSync(`data/${folder}/.preload`)) return;
+        //if (fs.existsSync(`data/${folder}/.preload`)) return;
 
         logger.info('Preload session %d', folder);
         return fs.readdirAsync(`data/${folder}`)
@@ -51,6 +51,9 @@ class Preload {
                     lng: d.decoded.longitude,
                 };
             });
+        })
+        .catch(e => {
+            throw e;
         });
     }
 
