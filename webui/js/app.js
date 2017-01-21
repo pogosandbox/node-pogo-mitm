@@ -3,13 +3,6 @@ $(function() {
     $('.navbar-nav').on('click', '.viewSession', function() {
         let session = $(this).data('session');
 
-        // let live = $(this).hasClass('live');
-        // clearInterval(window.live);
-        // if (live) {
-        //     console.log('live');
-        //     window.live = setInterval(() => viewSession(session), 1000);
-        // }
-
         $('.navbar-nav .active').removeClass('active');
         $(this).parent('li').addClass('active');
 
@@ -48,7 +41,7 @@ $(function() {
     }
 
     // view a session
-    function viewSession(id) {
+    function viewSession(id, req) {
         console.log(id);
         $('#view-request').hide();
         $('#view-session-info').show();
@@ -68,7 +61,7 @@ $(function() {
                 `);
                 data.files.forEach(d => {
                     let item = $('#request-template').clone().show().addClass('item').addClass(d.id).attr('id', d.id);
-                    item.find('.id').data('id', d.id).text(d.id);
+                    item.find('.id').data('id', d.id).text(d.id).attr('href', `#session=${id}&request=${d.id}`);
                     let fromStart = moment.duration(d.when - first.when).asSeconds().toFixed(1);
                     item.find('.when').text('+' + fromStart + 's');
                     let fromPrev = moment.duration(d.when - previous.when).asSeconds().toFixed(1);
@@ -77,7 +70,11 @@ $(function() {
                     previous = d;
                 });
             }
-            viewSessionInfo(data);
+            if (req) {
+                viewRequestDetail('request', id, req);
+            } else {
+                viewSessionInfo(data);
+            }
         });
     }
 
@@ -135,7 +132,6 @@ $(function() {
         $('.viewRequestResponse .request').addClass('btn-primary');
         $('.viewRequestResponse .response').removeClass('btn-primary');
         viewRequestDetail('request', session, request);
-        return false;
     });
 
     // attach handler for session selection
@@ -144,10 +140,22 @@ $(function() {
         $('#last-session').data('session', last.id);
         data.reverse().forEach(d => {
             $('#session-dropdown').append(`
-                <li><a href="#" class='viewSession' data-session='${d.id}'>${d.title}</a></li>
+                <li><a href="#session=${d.id}" class='viewSession' data-session='${d.id}'>${d.title}</a></li>
             `);
         });
-        viewSession(last.id);
-        // window.live = setInterval(() => viewSession(last.id), 1000);
+        let session = last.id;
+        let request = undefined;
+        if (window.location.hash.length > 0 && window.location.hash[0] == '#') {
+            let params = window.location.hash.substring(1).split('&');
+            params.forEach(p => {
+                if (p.startsWith('session=')) {
+                    session = p.substring('session='.length);
+                } else if (p.startsWith('request=')) {
+                    request = p.substring('request='.length);
+                }
+            });
+            console.log(params);
+        }
+        viewSession(session, request);
     });
 });
