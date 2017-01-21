@@ -40,9 +40,9 @@ $(function() {
         let pad = '0000000000'.substring(0, request.length);
         request = +request + next + '';
         request = pad.substring(request.length) + request;
-        if ($('.request').length > 0) {
+        if ($('.' + request).length > 0) {
             $('#requests .success').removeClass('success');
-            let which = $(this).find('.request').hasClass('btn-primary') ? 'request' : 'response';
+            let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
             viewRequestDetail(which, session, request);
         }
     }
