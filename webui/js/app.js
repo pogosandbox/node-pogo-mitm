@@ -26,6 +26,27 @@ $(function() {
         if (session && request) viewRequestDetail(which, session, request);
     });
 
+    $('#next-request').click(function() {
+        prevNext(+1);
+    });
+
+    $('#prev-request').click(function() {
+        prevNext(-1);
+    });
+
+    function prevNext(next) {
+        let session = $('#requests').data('session');
+        let request = $('#requests .success').attr('id');
+        let pad = '0000000000'.substring(0, request.length);
+        request = +request + next + '';
+        request = pad.substring(request.length) + request;
+        if ($('.request').length > 0) {
+            $('#requests .success').removeClass('success');
+            let which = $(this).find('.request').hasClass('btn-primary') ? 'request' : 'response';
+            viewRequestDetail(which, session, request);
+        }
+    }
+
     // view a session
     function viewSession(id) {
         console.log(id);
@@ -46,7 +67,7 @@ $(function() {
                     <div>${data.title}</div>
                 `);
                 data.files.forEach(d => {
-                    let item = $('#request-template').clone().show().addClass('item').attr('id', d.id);
+                    let item = $('#request-template').clone().show().addClass('item').addClass(d.id).attr('id', d.id);
                     item.find('.id').data('id', d.id).text(d.id);
                     let fromStart = moment.duration(d.when - first.when).asSeconds().toFixed(1);
                     item.find('.when').text('+' + fromStart + 's');
@@ -77,7 +98,7 @@ $(function() {
         $('#view-request').show();
         $('#view-session-info').hide();
         $('#jsonViewer').html('<h3>loading...</h3>');
-        $('#' + request).addClass('success');
+        $('.' + request).addClass('success');
         $.getJSON(`/api/${which}/${session}/${request}`, function(data) {
             $('#jsonViewer').jsonViewer(data.decoded, {collapsed: true});
             displayNicely();

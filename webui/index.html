@@ -67,11 +67,19 @@
                 </div>
                 <div class="col-xs-12 col-md-8">
                     <div id='view-request' style='display:none'>
-                        <div class="btn-group viewRequestResponse" role="group">
-                            <button type="button" class="request btn btn-default btn-primary">Request</button>
-                            <button type="button" class="response btn btn-default">Response</button>
+                        <div class="row">
+                            <div class="col-md-10 btn-group viewRequestResponse" role="group">
+                                <button type="button" class="request btn btn-default btn-primary">Request</button>
+                                <button type="button" class="response btn btn-default">Response</button>
+                            </div>
+                            <div class="col-md-2 text-right">
+                                <a href="#" id="prev-request"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></a>
+                                <a href="#" id="next-request"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></a>
+                            </div>
                         </div>
-                        <pre id="jsonViewer"></pre>
+                        <div class="row">
+                            <div class="col-md-12"><pre id="jsonViewer"></pre></div>
+                        </div>
                     </div>
                     <div id='view-session-info'>
                         <div id="map"></div>
