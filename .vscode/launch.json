@@ -7,13 +7,6 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "debug.js",
-            "program": "${workspaceRoot}/debug.js",
-            "cwd": "${workspaceRoot}"
-        },
-        {
-            "type": "node",
-            "request": "launch",
             "name": "Launch Program",
             "program": "${workspaceRoot}/index.js",
             "cwd": "${workspaceRoot}"
@@ -44,6 +37,13 @@
             "request": "launch",
             "name": "Launch CSV Export",
             "program": "${workspaceRoot}/export/csv.js",
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "debug.js",
+            "program": "${workspaceRoot}/debug.js",
             "cwd": "${workspaceRoot}"
         }
     ]
