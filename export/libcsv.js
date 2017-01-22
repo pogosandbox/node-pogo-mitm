@@ -54,14 +54,24 @@ class Csv {
                         return this.decoder.decodeRequest(file.session, file.request)
                                 .then(request => {
                                     let signature = _.find(request.decoded.platform_requests, r => r.request_name == 'SEND_ENCRYPTED_SIGNATURE');
-                                    return (!signature || typeof signature.message == 'string') ? null : signature.message;
+                                    return {
+                                        request: request,
+                                        signature: (!signature || typeof signature.message == 'string') ? null : signature.message,
+                                    };
                                 })
-                                .then(signature => {
+                                .then(request => {
+                                    let apiCall = 'NONE';
+                                    if (request.request.decoded.requests && request.request.decoded.requests.length > 0) {
+                                        apiCall = _.first(request.request.decoded.requests).request_name;
+                                    }
+                                    let hasPt8 = _.some(request.request.decoded.platform_requests, r => r.type == 8);
                                     return {
                                         session: file.session,
                                         info: file.info,
                                         request: file.request,
-                                        signature: signature,
+                                        apiCall: apiCall,
+                                        hasPt8: hasPt8,
+                                        signature: request.signature,
                                     };
                                 });
                     });
@@ -79,6 +89,8 @@ class Csv {
                 'session',
                 'info',
                 'request',
+                'apiCall',
+                'hasPt8',
                 'signature.device_info.device_brand',
                 'signature.device_info.device_model',
                 'signature.device_info.device_model_boot',
