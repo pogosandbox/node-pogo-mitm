@@ -12,23 +12,23 @@
   "dependencies": {
     "bluebird": "^3.4.7",
     "cookie-session": "^2.0.0-alpha.2",
-    "dotenv": "^2.0.0",
+    "dotenv": "^4.0.0",
     "express": "^4.14.0",
     "http-mitm-proxy": "joeferner/node-http-mitm-proxy",
     "js-yaml": "^3.7.0",
     "json2csv": "^3.7.3",
-    "lodash": "^4.17.3",
+    "lodash": "^4.17.4",
     "long": "^3.2.0",
     "moment": "^2.17.1",
-    "ngrok": "^2.2.4",
-    "node-pogo-protos": "pogosandbox/node-pogo-protos#full",
+    "ngrok": "^2.2.5",
+    "node-pogo-protos": "cyraxx/node-pogo-protos",
     "passport": "^0.3.2",
     "passport-github2": "^0.1.10",
     "pcrypt": "laverdet/pcrypt",
-    "winston": "^2.3.0"
+    "winston": "^2.3.1"
   },
   "devDependencies": {
-    "eslint": "^3.12.2",
+    "eslint": "^3.14.0",
     "eslint-config-google": "^0.7.1"
   }
 }

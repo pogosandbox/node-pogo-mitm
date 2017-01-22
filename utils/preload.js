@@ -25,9 +25,9 @@ class Preload {
     }
 
     preloadSession(folder) {
-        //if (fs.existsSync(`data/${folder}/.preload`)) return;
+        if (fs.existsSync(`data/${folder}/.preload`)) return;
 
-        logger.info('Preload session %d', folder);
+        logger.info('Preload session %s', folder);
         return fs.readdirAsync(`data/${folder}`)
                 .then(files => {
                     return this.processRequests(folder, files)
