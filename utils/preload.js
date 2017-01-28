@@ -42,7 +42,7 @@ class Preload {
     processRequests(session, files) {
         files = _.filter(files, f => _.endsWith(f, '.req.bin'));
         return Promise.map(files, file => {
-            return this.decoder.decodeRequest(session, _.trimEnd(file, '.req.bin'));
+            return this.decoder.decodeRequest(session, _.trimEnd(file, '.req.bin'), true);
         })
         .then(data => {
             return _.map(data, d => {
@@ -60,7 +60,7 @@ class Preload {
     processResponses(session, files) {
         files = _.filter(files, f => _.endsWith(f, '.res.bin'));
         return Promise.map(files, file => {
-            return this.decoder.decodeResponse(session, _.trimEnd(file, '.res.bin'));
+            return this.decoder.decodeResponse(session, _.trimEnd(file, '.res.bin'), true);
         });
     }
 }
