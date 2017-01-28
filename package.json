@@ -20,15 +20,15 @@
     "lodash": "^4.17.4",
     "long": "^3.2.0",
     "moment": "^2.17.1",
-    "ngrok": "^2.2.5",
-    "node-pogo-protos": "cyraxx/node-pogo-protos",
+    "ngrok": "^2.2.6",
+    "node-pogo-protos": "pogosandbox/node-pogo-protos",
     "passport": "^0.3.2",
     "passport-github2": "^0.1.10",
     "pcrypt": "laverdet/pcrypt",
     "winston": "^2.3.1"
   },
   "devDependencies": {
-    "eslint": "^3.14.0",
+    "eslint": "^3.14.1",
     "eslint-config-google": "^0.7.1"
   }
 }
