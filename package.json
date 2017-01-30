@@ -14,6 +14,7 @@
     "cookie-session": "^2.0.0-alpha.2",
     "dotenv": "^4.0.0",
     "express": "^4.14.0",
+    "geolib": "^2.0.22",
     "http-mitm-proxy": "joeferner/node-http-mitm-proxy",
     "js-yaml": "^3.7.0",
     "json2csv": "^3.7.3",

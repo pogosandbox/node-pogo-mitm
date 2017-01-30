@@ -3,11 +3,10 @@ let fs = require('fs');
 let Promise = require('bluebird');
 let _ = require('lodash');
 let json2csv = require('json2csv');
+const geolib = require('geolib');
 
 let Utils = require('./../lib/utils');
-
 let Config = require('./../lib/config');
-
 let Decoder = require('./../lib/decoder.js');
 
 class Csv {
@@ -15,6 +14,10 @@ class Csv {
         this.config = config || new Config().load();
         this.utils = new Utils(this.config);
         this.decoder = new Decoder(this.config);
+    }
+
+    distance(from, to) {
+        return geolib.getDistance(from, to, 1, 1);
     }
 
     exportRequestsSignature(filename) {
@@ -64,20 +67,44 @@ class Csv {
                                     if (request.request.decoded.requests && request.request.decoded.requests.length > 0) {
                                         apiCall = _.first(request.request.decoded.requests).request_name;
                                     }
-                                    let hasPt8 = _.some(request.request.decoded.platform_requests, r => r.type == 8);
+
+                                    let ptr8 = _.find(request.request.decoded.platform_requests, r => r.type == 8);
+                                    if (ptr8) {
+                                        ptr8 = ptr8.message.message || 'true';
+                                    }
+
+                                    let versionHash = '';
+                                    if (request.signature) versionHash = '="' + request.signature.unknown25.toString() + '"';
+
                                     return {
+                                        request_id: '="' + request.request.decoded.request_id + '"',
                                         session: file.session,
                                         info: file.info,
                                         request: file.request,
                                         apiCall: apiCall,
-                                        hasPt8: hasPt8,
+                                        ptr8: ptr8,
+                                        version_hash: versionHash,
                                         signature: request.signature,
+                                        fullRequest: request.request.decoded,
                                     };
                                 });
                     });
                 })
                 .then(signatures => _.filter(signatures, s => s.signature != null))
-                .then(signatures => this.dumpAllSignatures(signatures, filename));
+                .then(datas => {
+                    // if (datas.length > 0) {
+                    //     let prevPos = {latitude: datas[0].fullRequest.latitude, longitude: datas[0].fullRequest.longitude};
+                    //     let prevTime = +datas[0].signature.timestamp_since_start;
+                    //     _(datas).each(data => {
+                    //         data.distFromPrev = this.distance(prevPos, data.fullRequest);
+                    //         data.timeFromPrev = +data.signature.timestamp_since_start - prevTime;
+                    //         prevPos = {latitude: data.fullRequest.latitude, longitude: data.fullRequest.longitude};
+                    //         prevTime = +data.signature.timestamp_since_start;
+                    //     });
+                    // }
+                    return datas;
+                })
+                .then(data => this.dumpAllSignatures(data, filename));
     }
 
     dumpAllSignatures(signatures, file) {
@@ -86,11 +113,15 @@ class Csv {
         let csv = json2csv({
             data: signatures,
             fields: [
+                'request_id',
                 'session',
                 'info',
                 'request',
                 'apiCall',
-                'hasPt8',
+                'ptr8',
+                'version_hash',
+                // 'timeFromPrev',
+                // 'distFromPrev',
                 'signature.device_info.device_brand',
                 'signature.device_info.device_model',
                 'signature.device_info.device_model_boot',
@@ -98,6 +129,7 @@ class Csv {
                 'signature.device_info.hardware_model',
                 'signature.device_info.firmware_brand',
                 'signature.device_info.firmware_type',
+                'signature.location_fix.length',
                 'signature.location_fix[0].provider',
                 'signature.location_fix[0].altitude',
                 'signature.location_fix[0].latitude',
@@ -125,13 +157,13 @@ class Csv {
                 'signature.sensor_info[0].gravity_x',
                 'signature.sensor_info[0].gravity_y',
                 'signature.sensor_info[0].gravity_z',
-                'signature.activity_status.unknown_status',
-                'signature.activity_status.walking',
-                'signature.activity_status.running',
+                // 'signature.activity_status.unknown_status',
+                // 'signature.activity_status.walking',
+                // 'signature.activity_status.running',
                 'signature.activity_status.stationary',
-                'signature.activity_status.automotive',
-                'signature.activity_status.tilting',
-                'signature.activity_status.cycling',
+                // 'signature.activity_status.automotive',
+                // 'signature.activity_status.tilting',
+                // 'signature.activity_status.cycling',
             ],
             del: this.config.export.csv.separator,
         });
