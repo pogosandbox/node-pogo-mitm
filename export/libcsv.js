@@ -76,8 +76,17 @@ class Csv {
                                     let versionHash = '';
                                     if (request.signature) versionHash = '="' + request.signature.unknown25.toString() + '"';
 
+                                    let loginType = '';
+                                    let uk2 = '';
+                                    if (request.request.decoded.auth_info) {
+                                        loginType = request.request.decoded.auth_info.provider;
+                                        uk2 = request.request.decoded.auth_info.token.unknown2;
+                                    }
+
                                     return {
                                         request_id: '="' + request.request.decoded.request_id + '"',
+                                        loginType: loginType,
+                                        uk2: uk2,
                                         session: file.session,
                                         info: file.info,
                                         request: file.request,
@@ -116,6 +125,8 @@ class Csv {
                 'request_id',
                 'session',
                 'info',
+                // 'loginType',
+                // 'uk2',
                 'request',
                 'apiCall',
                 'ptr8',
