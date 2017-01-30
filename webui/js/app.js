@@ -1,6 +1,8 @@
 $(function() {
     // session selection
-    $('.navbar-nav').on('click', '.viewSession', function() {
+    $('.navbar-nav, .bs-allsessions-modal-lg').on('click', '.viewSession', function() {
+        $('.bs-allsessions-modal-lg').modal('hide');
+
         let session = $(this).data('session');
 
         $('.navbar-nav .active').removeClass('active');
@@ -79,8 +81,12 @@ $(function() {
     }
 
     function viewSessionInfo(data) {
-        if (window.mapobj) window.mapobj.remove();
+        if (window.mapobj) {
+            window.mapobj.remove();
+            window.mapobj = null;
+        }
         if (data.files.length > 0 && data.steps.length > 0) {
+            console.log('Display map.');
             let map = window.mapobj = L.map('map').setView([51.505, -0.09], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             let pts = Array.from(data.steps, pt => L.latLng(pt.lat, pt.lng));
@@ -136,13 +142,24 @@ $(function() {
 
     // attach handler for session selection
     $.getJSON('/api/sessions', function(data) {
-        let last = data.pop();
-        $('#last-session').data('session', last.id);
-        data.reverse().forEach(d => {
-            $('#session-dropdown').append(`
+        // all sessions modal
+        data.forEach(d => {
+            $('#all-sessions').prepend(`
                 <li><a href="#session=${d.id}" class='viewSession' data-session='${d.id}'>${d.title}</a></li>
             `);
         });
+
+        // current session menu
+        let last = data.pop();
+        $('#last-session').data('session', last.id);
+
+        // previous sessions drop down
+        data.slice(-15).forEach(d => {
+            $('#session-dropdown').prepend(`
+                <li><a href="#session=${d.id}" class='viewSession' data-session='${d.id}'>${d.title}</a></li>
+            `);
+        });
+
         let session = last.id;
         let request = undefined;
         if (window.location.hash.length > 0 && window.location.hash[0] == '#') {
