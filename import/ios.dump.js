@@ -30,7 +30,7 @@ class IOSDump {
 
                     let date = _.trimEnd(files[0], '.req.raw.bin');
                     let when = moment(+date);
-                    let folder = when.format('YYYYDDMM.HHmmss');
+                    let folder = when.format('YYYYMMDD.HHmmss');
                     logger.info('Dest folder: data/%s', folder);
 
                     try {

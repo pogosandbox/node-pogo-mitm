@@ -20,7 +20,7 @@ class Snorlax {
 
                     let date = files[0].substring(0, files[0].indexOf('.'));
                     let when = moment(date, 'YYMMDDHHmmSSSS');
-                    let folder = when.format('YYYYDDMM.HHmmss');
+                    let folder = when.format('YYYYMMDD.HHmmss');
                     logger.info('Dest folder: data/%s', folder);
                     try {
                         fs.mkdirSync('data');
