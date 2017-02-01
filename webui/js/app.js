@@ -23,10 +23,12 @@ $(function() {
 
     $('#next-request').click(function() {
         prevNext(+1);
+        return false;
     });
 
     $('#prev-request').click(function() {
         prevNext(-1);
+        return false;
     });
 
     function prevNext(next) {
@@ -38,6 +40,7 @@ $(function() {
         if ($('.' + request).length > 0) {
             $('#requests .success').removeClass('success');
             let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
+            window.location.hash = `#session=${session}&request=${request}`;
             viewRequestDetail(which, session, request);
         }
     }
