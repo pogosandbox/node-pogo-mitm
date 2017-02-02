@@ -1,4 +1,6 @@
 $(function() {
+    window.global = {};
+
     // session selection
     $('.navbar-nav, .bs-allsessions-modal-lg').on('click', '.viewSession', function() {
         $('.bs-allsessions-modal-lg').modal('hide');
@@ -37,7 +39,7 @@ $(function() {
         let pad = '0000000000'.substring(0, request.length);
         request = +request + next + '';
         request = pad.substring(request.length) + request;
-        if ($('.' + request).length > 0) {
+        if (request <= window.global.requests && $('.' + request).length > 0) {
             $('#requests .success').removeClass('success');
             let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
             window.location.hash = `#session=${session}&request=${request}`;
@@ -58,6 +60,7 @@ $(function() {
                 <div>${data.title}</div>
             `);
             if (data.files.length) {
+                window.global.requests = data.files.length;
                 let first = data.files[0];
                 let previous = data.files[0];
                 $('.info-session').html(`
