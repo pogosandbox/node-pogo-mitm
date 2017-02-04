@@ -54,15 +54,15 @@ export default class Csv {
         // we now have an array of files with requests dump, let's decrypt
         let signatures = await Bluebird.map(sessions, async file => {
             let request = await this.decoder.decodeRequest(file.session, file.request);
-            let signature: any = _.find(<_.List<any>>request.decoded.platform_requests, r => r.request_name === 'SEND_ENCRYPTED_SIGNATURE');
+            let signature: any = _.find(<any[]>request.decoded.platform_requests, r => r.request_name === 'SEND_ENCRYPTED_SIGNATURE');
             signature = (!signature || typeof signature.message == 'string') ? null : signature.message;
                     
             let apiCall = 'NONE';
             if (request.decoded.requests && request.decoded.requests.length > 0) {
-                apiCall = _.first(<_.List<any>>request.decoded.requests).request_name;
+                apiCall = _.first(<any[]>request.decoded.requests).request_name;
             }
 
-            let ptr8 = _.find(<_.List<any>>request.decoded.platform_requests, r => r.type === 8);
+            let ptr8 = _.find(<any[]>request.decoded.platform_requests, r => r.type === 8);
             if (ptr8) {
                 ptr8 = ptr8.message.message || 'true';
             }
@@ -92,7 +92,7 @@ export default class Csv {
             };
         });
 
-        signatures => _.filter(<_.List<any>>signatures, s => s.signature != null);
+        signatures => _.filter(<any[]>signatures, s => s.signature != null);
         
             // if (datas.length > 0) {
             //     let prevPos = {latitude: datas[0].fullRequest.latitude, longitude: datas[0].fullRequest.longitude};

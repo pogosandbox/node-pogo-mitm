@@ -1,14 +1,10 @@
 {
     "compilerOptions": {
-        "target": "ES6",
+        "target": "ES2016",
         "module": "commonjs",
-        "moduleResolution": "node",
         "sourceMap": true,
         "rootDir": "src",
         "outDir": "bin",
-        "listEmittedFiles": true
-    },
-    "files": [
-        "node_modules/moment/moment.d.ts"
-    ]
+        "watch": true
+    }
 }

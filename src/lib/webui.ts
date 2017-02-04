@@ -50,7 +50,7 @@ export default class WebUI {
                                     res.redirect('/');
                                 });
 
-            app.use(express.static(path.resolve(__dirname, '../webui')));
+            app.use(express.static('webui'));
 
             app.listen(config.port, () => {
                 logger.info('UI started, port %s.', config.port);

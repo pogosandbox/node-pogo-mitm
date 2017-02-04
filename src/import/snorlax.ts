@@ -26,8 +26,8 @@ class Snorlax {
                     } catch(e) {}
                     return {
                                 folder: folder,
-                                files: _.filter(files, f => f.indexOf('REQUEST') >= 0),
-                                responses: _.filter(files, f => f.indexOf('RESPONSE') >= 0),
+                                files: _.filter(<string[]>files, f => f.indexOf('REQUEST') >= 0),
+                                responses: _.filter(<string[]>files, f => f.indexOf('RESPONSE') >= 0),
                             };
                 })
                 .then(data => {
