@@ -39,11 +39,11 @@ export default class WebUI {
                 next();
             });
 
-            app.get('/api/sessions', _.bind(this.getSessions, this));
-            app.get('/api/session/:session', _.bind(this.getRequests, this));
-            app.get('/api/request/:session/:request', _.bind(this.decodeRequest, this));
-            app.get('/api/response/:session/:request', _.bind(this.decodeResponse, this));
-            app.get('/api/export/csv', _.bind(this.exportCsv, this));
+            app.get('/api/sessions', <express.RequestHandler>_.bind(this.getSessions, this));
+            app.get('/api/session/:session', <express.RequestHandler>_.bind(this.getRequests, this));
+            app.get('/api/request/:session/:request', <express.RequestHandler>_.bind(this.decodeRequest, this));
+            app.get('/api/response/:session/:request', <express.RequestHandler>_.bind(this.decodeResponse, this));
+            app.get('/api/export/csv', <express.RequestHandler>_.bind(this.exportCsv, this));
 
             this.app.get('/logout', function(req, res) {
                                     req.logout();
@@ -126,7 +126,7 @@ export default class WebUI {
         });
     }
 
-    getSessions(req, res) {
+    getSessions(req: express.Request, res: express.Response, next: Function): any {
         logger.info('Getting sessions.');
         return this.utils.getSessionFolders()
         .then(folders => {
@@ -154,7 +154,7 @@ export default class WebUI {
         .then(folders => res.json(folders));
     }
 
-    getRequests(req, res) {
+    getRequests(req: express.Request, res: express.Response, next: Function): any {
         logger.info('Getting requests for session %s', req.params.session);
         return fs.readdir(`data/${req.params.session}`)
         .then(data => _.filter(data, d => _.endsWith(d, '.req.bin')))
@@ -206,7 +206,7 @@ export default class WebUI {
         });
     }
 
-    decodeRequest(req, res) {
+    decodeRequest(req: express.Request, res: express.Response, next: Function): any {
         logger.info('Decrypting session %d, request %s', req.params.session, req.params.request);
         return this.decoder.decodeRequest(req.params.session, req.params.request, !this.config.protos.cachejson)
         .then(data => {
@@ -220,7 +220,7 @@ export default class WebUI {
         });
     }
 
-    decodeResponse(req, res) {
+    decodeResponse(req: express.Request, res: express.Response, next: Function): any {
         logger.info('Decrypting session %d, response %s', req.params.session, req.params.request);
         return this.decoder.decodeResponse(req.params.session, req.params.request, !this.config.protos.cachejson)
         .then(data => {
@@ -233,7 +233,7 @@ export default class WebUI {
         });
     }
 
-    exportCsv(req, res) {
+    exportCsv(req: express.Request, res: express.Response, next: Function): any {
         return fs.stat('data/requests.signatures.csv')
                 .then(stats => {
                     let mtime = moment(stats.mtime);

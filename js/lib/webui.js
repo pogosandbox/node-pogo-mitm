@@ -99,7 +99,7 @@ export default class WebUI {
             }
         });
     }
-    getSessions(req, res) {
+    getSessions(req, res, next) {
         logger.info('Getting sessions.');
         return this.utils.getSessionFolders()
             .then(folders => {
@@ -127,7 +127,7 @@ export default class WebUI {
         })
             .then(folders => res.json(folders));
     }
-    getRequests(req, res) {
+    getRequests(req, res, next) {
         logger.info('Getting requests for session %s', req.params.session);
         return fs.readdir(`data/${req.params.session}`)
             .then(data => _.filter(data, d => _.endsWith(d, '.req.bin')))
@@ -180,7 +180,7 @@ export default class WebUI {
             res.status(500).send(e);
         });
     }
-    decodeRequest(req, res) {
+    decodeRequest(req, res, next) {
         logger.info('Decrypting session %d, request %s', req.params.session, req.params.request);
         return this.decoder.decodeRequest(req.params.session, req.params.request, !this.config.protos.cachejson)
             .then(data => {
@@ -191,7 +191,7 @@ export default class WebUI {
             res.status(500).send(e);
         });
     }
-    decodeResponse(req, res) {
+    decodeResponse(req, res, next) {
         logger.info('Decrypting session %d, response %s', req.params.session, req.params.request);
         return this.decoder.decodeResponse(req.params.session, req.params.request, !this.config.protos.cachejson)
             .then(data => {
@@ -201,7 +201,7 @@ export default class WebUI {
             res.status(500).send(e);
         });
     }
-    exportCsv(req, res) {
+    exportCsv(req, res, next) {
         return fs.stat('data/requests.signatures.csv')
             .then(stats => {
             let mtime = moment(stats.mtime);
