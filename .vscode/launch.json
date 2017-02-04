@@ -4,46 +4,52 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
         {
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceRoot}/index.js",
-            "cwd": "${workspaceRoot}"
+            "program": "${workspaceRoot}/src/index.ts",
+            "cwd": "${workspaceRoot}",
+            "sourceMaps": true,
+            "outFiles": [
+                "**/*.js",
+                "**/*.js.map"
+            ]
         },
         {
             "type": "node",
             "request": "launch",
             "name": "Preload",
-            "program": "${workspaceRoot}/utils/preload.js",
+            "program": "${workspaceRoot}/js/utils/preload.js",
             "cwd": "${workspaceRoot}"
         },
         {
             "type": "node",
             "request": "launch",
             "name": "Import from iOS dump",
-            "program": "${workspaceRoot}/import/ios.dump.js",
+            "program": "${workspaceRoot}/js/import/ios.dump.js",
             "cwd": "${workspaceRoot}"
         },
         {
             "type": "node",
             "request": "launch",
             "name": "Import from Noctem iOS dump",
-            "program": "${workspaceRoot}/import/ios.dump.noctem.js",
+            "program": "${workspaceRoot}/js/import/ios.dump.noctem.js",
             "cwd": "${workspaceRoot}"
         },
         {
             "type": "node",
             "request": "launch",
             "name": "Import Snorlax",
-            "program": "${workspaceRoot}/import/snorlax.js",
+            "program": "${workspaceRoot}/js/import/snorlax.js",
             "cwd": "${workspaceRoot}"
         },
         {
             "type": "node",
             "request": "launch",
             "name": "CSV Export",
-            "program": "${workspaceRoot}/export/csv.js",
+            "program": "${workspaceRoot}/js/export/csv.js",
             "cwd": "${workspaceRoot}"
         },
         {

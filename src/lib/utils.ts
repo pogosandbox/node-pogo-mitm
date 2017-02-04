@@ -1,10 +1,7 @@
-let fs = require('fs');
-let moment = require('moment');
-let Promise = require('bluebird');
-let os = require('os');
-let _ = require('lodash');
-
-Promise.promisifyAll(fs);
+import * as os from 'os';
+import * as fs from 'fs-promise';
+import * as moment from 'moment';
+import * as _ from 'lodash';
 
 import Config from './config';
 
@@ -15,7 +12,11 @@ export default class Utils {
         this.config = config;
     }
 
-    getIp() {
+    getIp(): string {
+        let ips: any = os.networkInterfaces();
+        ips = _.filter(ips, (i, name) => !/(loopback|vmware|internal)/gi.test(name));
+
+
         let ipv4 = _(os.networkInterfaces())
                 .filter((i, name) => !/(loopback|vmware|internal)/gi.test(name))
                 .flatten().filter(ip => !ip.internal && ip.family == 'IPv4').first();
@@ -23,37 +24,38 @@ export default class Utils {
         return ipv4.address;
     }
 
-    initFolders() {
-        return this.cleanDataFolders().then(() => this.createCurrentFolder());
+    async initFolders() {
+        await this.cleanDataFolders();
+        await this.createCurrentFolder();
     }
 
-    createCurrentFolder() {
+    async createCurrentFolder() {
         this.config.datadir = 'data/' + moment().format('YYYYMMDD.HHmmss');
-        return fs.mkdirAsync(this.config.datadir);
+        await fs.mkdir(this.config.datadir);
     }
 
-    getSessionFolders() {
-        return fs.readdirAsync('data')
-                .then(files => Promise.filter(files, file => fs.statAsync('data/' + file).then(r => r.isDirectory())))
-                .then(files => _.sortBy(files));
+    async getSessionFolders(): Promise<string[]> {
+        let content: string[] = await fs.readdir('data');
+        let files = _.filter(content, file => {
+            let stat = await fs.stat('data/' + file);
+            return stat.isDirectory();
+        });
+        return _.sortBy(files);
     }
 
-    cleanDataFolders() {
+    async cleanDataFolders(): Promise<void> {
         try {
-            fs.mkdirSync('data');
+            await fs.mkdir('data');
         } catch(e) {}
 
-        return this.getSessionFolders()
-                .then(data => {
-                    return Promise.filter(data, dir => {
-                        return fs.readdirAsync(`data/${dir}`)
-                                .then(d => d.length == 0);
-                    });
-                })
-                .then(data => {
-                    return Promise.map(data, dir => {
-                        return fs.rmdirAsync(`data/${dir}`);
-                    });
-                });
+        let folders = await this.getSessionFolders();
+        folders = _.filter(folders, dir => {
+            let content = await fs.readdir(`data/${dir}`);
+            return content.length == 0;
+        });
+
+        _.map(folders, dir => {
+            await fs.rmdir(`data/${dir}`);
+        });
     }
 }

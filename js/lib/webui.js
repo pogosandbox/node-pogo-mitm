@@ -1,11 +1,11 @@
-let express = require('express');
-let logger = require('winston');
-let path = require('path');
-let fs = require('fs');
+import * as express from 'express';
+import * as logger from 'winston';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as _ from 'lodash';
+import * as moment from 'moment';
+import * as passport from 'passport';
 let Promise = require('bluebird');
-let _ = require('lodash');
-let moment = require('moment');
-let passport = require('passport');
 import Decoder from './decoder.js';
 import Utils from './utils.js';
 import Csv from './../export/libcsv';

@@ -1,7 +1,9 @@
-let logger = require('winston');
-let fs = require('fs');
-let Promise = require('bluebird');
-let _ = require('lodash');
+import * as logger from 'winston';
+import * as fs from 'fs-promise';
+import * as _ from 'lodash';
+
+let Bluebird = require('Bluebird');
+
 let json2csv = require('json2csv');
 const geolib = require('geolib');
 
@@ -24,100 +26,88 @@ export default class Csv {
         return geolib.getDistance(from, to, 1, 1);
     }
 
-    exportRequestsSignature(filename?: string): Promise<string> {
-        return this.utils.cleanDataFolders()
-                .then(() => this.utils.getSessionFolders())
-                .then(folders => {
-                    // parse all session folder and get only requests
-                    return Promise.map(folders, folder => {
-                        return fs.readdirAsync(`data/${folder}`)
-                                .then(files => _.filter(files, file => _.endsWith(file, '.req.bin')))
-                                .then(files => _.map(files, file => {
-                                                        return {
-                                                            session: folder,
-                                                            request: _.trimEnd(file, '.req.bin'),
-                                                            file: folder + '/' + file,
-                                                        };
-                                                    }));
-                    });
-                })
-                .then(folders => _.flatten(folders))
-                .then(folders => {
-                    return Promise.map(folders, folder => {
-                        if (fs.existsSync(`data/${folder.session}/.info`)) {
-                            return fs.readFileAsync(`data/${folder.session}/.info`, 'utf8')
-                            .then(content => {
-                                folder.info = content;
-                                return folder;
-                            });
-                        } else {
-                            return folder;
-                        }
-                    });
-                })
-                .then(files => {
-                    // we now have an array of files with requests dump, let's decrypt
-                    return Promise.map(files, file => {
-                        return this.decoder.decodeRequest(file.session, file.request)
-                                .then(request => {
-                                    let signature = _.find(request.decoded.platform_requests, r => r.request_name == 'SEND_ENCRYPTED_SIGNATURE');
-                                    return {
-                                        request: request,
-                                        signature: (!signature || typeof signature.message == 'string') ? null : signature.message,
-                                    };
-                                })
-                                .then(request => {
-                                    let apiCall = 'NONE';
-                                    if (request.request.decoded.requests && request.request.decoded.requests.length > 0) {
-                                        apiCall = _.first(request.request.decoded.requests).request_name;
-                                    }
+    async exportRequestsSignature(filename?: string): Promise<string> {
+        await this.utils.cleanDataFolders();
+        let folders = await this.utils.getSessionFolders();
 
-                                    let ptr8 = _.find(request.request.decoded.platform_requests, r => r.type == 8);
-                                    if (ptr8) {
-                                        ptr8 = ptr8.message.message || 'true';
-                                    }
+        let sessions: [] = await Bluebird.map(folders, folder => {
+            let files: string[] = await fs.readdir(`data/${folder}`);
+            files = _.filter(files, file => _.endsWith(file, '.req.bin'));
+            return _.map(files, file => {
+                                            return {
+                                                session: folder,
+                                                request: _.trimEnd(file, '.req.bin'),
+                                                file: folder + '/' + file,
+                                            };
+                                        });
+        });
 
-                                    let versionHash = '';
-                                    if (request.signature) versionHash = '="' + request.signature.unknown25.toString() + '"';
+        sessions = _.flatten(sessions);
 
-                                    let loginType = '';
-                                    let uk2 = '';
-                                    if (request.request.decoded.auth_info) {
-                                        loginType = request.request.decoded.auth_info.provider;
-                                        uk2 = request.request.decoded.auth_info.token.unknown2;
-                                    }
+        Bluebird.each(sessions, folder => {
+            let exists = await fs.exists(`data/${folder.session}/.info`);
+            if (exists) {
+                folder.info = await fs.readFile(`data/${folder.session}/.info`, 'utf8');
+            } else {
+                folder.info = '';
+            }
+        });
 
-                                    return {
-                                        request_id: '="' + request.request.decoded.request_id + '"',
-                                        loginType: loginType,
-                                        uk2: uk2,
-                                        session: file.session,
-                                        info: file.info,
-                                        request: file.request,
-                                        apiCall: apiCall,
-                                        ptr8: ptr8,
-                                        version_hash: versionHash,
-                                        signature: request.signature,
-                                        fullRequest: request.request.decoded,
-                                    };
-                                });
-                    });
-                })
-                .then(signatures => _.filter(signatures, s => s.signature != null))
-                .then(datas => {
-                    // if (datas.length > 0) {
-                    //     let prevPos = {latitude: datas[0].fullRequest.latitude, longitude: datas[0].fullRequest.longitude};
-                    //     let prevTime = +datas[0].signature.timestamp_since_start;
-                    //     _(datas).each(data => {
-                    //         data.distFromPrev = this.distance(prevPos, data.fullRequest);
-                    //         data.timeFromPrev = +data.signature.timestamp_since_start - prevTime;
-                    //         prevPos = {latitude: data.fullRequest.latitude, longitude: data.fullRequest.longitude};
-                    //         prevTime = +data.signature.timestamp_since_start;
-                    //     });
-                    // }
-                    return datas;
-                })
-                .then(data => this.dumpAllSignatures(data, filename));
+        // we now have an array of files with requests dump, let's decrypt
+        let signatures: [] = await Bluebird.map(sessions, file => {
+            let request = await this.decoder.decodeRequest(file.session, file.request);
+            let signature: any = _.find(<_.List<any>>request.decoded.platform_requests, r => r.request_name === 'SEND_ENCRYPTED_SIGNATURE');
+            signature = (!signature || typeof signature.message == 'string') ? null : signature.message;
+                    
+            let apiCall = 'NONE';
+            if (request.decoded.requests && request.decoded.requests.length > 0) {
+                apiCall = _.first(<_.List<any>>request.decoded.requests).request_name;
+            }
+
+            let ptr8 = _.find(<_.List<any>>request.decoded.platform_requests, r => r.type === 8);
+            if (ptr8) {
+                ptr8 = ptr8.message.message || 'true';
+            }
+
+            let versionHash = '';
+            if (signature) versionHash = '="' + signature.unknown25.toString() + '"';
+
+            let loginType = '';
+            let uk2 = '';
+            if (request.decoded.auth_info) {
+                loginType = request.decoded.auth_info.provider;
+                uk2 = request.decoded.auth_info.token.unknown2;
+            }
+
+            return {
+                request_id: '="' + request.decoded.request_id + '"',
+                loginType: loginType,
+                uk2: uk2,
+                session: file.session,
+                info: file.info,
+                request: file.request,
+                apiCall: apiCall,
+                ptr8: ptr8,
+                version_hash: versionHash,
+                signature: signature,
+                fullRequest: request.decoded,
+            };
+        });
+
+        signatures => _.filter(<_.List<any>>signatures, s => s.signature != null);
+        
+            // if (datas.length > 0) {
+            //     let prevPos = {latitude: datas[0].fullRequest.latitude, longitude: datas[0].fullRequest.longitude};
+            //     let prevTime = +datas[0].signature.timestamp_since_start;
+            //     _(datas).each(data => {
+            //         data.distFromPrev = this.distance(prevPos, data.fullRequest);
+            //         data.timeFromPrev = +data.signature.timestamp_since_start - prevTime;
+            //         prevPos = {latitude: data.fullRequest.latitude, longitude: data.fullRequest.longitude};
+            //         prevTime = +data.signature.timestamp_since_start;
+            //     });
+            // }
+
+        return await this.dumpAllSignatures(signatures, filename);
     }
 
     dumpAllSignatures(signatures: any, file = 'requests.signatures.csv'): Promise<string> {

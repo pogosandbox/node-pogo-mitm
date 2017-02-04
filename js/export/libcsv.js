@@ -1,7 +1,15 @@
-let logger = require('winston');
-let fs = require('fs');
-let Promise = require('bluebird');
-let _ = require('lodash');
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+import * as logger from 'winston';
+import * as fs from 'fs-promise';
+import * as _ from 'lodash';
+let Bluebird = require('Bluebird');
 let json2csv = require('json2csv');
 const geolib = require('geolib');
 import Utils from './../lib/utils';
@@ -17,84 +25,68 @@ export default class Csv {
         return geolib.getDistance(from, to, 1, 1);
     }
     exportRequestsSignature(filename) {
-        return this.utils.cleanDataFolders()
-            .then(() => this.utils.getSessionFolders())
-            .then(folders => {
-            // parse all session folder and get only requests
-            return Promise.map(folders, folder => {
-                return fs.readdirAsync(`data/${folder}`)
-                    .then(files => _.filter(files, file => _.endsWith(file, '.req.bin')))
-                    .then(files => _.map(files, file => {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.utils.cleanDataFolders();
+            let folders = yield this.utils.getSessionFolders();
+            let sessions = yield Bluebird.map(folders, folder => {
+                let files = yield fs.readdir(`data/${folder}`);
+                files = _.filter(files, file => _.endsWith(file, '.req.bin'));
+                return _.map(files, file => {
                     return {
                         session: folder,
                         request: _.trimEnd(file, '.req.bin'),
                         file: folder + '/' + file,
                     };
-                }));
-            });
-        })
-            .then(folders => _.flatten(folders))
-            .then(folders => {
-            return Promise.map(folders, folder => {
-                if (fs.existsSync(`data/${folder.session}/.info`)) {
-                    return fs.readFileAsync(`data/${folder.session}/.info`, 'utf8')
-                        .then(content => {
-                        folder.info = content;
-                        return folder;
-                    });
-                }
-                else {
-                    return folder;
-                }
-            });
-        })
-            .then(files => {
-            // we now have an array of files with requests dump, let's decrypt
-            return Promise.map(files, file => {
-                return this.decoder.decodeRequest(file.session, file.request)
-                    .then(request => {
-                    let signature = _.find(request.decoded.platform_requests, r => r.request_name == 'SEND_ENCRYPTED_SIGNATURE');
-                    return {
-                        request: request,
-                        signature: (!signature || typeof signature.message == 'string') ? null : signature.message,
-                    };
-                })
-                    .then(request => {
-                    let apiCall = 'NONE';
-                    if (request.request.decoded.requests && request.request.decoded.requests.length > 0) {
-                        apiCall = _.first(request.request.decoded.requests).request_name;
-                    }
-                    let ptr8 = _.find(request.request.decoded.platform_requests, r => r.type == 8);
-                    if (ptr8) {
-                        ptr8 = ptr8.message.message || 'true';
-                    }
-                    let versionHash = '';
-                    if (request.signature)
-                        versionHash = '="' + request.signature.unknown25.toString() + '"';
-                    let loginType = '';
-                    let uk2 = '';
-                    if (request.request.decoded.auth_info) {
-                        loginType = request.request.decoded.auth_info.provider;
-                        uk2 = request.request.decoded.auth_info.token.unknown2;
-                    }
-                    return {
-                        request_id: '="' + request.request.decoded.request_id + '"',
-                        loginType: loginType,
-                        uk2: uk2,
-                        session: file.session,
-                        info: file.info,
-                        request: file.request,
-                        apiCall: apiCall,
-                        ptr8: ptr8,
-                        version_hash: versionHash,
-                        signature: request.signature,
-                        fullRequest: request.request.decoded,
-                    };
                 });
             });
-        })
-            .then(signatures => _.filter(signatures, s => s.signature != null))
-            .then(datas => {
+            sessions = _.flatten(sessions);
+            Bluebird.each(sessions, folder => {
+                let exists = yield fs.exists(`data/${folder.session}/.info`);
+                if (exists) {
+                    folder.info = yield fs.readFile(`data/${folder.session}/.info`, 'utf8');
+                }
+                else {
+                    folder.info = '';
+                }
+            });
+            // we now have an array of files with requests dump, let's decrypt
+            let signatures = yield Bluebird.map(sessions, file => {
+                let request = await;
+                this.decoder.decodeRequest(file.session, file.request);
+                let signature = _.find(request.decoded.platform_requests, r => r.request_name === 'SEND_ENCRYPTED_SIGNATURE');
+                signature = (!signature || typeof signature.message == 'string') ? null : signature.message;
+                let apiCall = 'NONE';
+                if (request.decoded.requests && request.decoded.requests.length > 0) {
+                    apiCall = _.first(request.decoded.requests).request_name;
+                }
+                let ptr8 = _.find(request.decoded.platform_requests, r => r.type === 8);
+                if (ptr8) {
+                    ptr8 = ptr8.message.message || 'true';
+                }
+                let versionHash = '';
+                if (signature)
+                    versionHash = '="' + signature.unknown25.toString() + '"';
+                let loginType = '';
+                let uk2 = '';
+                if (request.decoded.auth_info) {
+                    loginType = request.decoded.auth_info.provider;
+                    uk2 = request.decoded.auth_info.token.unknown2;
+                }
+                return {
+                    request_id: '="' + request.decoded.request_id + '"',
+                    loginType: loginType,
+                    uk2: uk2,
+                    session: file.session,
+                    info: file.info,
+                    request: file.request,
+                    apiCall: apiCall,
+                    ptr8: ptr8,
+                    version_hash: versionHash,
+                    signature: signature,
+                    fullRequest: request.decoded,
+                };
+            });
+            signatures => _.filter(signatures, s => s.signature != null);
             // if (datas.length > 0) {
             //     let prevPos = {latitude: datas[0].fullRequest.latitude, longitude: datas[0].fullRequest.longitude};
             //     let prevTime = +datas[0].signature.timestamp_since_start;
@@ -105,9 +97,8 @@ export default class Csv {
             //         prevTime = +data.signature.timestamp_since_start;
             //     });
             // }
-            return datas;
-        })
-            .then(data => this.dumpAllSignatures(data, filename));
+            return yield this.dumpAllSignatures(signatures, filename);
+        });
     }
     dumpAllSignatures(signatures, file = 'requests.signatures.csv') {
         logger.info('Dumping signature info...');

@@ -4,9 +4,5 @@
         "sourceMap": true,
         "rootDir": "src",
         "outDir": "js"
-    },
-    "exclude": [
-        "node_modules",
-        "**/*.spec.ts"
-    ]
+    }
 }

@@ -1,14 +1,11 @@
 import * as logger from 'winston';
 import Csv from './libcsv';
 
-let csv = new Csv();
-csv.exportRequestsSignature()
-.then(() => {
+async function exportCsv() {
+    let csv = new Csv();
+    await csv.exportRequestsSignature()
     logger.info('Done.');
-})
-.catch(e => {
-    logger.error(e);
-})
-.finally(() => {
     process.exit();
-});
+}
+
+exportCsv();
