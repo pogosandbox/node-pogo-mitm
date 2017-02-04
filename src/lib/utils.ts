@@ -6,7 +6,11 @@ let _ = require('lodash');
 
 Promise.promisifyAll(fs);
 
-class Utils {
+import Config from './config';
+
+export default class Utils {
+    config: any;
+
     constructor(config) {
         this.config = config;
     }
@@ -53,5 +57,3 @@ class Utils {
                 });
     }
 }
-
-module.exports = Utils;

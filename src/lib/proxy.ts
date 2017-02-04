@@ -6,8 +6,8 @@ let moment = require('moment');
 // let ngrok = require('ngrok');
 // let Promise = require('bluebird');
 
-let Utils = require('./utils');
-let utils = new Utils();
+import Config from './config';
+import Utils from './utils';
 
 let endpoints = {
     api: 'pgorelease.nianticlabs.com',
@@ -16,15 +16,20 @@ let endpoints = {
     storage: 'storage.googleapis.com',
 };
 
-class MitmProxy {
+export default class MitmProxy {
+    config: any;
+    utils: Utils;
+    proxy: any;
+
     constructor(config) {
         this.config = config;
+        this.utils = new Utils(config);
     }
 
     launch() {
         let config = this.config;
         if (config.proxy.active) {
-            let ip = config.ip = utils.getIp();
+            let ip = config.ip = this.utils.getIp();
             logger.info('Proxy listening at %s:%s', ip, config.proxy.port);
 
             this.proxy = mitmproxy()
@@ -160,5 +165,3 @@ class MitmProxy {
         logger.error('Proxy error:', err);
     }
 }
-
-module.exports = MitmProxy;

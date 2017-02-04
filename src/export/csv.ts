@@ -1,5 +1,5 @@
-let logger = require('winston');
-let Csv = require('./libcsv');
+import * as logger from 'winston';
+import Csv from './libcsv';
 
 let csv = new Csv();
 csv.exportRequestsSignature()

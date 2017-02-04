@@ -10,6 +10,8 @@
     "url": "https://github.com/pogosandbox/node-pogo-mitm.git"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.52",
+    "@types/winston": "^2.2.0",
     "bluebird": "^3.4.7",
     "cookie-session": "^2.0.0-alpha.2",
     "dotenv": "^4.0.0",

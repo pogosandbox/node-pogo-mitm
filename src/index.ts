@@ -1,17 +1,18 @@
 require('dotenv').config({silent: true});
 
-let logger = require('winston');
-let fs = require('fs');
+import * as fs from 'fs';
+import * as logger from 'winston';
+import * as dns from 'dns';
+
 let Promise = require('bluebird');
-let dns = require('dns');
 
 Promise.promisifyAll(fs);
 Promise.promisifyAll(dns);
 
-let Config = require('./lib/config');
-let Proxy = require('./lib/proxy');
-let WebUI = require('./lib/webui');
-let Utils = require('./lib/utils');
+import Config from './lib/config';
+import Proxy from './lib/proxy';
+import WebUI from './lib/webui';
+import Utils from './lib/utils';
 
 let config = new Config().load();
 let utils = new Utils(config);

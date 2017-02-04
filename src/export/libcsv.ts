@@ -5,22 +5,26 @@ let _ = require('lodash');
 let json2csv = require('json2csv');
 const geolib = require('geolib');
 
-let Utils = require('./../lib/utils');
-let Config = require('./../lib/config');
-let Decoder = require('./../lib/decoder.js');
+import Utils from './../lib/utils';
+import Config from './../lib/config';
+import Decoder from './../lib/decoder.js';
 
-class Csv {
-    constructor(config) {
+export default class Csv {
+    config: any;
+    utils: Utils;
+    decoder: Decoder;
+
+    constructor(config?: any) {
         this.config = config || new Config().load();
         this.utils = new Utils(this.config);
         this.decoder = new Decoder(this.config);
     }
 
-    distance(from, to) {
+    distance(from: any, to: any): number {
         return geolib.getDistance(from, to, 1, 1);
     }
 
-    exportRequestsSignature(filename) {
+    exportRequestsSignature(filename?: string): Promise<string> {
         return this.utils.cleanDataFolders()
                 .then(() => this.utils.getSessionFolders())
                 .then(folders => {
@@ -116,8 +120,7 @@ class Csv {
                 .then(data => this.dumpAllSignatures(data, filename));
     }
 
-    dumpAllSignatures(signatures, file) {
-        file = file || 'requests.signatures.csv';
+    dumpAllSignatures(signatures: any, file = 'requests.signatures.csv'): Promise<string> {
         logger.info('Dumping signature info...');
         let csv = json2csv({
             data: signatures,
@@ -182,5 +185,3 @@ class Csv {
                 .then(() => file);
     }
 }
-
-module.exports = Csv;

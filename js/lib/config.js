@@ -1,9 +1,8 @@
-let logger = require('winston');
-let fs = require('fs');
-let _ = require('lodash');
+import * as logger from 'winston';
+import * as fs from 'fs';
+import * as _ from 'lodash';
+import * as moment from 'moment';
 let yaml = require('js-yaml');
-let moment = require('moment');
-
 let config = {
     reqId: 0,
     proxy: {
@@ -31,33 +30,31 @@ let config = {
         file: null,
     },
 };
-
-class Config {
+export default class Config {
     load() {
         if (!fs.existsSync('data/config.yaml')) {
             logger.info('Config file not found in data/config.yaml, using default.');
             return config;
         }
-
-        logger.remove(logger.transports.Console);
-        logger.add(logger.transports.Console, {
-            'timestamp': function() {
-                return moment().format('HH:mm:ss');
-            },
-            'colorize': true,
-        });
-
         logger.info('Loading data/config.yaml');
         let loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
         loaded = _.defaultsDeep(loaded, config);
-
-        logger.level = loaded.logger.level;
+        logger.remove(logger.transports.Console);
+        logger.add(logger.transports.Console, {
+            'timestamp': function () {
+                return moment().format('HH:mm:ss');
+            },
+            'colorize': true,
+            'level': loaded.logger.level,
+        });
         if (config.logger.file) {
-            logger.add(logger.transports.File, {filename: loaded.logger.file, json: false});
+            logger.add(logger.transports.File, {
+                filename: loaded.logger.file,
+                json: false,
+                level: loaded.logger.level
+            });
         }
-
         return loaded;
     }
 }
-
-module.exports = Config;
+//# sourceMappingURL=config.js.map
