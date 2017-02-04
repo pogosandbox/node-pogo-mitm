@@ -110,7 +110,7 @@ export default class Csv {
         return await this.dumpAllSignatures(signatures, filename);
     }
 
-    dumpAllSignatures(signatures: any, file = 'requests.signatures.csv'): Promise<string> {
+    async dumpAllSignatures(signatures: any, file = 'requests.signatures.csv'): Promise<string> {
         logger.info('Dumping signature info...');
         let csv = json2csv({
             data: signatures,
@@ -171,7 +171,7 @@ export default class Csv {
             ],
             del: this.config.export.csv.separator,
         });
-        return fs.writeFileAsync(`data/${file}`, csv, 'utf8')
-                .then(() => file);
+        await fs.writeFile(`data/${file}`, csv, 'utf8');
+        return file;
     }
 }

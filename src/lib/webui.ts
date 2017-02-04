@@ -1,18 +1,16 @@
 import * as express from 'express';
 import * as logger from 'winston';
 import * as path from 'path';
-import * as fs from 'fs';
+import * as fs from 'fs-promise';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 import * as passport from 'passport';
-let Promise = require('bluebird');
+import * as Bluebird from 'bluebird';
 
 import Decoder from './decoder.js';
 import Utils from './utils.js';
 
 import Csv from './../export/libcsv';
-
-Promise.promisifyAll(fs);
 
 export default class WebUI {
     config: any;
@@ -141,9 +139,9 @@ export default class WebUI {
         })
         .then(folders => {
             // get info if it exist
-            return Promise.map(folders, folder => {
+            return Bluebird.map(folders, folder => {
                 if (fs.existsSync(`data/${folder.id}/.info`)) {
-                    return fs.readFileAsync(`data/${folder.id}/.info`, 'utf8')
+                    return fs.readFile(`data/${folder.id}/.info`, 'utf8')
                     .then(content => {
                         folder.title += ' ' + content;
                         return folder;
@@ -158,11 +156,11 @@ export default class WebUI {
 
     getRequests(req, res) {
         logger.info('Getting requests for session %s', req.params.session);
-        return fs.readdirAsync(`data/${req.params.session}`)
+        return fs.readdir(`data/${req.params.session}`)
         .then(data => _.filter(data, d => _.endsWith(d, '.req.bin')))
         .then(data => {
-            return Promise.map(data, file => {
-                return fs.readFileAsync(`data/${req.params.session}/${file}`, 'utf8')
+            return Bluebird.map(data, file => {
+                return fs.readFile(`data/${req.params.session}/${file}`, 'utf8')
                         .then(content => {
                             return JSON.parse(content);
                         })
@@ -176,12 +174,12 @@ export default class WebUI {
             return {
                 title: '',
                 files: files,
-                step: [],
+                steps: [],
             };
         })
         .then(data => {
             if (fs.existsSync(`data/${req.params.session}/.info`)) {
-                return fs.readFileAsync(`data/${req.params.session}/.info`, 'utf8')
+                return fs.readFile(`data/${req.params.session}/.info`, 'utf8')
                         .then(content => {
                             data.title = content;
                             return data;
@@ -192,7 +190,7 @@ export default class WebUI {
         })
         .then(data => {
             if (fs.existsSync(`data/${req.params.session}/.preload`)) {
-                return fs.readFileAsync(`data/${req.params.session}/.preload`, 'utf8')
+                return fs.readFile(`data/${req.params.session}/.preload`, 'utf8')
                         .then(content => {
                             data.steps = JSON.parse(content);
                             return data;
@@ -236,7 +234,7 @@ export default class WebUI {
     }
 
     exportCsv(req, res) {
-        return fs.statAsync('data/requests.signatures.csv')
+        return fs.stat('data/requests.signatures.csv')
                 .then(stats => {
                     let mtime = moment(stats.mtime);
                     if (mtime.add(15, 'm').isAfter(moment())) {

@@ -2,6 +2,7 @@ import * as os from 'os';
 import * as fs from 'fs-promise';
 import * as moment from 'moment';
 import * as _ from 'lodash';
+import * as Bluebird from 'bluebird';
 
 import Config from './config';
 
@@ -13,10 +14,6 @@ export default class Utils {
     }
 
     getIp(): string {
-        let ips: any = os.networkInterfaces();
-        ips = _.filter(ips, (i, name) => !/(loopback|vmware|internal)/gi.test(name));
-
-
         let ipv4 = _(os.networkInterfaces())
                 .filter((i, name) => !/(loopback|vmware|internal)/gi.test(name))
                 .flatten().filter(ip => !ip.internal && ip.family == 'IPv4').first();
@@ -36,7 +33,7 @@ export default class Utils {
 
     async getSessionFolders(): Promise<string[]> {
         let content: string[] = await fs.readdir('data');
-        let files = _.filter(content, file => {
+        let files = Bluebird.filter(content, file => {
             let stat = await fs.stat('data/' + file);
             return stat.isDirectory();
         });
@@ -49,12 +46,12 @@ export default class Utils {
         } catch(e) {}
 
         let folders = await this.getSessionFolders();
-        folders = _.filter(folders, dir => {
+        folders = Bluebird.filter(folders, dir => {
             let content = await fs.readdir(`data/${dir}`);
             return content.length == 0;
         });
 
-        _.map(folders, dir => {
+        Bluebird.map(folders, dir => {
             await fs.rmdir(`data/${dir}`);
         });
     }
