@@ -3,7 +3,7 @@
         "target": "ES6",
         "sourceMap": true,
         "rootDir": "src",
-        "outDir": "js"
+        "outDir": "bin"
     },
     "files": [
         "node_modules/moment/moment.d.ts"
