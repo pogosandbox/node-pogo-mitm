@@ -1,13 +1,6 @@
 require('dotenv').config({silent: true});
 
-import * as fs from 'fs';
 import * as logger from 'winston';
-import * as dns from 'dns';
-
-let Promise = require('bluebird');
-
-Promise.promisifyAll(fs);
-Promise.promisifyAll(dns);
 
 import Config from './lib/config';
 import Proxy from './lib/proxy';
@@ -17,18 +10,21 @@ import Utils from './lib/utils';
 let config = new Config().load();
 let utils = new Utils(config);
 
-utils.initFolders()
-.then(() => {
+async function Main() {
+    await utils.initFolders();
+
+    logger.debug('Launching proxy...');
     let proxy = new Proxy(config);
-    proxy.launch();
-})
-.then(() => {
+    await proxy.launch();
+
     let webui = new WebUI(config);
-    webui.launch();
-})
-.then(() => {
+    await webui.launch();
+
     logger.info('App ready.');
-})
-.catch(e => {
+}
+
+try {
+    Main();
+} catch(e) {
     logger.error(e);
-});
+}
