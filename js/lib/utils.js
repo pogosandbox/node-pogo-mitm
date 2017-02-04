@@ -16,6 +16,7 @@ export default class Utils {
         this.config = config;
     }
     getIp() {
+        // typing is bad but I can't find a way to make it works
         let ipv4 = _(os.networkInterfaces())
             .filter((i, name) => !/(loopback|vmware|internal)/gi.test(name))
             .flatten().filter(ip => !ip.internal && ip.family == 'IPv4').first();
@@ -36,7 +37,7 @@ export default class Utils {
     getSessionFolders() {
         return __awaiter(this, void 0, void 0, function* () {
             let content = yield fs.readdir('data');
-            let files = Bluebird.filter(content, file => {
+            let files = yield Bluebird.filter(content, file => {
                 let stat = yield fs.stat('data/' + file);
                 return stat.isDirectory();
             });
@@ -50,11 +51,11 @@ export default class Utils {
             }
             catch (e) { }
             let folders = yield this.getSessionFolders();
-            folders = Bluebird.filter(folders, dir => {
+            folders = yield Bluebird.filter(folders, dir => {
                 let content = yield fs.readdir(`data/${dir}`);
                 return content.length == 0;
             });
-            Bluebird.map(folders, dir => {
+            yield Bluebird.map(folders, dir => {
                 yield fs.rmdir(`data/${dir}`);
             });
         });

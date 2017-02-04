@@ -34,8 +34,6 @@
     "@types/fs-promise": "^1.0.1",
     "@types/lodash": "^4.14.52",
     "@types/passport": "^0.3.2",
-    "@types/winston": "^2.2.0",
-    "eslint": "^3.14.1",
-    "eslint-config-google": "^0.7.1"
+    "@types/winston": "^2.2.0"
   }
 }
