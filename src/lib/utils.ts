@@ -35,7 +35,7 @@ export default class Utils {
         let content: string[] = await fs.readdir('data');
         let files = await Bluebird.filter(content, file => {
             let stat = await fs.stat('data/' + file);
-            return stat.isDirectory();
+            return stat.isDirectory() && !file.startsWith('.');
         });
         return _.sortBy(files);
     }
