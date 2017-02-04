@@ -33,7 +33,7 @@ export default class Utils {
 
     async getSessionFolders(): Promise<string[]> {
         let content: string[] = await fs.readdir('data');
-        let files = await Bluebird.filter(content, file => {
+        let files = await Bluebird.filter(content, async file => {
             let stat = await fs.stat('data/' + file);
             return stat.isDirectory() && !file.startsWith('.');
         });
@@ -46,12 +46,12 @@ export default class Utils {
         } catch(e) {}
 
         let folders = await this.getSessionFolders();
-        folders = await Bluebird.filter(folders, dir => {
+        folders = await Bluebird.filter(folders, async dir => {
             let content = await fs.readdir(`data/${dir}`);
             return content.length == 0;
         });
 
-        await Bluebird.map(folders, dir => {
+        await Bluebird.map(folders, async dir => {
             await fs.rmdir(`data/${dir}`);
         });
     }

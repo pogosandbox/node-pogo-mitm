@@ -1,8 +1,7 @@
 import * as logger from 'winston';
 import * as fs from 'fs-promise';
 import * as _ from 'lodash';
-
-let Bluebird = require('Bluebird');
+import * as Bluebird from 'Bluebird';
 
 let json2csv = require('json2csv');
 const geolib = require('geolib');
@@ -30,7 +29,7 @@ export default class Csv {
         await this.utils.cleanDataFolders();
         let folders = await this.utils.getSessionFolders();
 
-        let sessions: [] = await Bluebird.map(folders, folder => {
+        let sessionsArray = await Bluebird.map(folders, async folder => {
             let files: string[] = await fs.readdir(`data/${folder}`);
             files = _.filter(files, file => _.endsWith(file, '.req.bin'));
             return _.map(files, file => {
@@ -38,23 +37,22 @@ export default class Csv {
                                                 session: folder,
                                                 request: _.trimEnd(file, '.req.bin'),
                                                 file: folder + '/' + file,
+                                                info: '',
                                             };
                                         });
         });
 
-        sessions = _.flatten(sessions);
+        let sessions = _.flatten(sessionsArray);
 
-        Bluebird.each(sessions, folder => {
+        Bluebird.each(sessions, async folder => {
             let exists = await fs.exists(`data/${folder.session}/.info`);
             if (exists) {
                 folder.info = await fs.readFile(`data/${folder.session}/.info`, 'utf8');
-            } else {
-                folder.info = '';
             }
         });
 
         // we now have an array of files with requests dump, let's decrypt
-        let signatures: [] = await Bluebird.map(sessions, file => {
+        let signatures = await Bluebird.map(sessions, async file => {
             let request = await this.decoder.decodeRequest(file.session, file.request);
             let signature: any = _.find(<_.List<any>>request.decoded.platform_requests, r => r.request_name === 'SEND_ENCRYPTED_SIGNATURE');
             signature = (!signature || typeof signature.message == 'string') ? null : signature.message;
