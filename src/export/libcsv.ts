@@ -169,6 +169,7 @@ export default class Csv {
             ],
             del: this.config.export.csv.separator,
         });
+        
         await fs.writeFile(`data/${file}`, csv, 'utf8');
         return file;
     }

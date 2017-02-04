@@ -1,21 +1,17 @@
-let logger = require('winston');
-let fs = require('fs');
-let Promise = require('bluebird');
-let moment = require('moment');
-let _ = require('lodash');
+import * as logger from 'winston';
+import * as fs from 'fs-promise';
+import * as Bluebird from 'bluebird';
+import * as moment from 'moment';
+import * as _ from 'lodash';
 
-Promise.promisifyAll(fs);
-
-let Config = require('./../lib/config');
+import Config from './../lib/config';
 let config = new Config().load();
-
-logger.loglevel = config.loglevel;
 
 class Snorlax {
     convert() {
-        return fs.readdirAsync('snorlax')
+        return fs.readdir('snorlax')
                 .then(files => {
-                    files = _.filter(files, file => file.match(/.ENVELOPE_(REQUEST|RESPONSE).log$/));
+                    files = _.filter(<string[]>files, file => file.match(/.ENVELOPE_(REQUEST|RESPONSE).log$/) != null);
                     if (files.length == 0) throw new Error('no file to import');
 
                     let date = files[0].substring(0, files[0].indexOf('.'));
@@ -35,7 +31,7 @@ class Snorlax {
                             };
                 })
                 .then(data => {
-                    return Promise.map(data.files, file => {
+                    return Bluebird.map(data.files, file => {
                         let timestamp = file.substring(0, file.indexOf('.'));
                         let when = moment(timestamp, 'YYMMDDHHmmSSSS');
                         return {
@@ -53,17 +49,17 @@ class Snorlax {
                 })
                 .then(files => {
                     let reqId = 0;
-                    return Promise.map(files.files, (file, idx) => this.handleReqFile(++reqId, files, file, idx));
+                    return Bluebird.map(files.files, (file, idx) => this.handleReqFile(++reqId, files, file, idx));
                 })
                 .then(files => {
-                    return files.length;
+                    return (<any>files).length;
                 });
     }
 
     handleReqFile(reqId, files, file, idx) {
         let folder = files.folder;
         logger.info('Convert file %s in folder %s', file.file, folder);
-        return fs.readFileAsync(`snorlax/${file.file}`)
+        return fs.readFile(`snorlax/${file.file}`)
                 .then(data => {
                     return {
                         id: reqId,
@@ -72,16 +68,16 @@ class Snorlax {
                     };
                 })
                 .then(data => {
-                    let id = _.padStart(reqId, 5, 0);
-                    return fs.writeFileAsync(`data/${folder}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8')
+                    let id = _.padStart(reqId, 5, '0');
+                    return fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8')
                             .then(() => id);
                 })
                 .then(id => {
                     let response = files.responses[idx];
-                    return fs.readFileAsync(`snorlax/${response}`)
+                    return fs.readFile(`snorlax/${response}`)
                             .then(data => Buffer.from(data).toString('base64'))
                             .then(data => {
-                                return fs.writeFileAsync(`data/${folder}/${id}.res.bin`, data, 'utf8');
+                                return fs.writeFile(`data/${folder}/${id}.res.bin`, data, 'utf8');
                             });
                 });
     }
