@@ -22,7 +22,8 @@ class IOSDump {
             }
             catch (e) { }
             let sessions = yield fs.readdir('ios.dump');
-            yield Bluebird.map(sessions, session => this.handleSession(session));
+            var converted = yield Bluebird.map(sessions, (session) => __awaiter(this, void 0, void 0, function* () { return this.handleSession(session); }));
+            return _.sum(converted);
         });
     }
     handleSession(session) {
@@ -41,22 +42,28 @@ class IOSDump {
             catch (e) { }
             yield fs.writeFile(`data/${folder}/.info`, '(from iOS dump)', 'utf8');
             let reqId = 0;
-            Bluebird.map(files, file => this.handleReqFile(++reqId, session, file, folder));
+            yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () { return this.handleReqFile(++reqId, session, file, folder); }));
             return files.length;
         });
     }
     handleReqFile(reqId, session, file, folder) {
         return __awaiter(this, void 0, void 0, function* () {
             logger.info('Convert file %s in folder %s', file, folder);
-            let raw = yield fs.readFile(`ios.dump/${session}/${file}`);
-            let content = {
-                id: reqId,
-                when: +_.trimEnd(file, '.req.raw.bin'),
-                data: Buffer.from(raw).toString('base64'),
-            };
-            let id = _.padStart(reqId.toString(), 5, '0');
-            yield fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(content, null, 4), 'utf8');
-            yield this.handleResFile(reqId, session, file, folder);
+            try {
+                let raw = yield fs.readFile(`ios.dump/${session}/${file}`);
+                let content = {
+                    id: reqId,
+                    when: +_.trimEnd(file, '.req.raw.bin'),
+                    data: Buffer.from(raw).toString('base64'),
+                };
+                let id = _.padStart(reqId.toString(), 5, '0');
+                yield fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(content, null, 4), 'utf8');
+                yield this.handleResFile(reqId, session, file, folder);
+            }
+            catch (e) {
+                logger.error('Error importing file %s', file);
+                logger.error(e);
+            }
         });
     }
     handleResFile(reqId, session, file, folder) {

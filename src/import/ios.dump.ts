@@ -14,7 +14,8 @@ class IOSDump {
         } catch(e) {}
 
         let sessions = await fs.readdir('ios.dump');
-        await Bluebird.map(sessions, session => this.handleSession(session));
+        var converted = await Bluebird.map(sessions, async session => this.handleSession(session));
+        return _.sum(converted);
     }
 
     async handleSession(session: string): Promise<number> {
@@ -35,23 +36,28 @@ class IOSDump {
         await fs.writeFile(`data/${folder}/.info`, '(from iOS dump)', 'utf8');
 
         let reqId = 0;
-        Bluebird.map(files, file => this.handleReqFile(++reqId, session, file, folder));
+        await Bluebird.map(files, async file => this.handleReqFile(++reqId, session, file, folder));
 
         return files.length;
     }
 
     async handleReqFile(reqId: number, session: string, file: string, folder: string): Promise<void> {
         logger.info('Convert file %s in folder %s', file, folder);
-        let raw = await fs.readFile(`ios.dump/${session}/${file}`)
-        let content = {
-            id: reqId,
-            when: + _.trimEnd(file, '.req.raw.bin'),
-            data: Buffer.from(raw).toString('base64'),
-        };
+        try {
+            let raw = await fs.readFile(`ios.dump/${session}/${file}`);
+            let content = {
+                id: reqId,
+                when: + _.trimEnd(file, '.req.raw.bin'),
+                data: Buffer.from(raw).toString('base64'),
+            };
 
-        let id = _.padStart(reqId.toString(), 5, '0');
-        await fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(content, null, 4), 'utf8');
-        await this.handleResFile(reqId, session, file, folder);
+            let id = _.padStart(reqId.toString(), 5, '0');
+            await fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(content, null, 4), 'utf8');
+            await this.handleResFile(reqId, session, file, folder);
+        } catch (e) {
+            logger.error('Error importing file %s', file);
+            logger.error(e);
+        }
     }
 
     async handleResFile(reqId: number, session: string, file: any, folder: string): Promise<void> {
