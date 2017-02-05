@@ -17,5 +17,5 @@ function exportCsv() {
         process.exit();
     });
 }
-exportCsv();
+exportCsv().catch(e => logger.error(e));
 //# sourceMappingURL=csv.js.map

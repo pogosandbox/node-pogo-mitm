@@ -12,73 +12,64 @@ class IOSDump {
         try {
             await fs.mkdir('data');
         } catch(e) {}
+
         let files = await fs.readdir('ios.dump.noctem');
+
         // remove non api call
         files = _.filter(files, f => f.indexOf('undefined') < 0);
+
         // split requests and responses
         let requests = _.filter(files, f =>  _.endsWith(f, '.request'));
         let responses = _.filter(files, f =>  _.endsWith(f, '.response'));
 
-        if (requests.length == 0) throw new Error('no file to import');
-        let date = this.getTimestamp(requests[0]);
+        if (requests.length == 0) throw new Error('No file to import');
 
+        let date = this.getTimestamp(requests[0]);
         let when = moment(+date);
         let folder = when.format('YYYYMMDD.HHmmss');
-        logger.info('Dest folder: data/%s', folder);
 
+        logger.info('Dest folder: data/%s', folder);
         try {
             await fs.mkdir('data/' + folder);
         } catch(e) {}
                  
-        await fs.writeFile(`data/${folder}/.info`, '(from iOS dump)', 'utf8');
-
-        let fullRequests = await Bluebird.map(requests, file => {
-            let timestamp = this.getTimestamp(file);
-            return {
-                file: file,
-                when: +timestamp,
-            };
-        });
+        await fs.writeFile(`data/${folder}/.info`, '(Noctem, iOS)', 'utf8');
 
         let reqId = 0;
-        await Bluebird.map(fullRequests, file => this.handleReqFile(++reqId, file, folder, responses));
+        await Bluebird.map(requests, file => this.handleReqFile(++reqId, file, folder, responses));
 
         return requests.length;
     }
 
-    getTimestamp(file) {
-        return file.substring('iOS-'.length, file.indexOf('-', 'iOS-'.length + 1));
+    getTimestamp(file: string): number {
+        return +file.substring('iOS-'.length, file.indexOf('-', 'iOS-'.length + 1));
     }
 
-    getRequestId(file) {
-        return file.substring(file.lastIndexOf("-") + 1);
+    getRequestId(file: string): number {
+        return +file.substring(file.lastIndexOf("-") + 1);
     }
 
-    handleReqFile(reqId, file, folder, responses) {
-        logger.info('Convert file %s in folder %s', file.file, folder);
-        return fs.readFile(`ios.dump.noctem/${file.file}`)
-                .then(raw => {
-                    let id = _.padStart(reqId, 5, '0');
-                    let content = {
-                        id: reqId,
-                        when: file.when,
-                        data: Buffer.from(raw).toString('base64'),
-                    }
-                    return fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(content, null, 4), 'utf8');
-                })
-                .then(() => this.handleResFile(reqId, file, folder, responses));
+    async handleReqFile(reqId: number, file: string, folder: string, responses: string[]): Promise<void> {
+        logger.info('Convert file %s in folder %s', file, folder);
+        let raw = await fs.readFile(`ios.dump.noctem/${file}`);
+        let id = _.padStart(reqId.toString(), 5, '0');
+        let content = {
+            id: reqId,
+            when: this.getTimestamp(file),
+            data: Buffer.from(raw).toString('base64'),
+        }
+        await fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(content, null, 4), 'utf8');
+        await this.handleResFile(reqId, file, folder, responses);
     }
 
-    handleResFile(reqId, file, folder, responses) {
-        let requestId = this.getRequestId(file.file);
+    async handleResFile(reqId: number, file: string, folder: string, responses: string[]): Promise<void> {
+        let requestId = this.getRequestId(file);
         let resfile = _.find(<string[]>responses, f => f.endsWith(requestId + '.response'));
         if (fs.existsSync(`ios.dump/${resfile}`)) {
-            return fs.readFile(`ios.dump.noctem/${resfile}`)
-                    .then(raw => Buffer.from(raw).toString('base64'))
-                    .then(raw => {
-                        let id = _.padStart(reqId, 5, '0');
-                        return fs.writeFile(`data/${folder}/${id}.res.bin`, raw, 'utf8');
-                    });
+            let raw = await fs.readFile(`ios.dump.noctem/${resfile}`);
+            let base64 = Buffer.from(raw).toString('base64');
+            let id = _.padStart(reqId.toString(), 5, '0');
+            await fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');
         }
     }
 }
@@ -88,4 +79,5 @@ iOSDump.convert()
 .then(num => {
     logger.info('%s file(s) converted.', num);
     process.exit();
-});
+})
+.catch(e => logger.error(e));

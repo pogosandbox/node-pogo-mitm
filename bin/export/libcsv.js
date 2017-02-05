@@ -29,7 +29,7 @@ class Csv {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.utils.cleanDataFolders();
             let folders = yield this.utils.getSessionFolders();
-            let sessionsArray = yield Bluebird.map(folders, (folder) => __awaiter(this, void 0, void 0, function* () {
+            let sessionsArOfAr = yield Bluebird.map(folders, (folder) => __awaiter(this, void 0, void 0, function* () {
                 let files = yield fs.readdir(`data/${folder}`);
                 files = _.filter(files, file => _.endsWith(file, '.req.bin'));
                 return _.map(files, file => {
@@ -41,15 +41,15 @@ class Csv {
                     };
                 });
             }));
-            let sessions = _.flatten(sessionsArray);
-            Bluebird.each(sessions, (folder) => __awaiter(this, void 0, void 0, function* () {
-                let exists = yield fs.exists(`data/${folder.session}/.info`);
+            let requests = _.flatten(sessionsArOfAr);
+            Bluebird.each(requests, (request) => __awaiter(this, void 0, void 0, function* () {
+                let exists = yield fs.exists(`data/${request.session}/.info`);
                 if (exists) {
-                    folder.info = yield fs.readFile(`data/${folder.session}/.info`, 'utf8');
+                    request.info = yield fs.readFile(`data/${request.session}/.info`, 'utf8');
                 }
             }));
             // we now have an array of files with requests dump, let's decrypt
-            let signatures = yield Bluebird.map(sessions, (file) => __awaiter(this, void 0, void 0, function* () {
+            let signatures = yield Bluebird.map(requests, (file) => __awaiter(this, void 0, void 0, function* () {
                 let request = yield this.decoder.decodeRequest(file.session, file.request);
                 let signature = _.find(request.decoded.platform_requests, r => r.request_name === 'SEND_ENCRYPTED_SIGNATURE');
                 signature = (!signature || typeof signature.message == 'string') ? null : signature.message;
@@ -84,7 +84,7 @@ class Csv {
                     fullRequest: request.decoded,
                 };
             }));
-            signatures => _.filter(signatures, s => s.signature != null);
+            signatures = _.filter(signatures, s => s.signature != null);
             // if (datas.length > 0) {
             //     let prevPos = {latitude: datas[0].fullRequest.latitude, longitude: datas[0].fullRequest.longitude};
             //     let prevTime = +datas[0].signature.timestamp_since_start;

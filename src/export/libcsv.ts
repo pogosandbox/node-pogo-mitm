@@ -29,8 +29,8 @@ export default class Csv {
         await this.utils.cleanDataFolders();
         let folders = await this.utils.getSessionFolders();
 
-        let sessionsArray = await Bluebird.map(folders, async folder => {
-            let files: string[] = await fs.readdir(`data/${folder}`);
+        let sessionsArOfAr = await Bluebird.map(folders, async folder => {
+            let files = await fs.readdir(`data/${folder}`) as string[];
             files = _.filter(files, file => _.endsWith(file, '.req.bin'));
             return _.map(files, file => {
                                             return {
@@ -42,19 +42,19 @@ export default class Csv {
                                         });
         });
 
-        let sessions = _.flatten(sessionsArray);
+        let requests = _.flatten(sessionsArOfAr);
 
-        Bluebird.each(sessions, async folder => {
-            let exists = await fs.exists(`data/${folder.session}/.info`);
+        Bluebird.each(requests, async request => {
+            let exists = await fs.exists(`data/${request.session}/.info`);
             if (exists) {
-                folder.info = await fs.readFile(`data/${folder.session}/.info`, 'utf8');
+                request.info = await fs.readFile(`data/${request.session}/.info`, 'utf8');
             }
         });
 
         // we now have an array of files with requests dump, let's decrypt
-        let signatures = await Bluebird.map(sessions, async file => {
+        let signatures = await Bluebird.map(requests, async file => {
             let request = await this.decoder.decodeRequest(file.session, file.request);
-            let signature: any = _.find(<any[]>request.decoded.platform_requests, r => r.request_name === 'SEND_ENCRYPTED_SIGNATURE');
+            let signature = _.find(<any[]>request.decoded.platform_requests, r => r.request_name === 'SEND_ENCRYPTED_SIGNATURE');
             signature = (!signature || typeof signature.message == 'string') ? null : signature.message;
                     
             let apiCall = 'NONE';
@@ -92,7 +92,7 @@ export default class Csv {
             };
         });
 
-        signatures => _.filter(<any[]>signatures, s => s.signature != null);
+        signatures = _.filter(<any[]>signatures, s => s.signature != null);
         
             // if (datas.length > 0) {
             //     let prevPos = {latitude: datas[0].fullRequest.latitude, longitude: datas[0].fullRequest.longitude};
@@ -108,7 +108,7 @@ export default class Csv {
         return await this.dumpAllSignatures(signatures, filename);
     }
 
-    async dumpAllSignatures(signatures: any, file = 'requests.signatures.csv'): Promise<string> {
+    async dumpAllSignatures(signatures: any[], file = 'requests.signatures.csv'): Promise<string> {
         logger.info('Dumping signature info...');
         let csv = json2csv({
             data: signatures,
