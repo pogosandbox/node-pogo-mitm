@@ -8,7 +8,7 @@ import Config from './../lib/config';
 let config = new Config().load();
 
 class IOSDump {
-    async convert() {
+    async convert(): Promise<number> {
         try {
             await fs.mkdir('data');
         } catch(e) {}

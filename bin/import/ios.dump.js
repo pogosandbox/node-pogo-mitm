@@ -40,7 +40,7 @@ class IOSDump {
                 yield fs.mkdir('data/' + folder);
             }
             catch (e) { }
-            yield fs.writeFile(`data/${folder}/.info`, '(from iOS dump)', 'utf8');
+            yield fs.writeFile(`data/${folder}/.info`, '(iOS)', 'utf8');
             let reqId = 0;
             yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () { return this.handleReqFile(++reqId, session, file, folder); }));
             return files.length;
@@ -68,12 +68,19 @@ class IOSDump {
     }
     handleResFile(reqId, session, file, folder) {
         return __awaiter(this, void 0, void 0, function* () {
-            let resfile = _.trimEnd(file.file, '.req.raw.bin') + '.res.raw.bin';
+            let resfile = _.trimEnd(file, '.req.raw.bin');
+            resfile += '.res.raw.bin';
             if (fs.existsSync(`ios.dump/${session}/${resfile}`)) {
-                let raw = yield fs.readFile(`ios.dump/${session}/${resfile}`);
-                let base64 = Buffer.from(raw).toString('base64');
-                let id = _.padStart(reqId.toString(), 5, '0');
-                yield fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');
+                try {
+                    let raw = yield fs.readFile(`ios.dump/${session}/${resfile}`);
+                    let base64 = Buffer.from(raw).toString('base64');
+                    let id = _.padStart(reqId.toString(), 5, '0');
+                    yield fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');
+                }
+                catch (e) {
+                    logger.error('Error importing file %s', resfile);
+                    logger.error(e);
+                }
             }
         });
     }

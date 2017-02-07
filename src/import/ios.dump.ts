@@ -8,7 +8,7 @@ import Config from './../lib/config';
 let config = new Config().load();
 
 class IOSDump {
-    async convert() {
+    async convert(): Promise<number> {
         try {
             await fs.mkdir('data');
         } catch(e) {}
@@ -33,7 +33,7 @@ class IOSDump {
             await fs.mkdir('data/' + folder);
         } catch(e) {}
 
-        await fs.writeFile(`data/${folder}/.info`, '(from iOS dump)', 'utf8');
+        await fs.writeFile(`data/${folder}/.info`, '(iOS)', 'utf8');
 
         let reqId = 0;
         await Bluebird.map(files, async file => this.handleReqFile(++reqId, session, file, folder));
@@ -60,13 +60,19 @@ class IOSDump {
         }
     }
 
-    async handleResFile(reqId: number, session: string, file: any, folder: string): Promise<void> {
-        let resfile = _.trimEnd(file.file, '.req.raw.bin') + '.res.raw.bin';
+    async handleResFile(reqId: number, session: string, file: string, folder: string): Promise<void> {
+        let resfile = _.trimEnd(file, '.req.raw.bin');
+        resfile += '.res.raw.bin';
         if (fs.existsSync(`ios.dump/${session}/${resfile}`)) {
-            let raw = await fs.readFile(`ios.dump/${session}/${resfile}`);
-            let base64 = Buffer.from(raw).toString('base64');
-            let id = _.padStart(reqId.toString(), 5, '0');
-            await fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');
+            try {
+                let raw = await fs.readFile(`ios.dump/${session}/${resfile}`);
+                let base64 = Buffer.from(raw).toString('base64');
+                let id = _.padStart(reqId.toString(), 5, '0');
+                await fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');
+            } catch(e) {
+                logger.error('Error importing file %s', resfile);
+                logger.error(e);
+            }
         }
     }
 }
