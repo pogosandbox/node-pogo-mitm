@@ -1,10 +1,10 @@
-let logger = require('winston');
+import * as logger from 'winston';
+import * as fs from 'fs-promise';
+import * as _ from 'lodash';
+import * as moment from 'moment';
+import * as Bluebird from 'bluebird';
+
 let mitmproxy = require('http-mitm-proxy');
-let _ = require('lodash');
-let fs = require('fs');
-let moment = require('moment');
-// let ngrok = require('ngrok');
-// let Promise = require('bluebird');
 
 import Config from './config';
 import Utils from './utils';
@@ -53,7 +53,7 @@ export default class MitmProxy {
         }
     }
 
-    onRequest(context, callback) {
+    async onRequest(context, callback) {
         let config = this.config;
         let host = context.clientToProxyRequest.headers.host;
         if (host == `${config.ip}:${config.proxy.port}` || (config.proxy.hostname && _.startsWith(host, config.proxy.hostname))) {
@@ -61,30 +61,27 @@ export default class MitmProxy {
             if (_.startsWith(context.clientToProxyRequest.url, '/proxy.pac')) {
                 // get proxy.pac
                 logger.info('Get proxy.pac');
-                fs.readFileAsync('templates/proxy.pac', 'utf8').then(data => {
-                    if (_.endsWith(host, '.ngrok.io')) {
-                        data = data.replace(/##PROXY##/g, host + ':80');
-                    } else {
-                        data = data.replace(/##PROXY##/g, host);
-                    }
-                    res.writeHead(200, {'Content-Type': 'application/x-ns-proxy-autoconfig', 'Content-Length': data.length});
-                    res.end(data, 'utf8');
-                });
+                let data = await fs.readFile('templates/proxy.pac', 'utf8');
+                if (_.endsWith(host, '.ngrok.io')) {
+                    data = data.replace(/##PROXY##/g, host + ':80');
+                } else {
+                    data = data.replace(/##PROXY##/g, host);
+                }
+                res.writeHead(200, {'Content-Type': 'application/x-ns-proxy-autoconfig', 'Content-Length': data.length});
+                res.end(data, 'utf8');
             } else if (_.endsWith(context.clientToProxyRequest.url, '.mobileconfig')) {
                 logger.info('Get mobileconfig');
-                fs.readFileAsync('templates/mobileconfig.xml', 'utf8').then(data => {
-                    data = data.replace('##PAC_URL##', `http://${host}/proxy.pac`);
-                    res.writeHead(200, {'Content-Type': 'application/mobileconfig', 'Content-Length': data.length});
-                    res.end(data, 'utf8');
-                });
+                let data = await fs.readFile('templates/mobileconfig.xml', 'utf8');
+                data = data.replace('##PAC_URL##', `http://${host}/proxy.pac`);
+                res.writeHead(200, {'Content-Type': 'application/mobileconfig', 'Content-Length': data.length});
+                res.end(data, 'utf8');
             } else if (_.startsWith(context.clientToProxyRequest.url, '/cert')) {
                 // get cert
                 logger.info('Get certificate');
                 let path = this.proxy.sslCaDir + '/certs/ca.pem';
-                fs.readFileAsync(path).then(data => {
-                    res.writeHead(200, {'Content-Type': 'application/x-x509-ca-cert', 'Content-Length': data.length});
-                    res.end(data, 'binary');
-                });
+                let data = await fs.readFile(path);
+                res.writeHead(200, {'Content-Type': 'application/x-x509-ca-cert', 'Content-Length': data.length});
+                res.end(data, 'binary');
             } else {
                 logger.info('Incorrect request');
                 res.end('what?', 'utf8');
@@ -99,22 +96,26 @@ export default class MitmProxy {
             let requestChunks = [];
             let responseChunks = [];
 
-            let requestId = _.padStart(++this.config.reqId, 5, 0);
+            let id = ++this.config.reqId;
+            let requestId = _.padStart(id.toString(), 5, '0');
 
             context.onRequestData((ctx, chunk, callback) => {
                 requestChunks.push(chunk);
                 return callback(null, null);
             });
 
-            context.onRequestEnd((ctx, callback) => {
+            context.onRequestEnd(async (ctx, callback) => {
                 let buffer = Buffer.concat(requestChunks);
                 let url = ctx.clientToProxyRequest.url;
 
-                this.handleApiRequest(requestId, ctx, buffer, url)
-                .finally(() => {
-                    ctx.proxyToServerRequest.write(buffer);
-                    callback();
-                });
+                try {
+                    await this.handleApiRequest(requestId, ctx, buffer, url);
+                } catch(e) {
+                    logger.error(e);
+                }
+                
+                ctx.proxyToServerRequest.write(buffer);
+                callback();
             });
 
             context.onResponseData((ctx, chunk, callback) => {
@@ -122,14 +123,17 @@ export default class MitmProxy {
                 return callback();
             });
 
-            context.onResponseEnd((ctx, callback) => {
+            context.onResponseEnd(async (ctx, callback) => {
                 let buffer = Buffer.concat(responseChunks);
 
-                this.handleApiResponse(requestId, ctx, buffer)
-                .finally(() => {
-                    ctx.proxyToClientResponse.write(buffer);
-                    callback(false);
-                });
+                try {
+                    await this.handleApiResponse(requestId, ctx, buffer);
+                } catch(e) {
+                    logger.error(e);
+                }
+
+                ctx.proxyToClientResponse.write(buffer);
+                callback(false);
             });
 
             callback();
@@ -141,7 +145,7 @@ export default class MitmProxy {
         }
     }
 
-    handleApiRequest(id, ctx, buffer, url) {
+    async handleApiRequest(id, ctx, buffer, url) {
         logger.info('Pogo request: %s', url);
         let data = {
             id: id,
@@ -150,15 +154,15 @@ export default class MitmProxy {
             headers: ctx.proxyToServerRequest._headers,
             data: buffer.toString('base64'),
         };
-        return fs.writeFileAsync(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
+        await fs.writeFile(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
     }
 
-    handleApiResponse(id, ctx, buffer) {
+    async handleApiResponse(id, ctx, buffer) {
         let data = {
             when: +moment(),
             data: buffer.toString('base64'),
         };
-        return fs.writeFileAsync(`${this.config.datadir}/${id}.res.bin`, JSON.stringify(data, null, 4), 'utf8');
+        await fs.writeFile(`${this.config.datadir}/${id}.res.bin`, JSON.stringify(data, null, 4), 'utf8');
     }
 
     onError(ctx, err) {

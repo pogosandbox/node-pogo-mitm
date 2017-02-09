@@ -1,13 +1,19 @@
 "use strict";
-let fs = require('fs');
-let logger = require('winston');
-let Promise = require('bluebird');
-let _ = require('lodash');
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+const logger = require("winston");
+const fs = require("fs-promise");
+const _ = require("lodash");
 let POGOProtos = require('node-pogo-protos');
 let pcrypt = require('pcrypt');
 let protobuf = require('protobufjs');
 let long = require('long');
-Promise.promisifyAll(fs);
 class Decoder {
     constructor(config) {
         this.config = config;
@@ -33,12 +39,12 @@ class Decoder {
         this.altProtos = builder.build('POGOProtos');
     }
     decodeRequest(session, requestId, force = false) {
-        if (!force && fs.existsSync(`data/${session}/${requestId}.req.json`, 'utf8')) {
-            return fs.readFileAsync(`data/${session}/${requestId}.req.json`, 'utf8')
-                .then(data => JSON.parse(data));
-        }
-        return fs.readFileAsync(`data/${session}/${requestId}.req.bin`, 'utf8')
-            .then(content => {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!force && fs.existsSync(`data/${session}/${requestId}.req.json`)) {
+                let data = yield fs.readFile(`data/${session}/${requestId}.req.json`, 'utf8');
+                return JSON.parse(data);
+            }
+            let content = yield fs.readFile(`data/${session}/${requestId}.req.bin`, 'utf8');
             let data = JSON.parse(content);
             if (data.endpoint == '/plfe/version') {
                 data.decoded = { request: 'check version', checkVersion: true };
@@ -109,119 +115,120 @@ class Decoder {
                 }
             }
             data = this.fixLongToString(data);
-            return fs.writeFileAsync(`data/${session}/${requestId}.req.json`, JSON.stringify(data, null, 4), 'utf8')
-                .then(() => data);
+            yield fs.writeFile(`data/${session}/${requestId}.req.json`, JSON.stringify(data, null, 4), 'utf8');
+            return data;
         });
     }
     decodeResponse(session, requestId, force = false) {
-        if (!force && fs.existsSync(`data/${session}/${requestId}.res.json`, 'utf8')) {
-            return fs.readFileAsync(`data/${session}/${requestId}.res.json`, 'utf8')
-                .then(data => JSON.parse(data));
-        }
-        return Promise.all([
-            fs.readFileAsync(`data/${session}/${requestId}.req.json`, 'utf8'),
-            fs.readFileAsync(`data/${session}/${requestId}.res.bin`, 'utf8'),
-        ])
-            .then(results => {
-            let request = JSON.parse(results[0]).decoded;
-            let raw = '';
-            let data = {};
-            if (results[1][0] == '{') {
-                data = JSON.parse(results[1]);
-                raw = Buffer.from(data.data, 'base64');
-                delete data.data;
-            }
-            else {
-                data.when = request.when;
-                raw = Buffer.from(results[1], 'base64');
-            }
-            if (request.checkVersion) {
-                return {
-                    decoded: { response: raw.toString('utf8') },
-                };
-            }
-            let decoded = POGOProtos.Networking.Envelopes.ResponseEnvelope.decode(raw);
-            decoded.request_id = '0x' + decoded.request_id.toString(16);
-            // decode plateform response
-            let allPtfmRequests = _.map(request.platform_requests, r => r.request_name);
-            if (allPtfmRequests.length > 0) {
-                decoded.platform_responses = _.map(decoded.platform_returns, (buffer, i) => {
-                    let request = allPtfmRequests[i];
-                    if (request == 'GET_STORE_ITEMS') {
-                        return {
-                            error: '(unable to decode)',
-                            request_name: request,
-                        };
-                    }
-                    else {
-                        let responseType = POGOProtos.Networking.Platform.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (!force && fs.existsSync(`data/${session}/${requestId}.res.json`)) {
+                    let data = yield fs.readFile(`data/${session}/${requestId}.res.json`, 'utf8');
+                    return JSON.parse(data);
+                }
+                let requestJson = yield fs.readFile(`data/${session}/${requestId}.req.json`, 'utf8');
+                let responseJson = yield fs.readFile(`data/${session}/${requestId}.res.bin`, 'utf8');
+                let request = JSON.parse(requestJson).decoded;
+                let raw = '';
+                let data = {};
+                if (responseJson[0] == '{') {
+                    data = JSON.parse(responseJson);
+                    raw = Buffer.from(data.data, 'base64');
+                    delete data.data;
+                }
+                else {
+                    data.when = request.when;
+                    raw = Buffer.from(responseJson, 'base64');
+                }
+                if (request.checkVersion) {
+                    return {
+                        decoded: { response: raw.toString('utf8') },
+                    };
+                }
+                let decoded = POGOProtos.Networking.Envelopes.ResponseEnvelope.decode(raw);
+                decoded.request_id = '0x' + decoded.request_id.toString(16);
+                // decode plateform response
+                let allPtfmRequests = _.map(request.platform_requests, r => r.request_name);
+                if (allPtfmRequests.length > 0) {
+                    decoded.platform_responses = _.map(decoded.platform_returns, (buffer, i) => {
+                        let request = allPtfmRequests[i];
+                        if (request == 'GET_STORE_ITEMS') {
+                            return {
+                                error: '(unable to decode)',
+                                request_name: request,
+                            };
+                        }
+                        else {
+                            let responseType = POGOProtos.Networking.Platform.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
+                            if (responseType) {
+                                let message = responseType.decode(buffer.response);
+                                message.request_name = request;
+                                return message;
+                            }
+                            else {
+                                return { error: 'unable to decrypt ' + request };
+                            }
+                        }
+                    });
+                }
+                else {
+                    decoded.platform_responses = [];
+                }
+                _(decoded.platform_returns).takeRight(decoded.platform_returns.length - allPtfmRequests.length).each(response => {
+                    decoded.platform_responses.push({
+                        error: '(unknown response)',
+                    });
+                });
+                delete decoded.platform_returns;
+                // decode response messages
+                let allRequests = _.map(request.requests, r => r.request_name);
+                if (allRequests.length > 0) {
+                    decoded.responses = _.map(decoded.returns, (buffer, i) => {
+                        let request = allRequests[i];
+                        let responseType = POGOProtos.Networking.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
                         if (responseType) {
-                            let message = responseType.decode(buffer.response);
+                            let message = responseType.decode(buffer);
                             message.request_name = request;
+                            if (request == 'GET_ASSET_DIGEST') {
+                                _.each(message.digest, digest => {
+                                    digest.key = '(hidden)';
+                                });
+                            }
                             return message;
                         }
                         else {
                             return { error: 'unable to decrypt ' + request };
                         }
-                    }
+                    });
+                }
+                else {
+                    decoded.responses = [];
+                }
+                _(decoded.returns).takeRight(decoded.returns.length - allRequests.length).each(response => {
+                    decoded.responses.push({
+                        error: '(unknown response)',
+                    });
                 });
+                delete decoded.returns;
+                // hide auth info
+                if (decoded.auth_ticket) {
+                    if (decoded.auth_ticket.start)
+                        decoded.auth_ticket.start = '(hidden)';
+                    if (decoded.auth_ticket.end)
+                        decoded.auth_ticket.end = '(hidden)';
+                }
+                data.decoded = decoded;
+                data = this.fixLongToString(data);
+                yield fs.writeFile(`data/${session}/${requestId}.res.json`, JSON.stringify(data, null, 4), 'utf8');
+                return data;
             }
-            else {
-                decoded.platform_responses = [];
+            catch (e) {
+                logger.error('Error decrypting request %s of session %s', requestId, session);
+                logger.error(e);
+                return {
+                    decoded: { error: 'unable to decode response' },
+                };
             }
-            _(decoded.platform_returns).takeRight(decoded.platform_returns.length - allPtfmRequests.length).each(response => {
-                decoded.platform_responses.push({
-                    error: '(unknown response)',
-                });
-            });
-            delete decoded.platform_returns;
-            // decode response messages
-            let allRequests = _.map(request.requests, r => r.request_name);
-            if (allRequests.length > 0) {
-                decoded.responses = _.map(decoded.returns, (buffer, i) => {
-                    let request = allRequests[i];
-                    let responseType = POGOProtos.Networking.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
-                    if (responseType) {
-                        let message = responseType.decode(buffer);
-                        message.request_name = request;
-                        if (request == 'GET_ASSET_DIGEST') {
-                            _.each(message.digest, digest => {
-                                digest.key = '(hidden)';
-                            });
-                        }
-                        return message;
-                    }
-                    else {
-                        return { error: 'unable to decrypt ' + request };
-                    }
-                });
-            }
-            else {
-                decoded.responses = [];
-            }
-            _(decoded.returns).takeRight(decoded.returns.length - allRequests.length).each(response => {
-                decoded.responses.push({
-                    error: '(unknown response)',
-                });
-            });
-            delete decoded.returns;
-            // hide auth info
-            if (decoded.auth_ticket) {
-                if (decoded.auth_ticket.start)
-                    decoded.auth_ticket.start = '(hidden)';
-                if (decoded.auth_ticket.end)
-                    decoded.auth_ticket.end = '(hidden)';
-            }
-            data.decoded = decoded;
-            data = this.fixLongToString(data);
-            return fs.writeFileAsync(`data/${session}/${requestId}.res.json`, JSON.stringify(data, null, 4), 'utf8')
-                .then(() => data);
-        }).catch(e => {
-            logger.error('Error decrypting request %s of session %s', requestId, session);
-            logger.error(e);
-            return {
-                decoded: { error: 'unable to decode response' },
-            };
         });
     }
     fixLongToString(data) {

@@ -126,129 +126,103 @@ export default class WebUI {
         });
     }
 
-    getSessions(req: express.Request, res: express.Response, next: Function): any {
+    async getSessions(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
         logger.info('Getting sessions.');
-        return this.utils.getSessionFolders()
-        .then(folders => {
-            return _.map(folders, folder => {
-                return {
+        try {
+            let folders = await this.utils.getSessionFolders()
+            let data = await Bluebird.map(folders, async folder => {
+                let info = {
                     id: folder,
                     title: moment(folder, 'YYYYMMDD.HHmmss').format('DD MMM YY - HH:mm:ss'),
                 };
-            });
-        })
-        .then(folders => {
-            // get info if it exist
-            return Bluebird.map(folders, folder => {
-                if (fs.existsSync(`data/${folder.id}/.info`)) {
-                    return fs.readFile(`data/${folder.id}/.info`, 'utf8')
-                    .then(content => {
-                        folder.title += ' ' + content;
-                        return folder;
-                    });
-                } else {
-                    return folder;
+                if (fs.existsSync(`data/${folder}/.info`)) {
+                    let content = await fs.readFile(`data/${folder}/.info`, 'utf8');
+                    info.title += ' ' + content;
                 }
+                return info;
             });
-        })
-        .then(folders => res.json(folders));
+            return res.json(data);
+        } catch(e) {
+            logger.error(e);
+            res.status(500).send(e);
+        }
     }
 
-    getRequests(req: express.Request, res: express.Response, next: Function): any {
+    async getRequests(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
         logger.info('Getting requests for session %s', req.params.session);
-        return fs.readdir(`data/${req.params.session}`)
-        .then(data => _.filter(data, d => _.endsWith(d, '.req.bin')))
-        .then(data => {
-            return Bluebird.map(data, file => {
-                return fs.readFile(`data/${req.params.session}/${file}`, 'utf8')
-                        .then(content => {
-                            return JSON.parse(content);
-                        })
-                        .then(req => {
-                            req.id = _.trimEnd(file, '.req.bin');
-                            return req;
-                        });
-            });
-        })
-        .then(files => {
-            return {
+        try {
+            let result =  {
                 title: '',
-                files: files,
                 steps: [],
+                files: [],
             };
-        })
-        .then(data => {
+
             if (fs.existsSync(`data/${req.params.session}/.info`)) {
-                return fs.readFile(`data/${req.params.session}/.info`, 'utf8')
-                        .then(content => {
-                            data.title = content;
-                            return data;
-                        });
-            } else {
-                return data;
+                let info = await fs.readFile(`data/${req.params.session}/.info`, 'utf8');
+                result.title = info;
             }
-        })
-        .then(data => {
+
             if (fs.existsSync(`data/${req.params.session}/.preload`)) {
-                return fs.readFile(`data/${req.params.session}/.preload`, 'utf8')
-                        .then(content => {
-                            data.steps = JSON.parse(content);
-                            return data;
-                        });
-            } else {
-                return data;
+                let preload = await fs.readFile(`data/${req.params.session}/.preload`, 'utf8');
+                result.steps = JSON.parse(preload);
             }
-        })
-        .then(data => res.json(data))
-        .catch(e => {
+
+            let files = await fs.readdir(`data/${req.params.session}`);
+            files = _.filter(files, d => _.endsWith(d, '.req.bin'));
+
+            result.files = await Bluebird.map(files, async file => {
+                let content = await fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
+                let request = JSON.parse(content);
+                delete request.data;
+                request.id = _.trimEnd(file, '.req.bin');
+                return request;
+            });
+
+            return res.json(result);
+        } catch(e) {
             logger.error(e);
             res.status(500).send(e);
-        });
+        }
     }
 
-    decodeRequest(req: express.Request, res: express.Response, next: Function): any {
+    async decodeRequest(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
         logger.info('Decrypting session %d, request %s', req.params.session, req.params.request);
-        return this.decoder.decodeRequest(req.params.session, req.params.request, !this.config.protos.cachejson)
-        .then(data => {
-            data.id = req.params.request;
-            res.json(data);
-
-        }).catch(e => {
+        try {
+            let force = !this.config.protos.cachejson;
+            let data = await this.decoder.decodeRequest(req.params.session, req.params.request, force);
+            return res.json(data);
+        } catch(e) {
             logger.error(e);
-            res.status(500).send(e);
-
-        });
+            return res.status(500).send(e);
+        }
     }
 
-    decodeResponse(req: express.Request, res: express.Response, next: Function): any {
+    async decodeResponse(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
         logger.info('Decrypting session %d, response %s', req.params.session, req.params.request);
-        return this.decoder.decodeResponse(req.params.session, req.params.request, !this.config.protos.cachejson)
-        .then(data => {
-            res.json(data);
-
-        }).catch(e => {
+        try {
+            let force = !this.config.protos.cachejson;
+            let data = await this.decoder.decodeResponse(req.params.session, req.params.request, force);
+            return res.json(data);
+        } catch(e) {
             logger.error(e);
-            res.status(500).send(e);
-
-        });
+            return res.status(500).send(e);
+        }
     }
 
-    exportCsv(req: express.Request, res: express.Response, next: Function): any {
-        return fs.stat('data/requests.signatures.csv')
-                .then(stats => {
-                    let mtime = moment(stats.mtime);
-                    if (mtime.add(15, 'm').isAfter(moment())) {
-                        res.sendFile('requests.signatures.csv', {root: 'data'});
-                    } else {
-                        throw new Error('File too old.');
-                    }
-                }).catch(e => {
-                    logger.info('Export signatures to CSV.');
-                    let csv = new Csv(this.config);
-                    return csv.exportRequestsSignature('requests.signatures.csv')
-                            .then(file => {
-                                res.sendFile(file, {root: 'data'});
-                            });
-                });
+    async exportCsv(req: express.Request, res: express.Response, next: Function): Promise<void> {
+        try {
+            let stats = await fs.stat('data/requests.signatures.csv');
+            let mtime = moment(stats.mtime);
+            if (mtime.add(15, 'm').isAfter(moment())) {
+                return res.sendFile('requests.signatures.csv', {root: 'data'});
+            } else {
+                throw new Error('File too old.');
+            }
+        } catch(e) {
+            logger.info('Export signatures to CSV.');
+            let csv = new Csv(this.config);
+            let file = await csv.exportRequestsSignature('requests.signatures.csv');
+            res.sendFile(file, {root: 'data'});
+        }
     }
 }

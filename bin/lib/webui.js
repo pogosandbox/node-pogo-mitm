@@ -1,4 +1,12 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 const express = require("express");
 const logger = require("winston");
 const fs = require("fs-promise");
@@ -100,124 +108,109 @@ class WebUI {
         });
     }
     getSessions(req, res, next) {
-        logger.info('Getting sessions.');
-        return this.utils.getSessionFolders()
-            .then(folders => {
-            return _.map(folders, folder => {
-                return {
-                    id: folder,
-                    title: moment(folder, 'YYYYMMDD.HHmmss').format('DD MMM YY - HH:mm:ss'),
-                };
-            });
-        })
-            .then(folders => {
-            // get info if it exist
-            return Bluebird.map(folders, folder => {
-                if (fs.existsSync(`data/${folder.id}/.info`)) {
-                    return fs.readFile(`data/${folder.id}/.info`, 'utf8')
-                        .then(content => {
-                        folder.title += ' ' + content;
-                        return folder;
-                    });
-                }
-                else {
-                    return folder;
-                }
-            });
-        })
-            .then(folders => res.json(folders));
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.info('Getting sessions.');
+            try {
+                let folders = yield this.utils.getSessionFolders();
+                let data = yield Bluebird.map(folders, (folder) => __awaiter(this, void 0, void 0, function* () {
+                    let info = {
+                        id: folder,
+                        title: moment(folder, 'YYYYMMDD.HHmmss').format('DD MMM YY - HH:mm:ss'),
+                    };
+                    if (fs.existsSync(`data/${folder}/.info`)) {
+                        let content = yield fs.readFile(`data/${folder}/.info`, 'utf8');
+                        info.title += ' ' + content;
+                    }
+                    return info;
+                }));
+                return res.json(data);
+            }
+            catch (e) {
+                logger.error(e);
+                res.status(500).send(e);
+            }
+        });
     }
     getRequests(req, res, next) {
-        logger.info('Getting requests for session %s', req.params.session);
-        return fs.readdir(`data/${req.params.session}`)
-            .then(data => _.filter(data, d => _.endsWith(d, '.req.bin')))
-            .then(data => {
-            return Bluebird.map(data, file => {
-                return fs.readFile(`data/${req.params.session}/${file}`, 'utf8')
-                    .then(content => {
-                    return JSON.parse(content);
-                })
-                    .then(req => {
-                    req.id = _.trimEnd(file, '.req.bin');
-                    return req;
-                });
-            });
-        })
-            .then(files => {
-            return {
-                title: '',
-                files: files,
-                steps: [],
-            };
-        })
-            .then(data => {
-            if (fs.existsSync(`data/${req.params.session}/.info`)) {
-                return fs.readFile(`data/${req.params.session}/.info`, 'utf8')
-                    .then(content => {
-                    data.title = content;
-                    return data;
-                });
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.info('Getting requests for session %s', req.params.session);
+            try {
+                let result = {
+                    title: '',
+                    steps: [],
+                    files: [],
+                };
+                if (fs.existsSync(`data/${req.params.session}/.info`)) {
+                    let info = yield fs.readFile(`data/${req.params.session}/.info`, 'utf8');
+                    result.title = info;
+                }
+                if (fs.existsSync(`data/${req.params.session}/.preload`)) {
+                    let preload = yield fs.readFile(`data/${req.params.session}/.preload`, 'utf8');
+                    result.steps = JSON.parse(preload);
+                }
+                let files = yield fs.readdir(`data/${req.params.session}`);
+                files = _.filter(files, d => _.endsWith(d, '.req.bin'));
+                result.files = yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () {
+                    let content = yield fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
+                    let request = JSON.parse(content);
+                    delete request.data;
+                    request.id = _.trimEnd(file, '.req.bin');
+                    return request;
+                }));
+                return res.json(result);
             }
-            else {
-                return data;
+            catch (e) {
+                logger.error(e);
+                res.status(500).send(e);
             }
-        })
-            .then(data => {
-            if (fs.existsSync(`data/${req.params.session}/.preload`)) {
-                return fs.readFile(`data/${req.params.session}/.preload`, 'utf8')
-                    .then(content => {
-                    data.steps = JSON.parse(content);
-                    return data;
-                });
-            }
-            else {
-                return data;
-            }
-        })
-            .then(data => res.json(data))
-            .catch(e => {
-            logger.error(e);
-            res.status(500).send(e);
         });
     }
     decodeRequest(req, res, next) {
-        logger.info('Decrypting session %d, request %s', req.params.session, req.params.request);
-        return this.decoder.decodeRequest(req.params.session, req.params.request, !this.config.protos.cachejson)
-            .then(data => {
-            data.id = req.params.request;
-            res.json(data);
-        }).catch(e => {
-            logger.error(e);
-            res.status(500).send(e);
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.info('Decrypting session %d, request %s', req.params.session, req.params.request);
+            try {
+                let force = !this.config.protos.cachejson;
+                let data = yield this.decoder.decodeRequest(req.params.session, req.params.request, force);
+                return res.json(data);
+            }
+            catch (e) {
+                logger.error(e);
+                return res.status(500).send(e);
+            }
         });
     }
     decodeResponse(req, res, next) {
-        logger.info('Decrypting session %d, response %s', req.params.session, req.params.request);
-        return this.decoder.decodeResponse(req.params.session, req.params.request, !this.config.protos.cachejson)
-            .then(data => {
-            res.json(data);
-        }).catch(e => {
-            logger.error(e);
-            res.status(500).send(e);
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.info('Decrypting session %d, response %s', req.params.session, req.params.request);
+            try {
+                let force = !this.config.protos.cachejson;
+                let data = yield this.decoder.decodeResponse(req.params.session, req.params.request, force);
+                return res.json(data);
+            }
+            catch (e) {
+                logger.error(e);
+                return res.status(500).send(e);
+            }
         });
     }
     exportCsv(req, res, next) {
-        return fs.stat('data/requests.signatures.csv')
-            .then(stats => {
-            let mtime = moment(stats.mtime);
-            if (mtime.add(15, 'm').isAfter(moment())) {
-                res.sendFile('requests.signatures.csv', { root: 'data' });
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                let stats = yield fs.stat('data/requests.signatures.csv');
+                let mtime = moment(stats.mtime);
+                if (mtime.add(15, 'm').isAfter(moment())) {
+                    return res.sendFile('requests.signatures.csv', { root: 'data' });
+                }
+                else {
+                    throw new Error('File too old.');
+                }
             }
-            else {
-                throw new Error('File too old.');
-            }
-        }).catch(e => {
-            logger.info('Export signatures to CSV.');
-            let csv = new libcsv_1.default(this.config);
-            return csv.exportRequestsSignature('requests.signatures.csv')
-                .then(file => {
+            catch (e) {
+                logger.info('Export signatures to CSV.');
+                let csv = new libcsv_1.default(this.config);
+                let file = yield csv.exportRequestsSignature('requests.signatures.csv');
                 res.sendFile(file, { root: 'data' });
-            });
+            }
         });
     }
 }
