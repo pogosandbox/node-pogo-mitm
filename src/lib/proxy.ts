@@ -56,7 +56,7 @@ export default class MitmProxy {
     async onRequest(context, callback) {
         let config = this.config;
         let host = context.clientToProxyRequest.headers.host;
-        if (host == `${config.ip}:${config.proxy.port}` || (config.proxy.hostname && _.startsWith(host, config.proxy.hostname))) {
+        if (host === `${config.ip}:${config.proxy.port}` || (config.proxy.hostname && _.startsWith(host, config.proxy.hostname))) {
             let res = context.proxyToClientResponse;
             if (_.startsWith(context.clientToProxyRequest.url, '/proxy.pac')) {
                 // get proxy.pac
@@ -92,7 +92,7 @@ export default class MitmProxy {
         //     logger.debug(ctx.proxyToServerRequest._headers);
         //     callback();
 
-        } else if (host == endpoints.api) {
+        } else if (host === endpoints.api) {
             let requestChunks = [];
             let responseChunks = [];
 
@@ -110,10 +110,10 @@ export default class MitmProxy {
 
                 try {
                     await this.handleApiRequest(requestId, ctx, buffer, url);
-                } catch(e) {
+                } catch (e) {
                     logger.error(e);
                 }
-                
+
                 ctx.proxyToServerRequest.write(buffer);
                 callback();
             });
@@ -128,7 +128,7 @@ export default class MitmProxy {
 
                 try {
                     await this.handleApiResponse(requestId, ctx, buffer);
-                } catch(e) {
+                } catch (e) {
                     logger.error(e);
                 }
 

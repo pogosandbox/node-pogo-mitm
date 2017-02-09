@@ -63,7 +63,7 @@ class WebUI {
             clientSecret: config.auth.githubClientSecret,
             callbackURL: config.auth.callbackUrl,
         }, function (accessToken, refreshToken, profile, done) {
-            if (_.find(config.auth.users, u => u == profile.username)) {
+            if (_.find(config.auth.users, u => u === profile.username)) {
                 logger.debug('User %s logged in.', profile.username);
                 return done(null, profile);
             }
@@ -75,7 +75,7 @@ class WebUI {
             done(null, JSON.stringify(user));
         });
         passport.deserializeUser(function (user, done) {
-            if (typeof user == 'string') {
+            if (typeof user === 'string') {
                 done(null, JSON.parse(user));
             }
             else {

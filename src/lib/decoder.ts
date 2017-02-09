@@ -26,7 +26,7 @@ export default class Decoder {
         function addPackedOption(ns) {
             if (ns instanceof protobuf.Reflect.Message) {
                 ns.getChildren(protobuf.Reflect.Message.Field).forEach(field => {
-                    if (field.repeated && protobuf.PACKABLE_WIRE_TYPES.indexOf(field.type.wireType) != -1) {
+                    if (field.repeated && protobuf.PACKABLE_WIRE_TYPES.indexOf(field.type.wireType) !== -1) {
                         field.options.packed = true;
                     }
                 });
@@ -48,7 +48,7 @@ export default class Decoder {
 
         let content = await fs.readFile(`data/${session}/${requestId}.req.bin`, 'utf8');
         let data = JSON.parse(content);
-        if (data.endpoint == '/plfe/version') {
+        if (data.endpoint === '/plfe/version') {
             data.decoded = {request: 'check version', checkVersion: true};
 
         } else {
@@ -60,20 +60,20 @@ export default class Decoder {
 
             // decode plateform requests
             _.each(data.decoded.platform_requests, req => {
-                let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r == req.type);
+                let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r === req.type);
                 req.request_name = reqname;
                 reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
                 let requestType = POGOProtos.Networking.Platform.Requests[reqname];
                 if (requestType) {
                     req.message = requestType.decode(req.request_message);
-                    if (req.type == POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
+                    if (req.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
                         // decrypt signature
                         try {
                             let buffer = req.message.encrypted_signature.toBuffer();
                             let decrypted = pcrypt.decrypt(buffer);
                             try {
                                 req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
-                            } catch(e) {
+                            } catch (e) {
                                 req.message = this.altProtos.Networking.Envelopes.Signature.decode(decrypted);
                                 logger.debug('Decrypted with alternate protos');
                             }
@@ -83,7 +83,7 @@ export default class Decoder {
                             if (req.message.session_hash) {
                                 req.message.session_hash = '(hidden)';
                             }
-                        } catch(e) {
+                        } catch (e) {
                             // try with an alternate proto
                             req.message = 'Error while decrypting: ' + e.message;
                             logger.error(e);
@@ -97,7 +97,7 @@ export default class Decoder {
 
             // decode requests
             _.each(data.decoded.requests, req => {
-                let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r == req.request_type);
+                let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r === req.request_type);
                 req.request_name = reqname;
                 reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
                 let requestType = POGOProtos.Networking.Requests.Messages[reqname];
@@ -133,9 +133,9 @@ export default class Decoder {
 
             let request = JSON.parse(requestJson).decoded;
 
-            let raw : any = '';
-            let data : any  = {};
-            if (responseJson[0] == '{') {
+            let raw: any = '';
+            let data: any  = {};
+            if (responseJson[0] === '{') {
                 data = JSON.parse(responseJson);
                 raw = Buffer.from(data.data, 'base64');
                 delete data.data;
@@ -158,7 +158,7 @@ export default class Decoder {
             if (allPtfmRequests.length > 0) {
                 decoded.platform_responses = _.map(<any[]>decoded.platform_returns, (buffer, i) => {
                     let request = allPtfmRequests[i];
-                    if (request == 'GET_STORE_ITEMS') { // crash. bad protos?
+                    if (request === 'GET_STORE_ITEMS') { // crash. bad protos?
                         return {
                             error: '(unable to decode)',
                             request_name: request,
@@ -194,7 +194,7 @@ export default class Decoder {
                     if (responseType) {
                         let message = responseType.decode(buffer);
                         message.request_name = request;
-                        if (request == 'GET_ASSET_DIGEST') {
+                        if (request === 'GET_ASSET_DIGEST') {
                             _.each(message.digest, digest => {
                                 digest.key = '(hidden)';
                             });
@@ -227,7 +227,7 @@ export default class Decoder {
 
             return data;
 
-        } catch(e) {
+        } catch (e) {
             logger.error('Error decrypting request %s of session %s', requestId, session);
             logger.error(e);
             return {
@@ -240,7 +240,7 @@ export default class Decoder {
         _.forIn(data, (value, key) => {
             if (value instanceof long) {
                 data[key] = value.toString();
-            } else if (typeof value == 'object') {
+            } else if (typeof value === 'object') {
                 data[key] = this.fixLongToString(value);
             }
         });

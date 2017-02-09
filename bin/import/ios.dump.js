@@ -22,7 +22,7 @@ class IOSDump {
             }
             catch (e) { }
             let sessions = yield fs.readdir('ios.dump');
-            var converted = yield Bluebird.map(sessions, (session) => __awaiter(this, void 0, void 0, function* () { return this.handleSession(session); }));
+            let converted = yield Bluebird.map(sessions, (session) => __awaiter(this, void 0, void 0, function* () { return this.handleSession(session); }));
             return _.sum(converted);
         });
     }
@@ -30,7 +30,7 @@ class IOSDump {
         return __awaiter(this, void 0, void 0, function* () {
             let files = yield fs.readdir(`ios.dump/${session}`);
             files = _.filter(files, f => _.endsWith(f, 'req.raw.bin'));
-            if (files.length == 0)
+            if (files.length === 0)
                 throw new Error('no file to import');
             let date = _.trimEnd(files[0], '.req.raw.bin');
             let when = moment(+date);

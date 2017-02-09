@@ -15,9 +15,9 @@ export default class Utils {
 
     getIp(): string {
         // typing is bad but I can't find a way to make it works
-        let ipv4:any = _(os.networkInterfaces())
+        let ipv4: any = _(os.networkInterfaces())
                 .filter((i, name) => !/(loopback|vmware|internal)/gi.test(name))
-                .flatten().filter(ip => !(<any>ip).internal && (<any>ip).family == 'IPv4').first();
+                .flatten().filter(ip => !(<any>ip).internal && (<any>ip).family === 'IPv4').first();
         return ipv4.address;
     }
 
@@ -43,12 +43,12 @@ export default class Utils {
     async cleanDataFolders(): Promise<void> {
         try {
             await fs.mkdir('data');
-        } catch(e) {}
+        } catch (e) {}
 
         let folders = await this.getSessionFolders();
         folders = await Bluebird.filter(folders, async dir => {
             let content = await fs.readdir(`data/${dir}`);
-            return content.length == 0;
+            return content.length === 0;
         });
 
         await Bluebird.map(folders, async dir => {

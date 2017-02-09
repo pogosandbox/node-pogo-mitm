@@ -3,7 +3,7 @@ import Csv from './libcsv';
 
 async function exportCsv() {
     let csv = new Csv();
-    await csv.exportRequestsSignature()
+    await csv.exportRequestsSignature();
     logger.info('Done.');
     process.exit();
 }

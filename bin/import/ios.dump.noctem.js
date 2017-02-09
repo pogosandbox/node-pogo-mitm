@@ -27,7 +27,7 @@ class IOSDump {
             // split requests and responses
             let requests = _.filter(files, f => _.endsWith(f, '.request'));
             let responses = _.filter(files, f => _.endsWith(f, '.response'));
-            if (requests.length == 0)
+            if (requests.length === 0)
                 throw new Error('No file to import');
             let date = this.getTimestamp(requests[0]);
             let when = moment(+date);
@@ -47,7 +47,7 @@ class IOSDump {
         return +file.substring('iOS-'.length, file.indexOf('-', 'iOS-'.length + 1));
     }
     getRequestId(file) {
-        return +file.substring(file.lastIndexOf("-") + 1);
+        return +file.substring(file.lastIndexOf('-') + 1);
     }
     handleReqFile(reqId, file, folder, responses) {
         return __awaiter(this, void 0, void 0, function* () {

@@ -55,8 +55,8 @@ export default class Csv {
         let signatures = await Bluebird.map(requests, async file => {
             let request = await this.decoder.decodeRequest(file.session, file.request);
             let signature = _.find(<any[]>request.decoded.platform_requests, r => r.request_name === 'SEND_ENCRYPTED_SIGNATURE');
-            signature = (!signature || typeof signature.message == 'string') ? null : signature.message;
-                    
+            signature = (!signature || typeof signature.message === 'string') ? null : signature.message;
+
             let apiCall = 'NONE';
             if (request.decoded.requests && request.decoded.requests.length > 0) {
                 apiCall = _.first(<any[]>request.decoded.requests).request_name;
@@ -93,17 +93,17 @@ export default class Csv {
         });
 
         signatures = _.filter(<any[]>signatures, s => s.signature != null);
-        
-            // if (datas.length > 0) {
-            //     let prevPos = {latitude: datas[0].fullRequest.latitude, longitude: datas[0].fullRequest.longitude};
-            //     let prevTime = +datas[0].signature.timestamp_since_start;
-            //     _(datas).each(data => {
-            //         data.distFromPrev = this.distance(prevPos, data.fullRequest);
-            //         data.timeFromPrev = +data.signature.timestamp_since_start - prevTime;
-            //         prevPos = {latitude: data.fullRequest.latitude, longitude: data.fullRequest.longitude};
-            //         prevTime = +data.signature.timestamp_since_start;
-            //     });
-            // }
+
+        // if (datas.length > 0) {
+        //     let prevPos = {latitude: datas[0].fullRequest.latitude, longitude: datas[0].fullRequest.longitude};
+        //     let prevTime = +datas[0].signature.timestamp_since_start;
+        //     _(datas).each(data => {
+        //         data.distFromPrev = this.distance(prevPos, data.fullRequest);
+        //         data.timeFromPrev = +data.signature.timestamp_since_start - prevTime;
+        //         prevPos = {latitude: data.fullRequest.latitude, longitude: data.fullRequest.longitude};
+        //         prevTime = +data.signature.timestamp_since_start;
+        //     });
+        // }
 
         return await this.dumpAllSignatures(signatures, filename);
     }
@@ -169,7 +169,7 @@ export default class Csv {
             ],
             del: this.config.export.csv.separator,
         });
-        
+
         await fs.writeFile(`data/${file}`, csv, 'utf8');
         return file;
     }

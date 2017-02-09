@@ -71,7 +71,7 @@ export default class WebUI {
                 callbackURL: config.auth.callbackUrl,
             },
             function(accessToken, refreshToken, profile, done) {
-                if (_.find(config.auth.users, u => u == profile.username)) {
+                if (_.find(config.auth.users, u => u === profile.username)) {
                     logger.debug('User %s logged in.', profile.username);
                     return done(null, profile);
                 } else {
@@ -85,7 +85,7 @@ export default class WebUI {
         });
 
         passport.deserializeUser(function(user, done) {
-            if (typeof user == 'string') {
+            if (typeof user === 'string') {
                 done(null, JSON.parse(user));
             } else {
                 done(null, user);
@@ -129,7 +129,7 @@ export default class WebUI {
     async getSessions(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
         logger.info('Getting sessions.');
         try {
-            let folders = await this.utils.getSessionFolders()
+            let folders = await this.utils.getSessionFolders();
             let data = await Bluebird.map(folders, async folder => {
                 let info = {
                     id: folder,
@@ -142,7 +142,7 @@ export default class WebUI {
                 return info;
             });
             return res.json(data);
-        } catch(e) {
+        } catch (e) {
             logger.error(e);
             res.status(500).send(e);
         }
@@ -179,7 +179,7 @@ export default class WebUI {
             });
 
             return res.json(result);
-        } catch(e) {
+        } catch (e) {
             logger.error(e);
             res.status(500).send(e);
         }
@@ -191,7 +191,7 @@ export default class WebUI {
             let force = !this.config.protos.cachejson;
             let data = await this.decoder.decodeRequest(req.params.session, req.params.request, force);
             return res.json(data);
-        } catch(e) {
+        } catch (e) {
             logger.error(e);
             return res.status(500).send(e);
         }
@@ -203,7 +203,7 @@ export default class WebUI {
             let force = !this.config.protos.cachejson;
             let data = await this.decoder.decodeResponse(req.params.session, req.params.request, force);
             return res.json(data);
-        } catch(e) {
+        } catch (e) {
             logger.error(e);
             return res.status(500).send(e);
         }
@@ -218,7 +218,7 @@ export default class WebUI {
             } else {
                 throw new Error('File too old.');
             }
-        } catch(e) {
+        } catch (e) {
             logger.info('Export signatures to CSV.');
             let csv = new Csv(this.config);
             let file = await csv.exportRequestsSignature('requests.signatures.csv');

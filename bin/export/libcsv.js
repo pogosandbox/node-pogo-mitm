@@ -52,7 +52,7 @@ class Csv {
             let signatures = yield Bluebird.map(requests, (file) => __awaiter(this, void 0, void 0, function* () {
                 let request = yield this.decoder.decodeRequest(file.session, file.request);
                 let signature = _.find(request.decoded.platform_requests, r => r.request_name === 'SEND_ENCRYPTED_SIGNATURE');
-                signature = (!signature || typeof signature.message == 'string') ? null : signature.message;
+                signature = (!signature || typeof signature.message === 'string') ? null : signature.message;
                 let apiCall = 'NONE';
                 if (request.decoded.requests && request.decoded.requests.length > 0) {
                     apiCall = _.first(request.decoded.requests).request_name;

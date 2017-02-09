@@ -39,9 +39,9 @@ class Preload {
 
     async processRequests(session: string, files: string[]): Promise<any[]> {
         files = _.filter(files, f => _.endsWith(f, '.req.bin'));
-        let data: any[] = await Bluebird.map(files, async file => {
+        let data = await Bluebird.map(files, async file => {
             return await this.decoder.decodeRequest(session, _.trimEnd(file, '.req.bin'), true);
-        })
+        });
         return _.map(data, d => {
             return {
                 lat: d.decoded.latitude,

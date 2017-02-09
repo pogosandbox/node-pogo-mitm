@@ -19,7 +19,7 @@ class Snorlax {
         return __awaiter(this, void 0, void 0, function* () {
             let files = yield fs.readdir('snorlax');
             files = _.filter(files, file => file.match(/.ENVELOPE_(REQUEST|RESPONSE).log$/) != null);
-            if (files.length == 0)
+            if (files.length === 0)
                 throw new Error('no file to import');
             let date = files[0].substring(0, files[0].indexOf('.'));
             let when = moment(date, 'YYMMDDHHmmSSSS');

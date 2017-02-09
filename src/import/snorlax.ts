@@ -11,7 +11,7 @@ class Snorlax {
     async convert(): Promise<number> {
         let files = await fs.readdir('snorlax');
         files = _.filter(files, file => file.match(/.ENVELOPE_(REQUEST|RESPONSE).log$/) != null);
-        if (files.length == 0) throw new Error('no file to import');
+        if (files.length === 0) throw new Error('no file to import');
 
         let date = files[0].substring(0, files[0].indexOf('.'));
         let when = moment(date, 'YYMMDDHHmmSSSS');
@@ -19,10 +19,10 @@ class Snorlax {
         logger.info('Dest folder: data/%s', folder);
         try {
             fs.mkdirSync('data');
-        } catch(e) {}
+        } catch (e) {}
         try {
             fs.mkdirSync('data/' + folder);
-        } catch(e) {}
+        } catch (e) {}
 
         await fs.writeFile(`data/${folder}/.info`, '(snorlax)', 'utf8');
 
@@ -36,7 +36,7 @@ class Snorlax {
                 file: file,
                 when: when.valueOf(),
             };
-        })
+        });
 
         let reqId = 0;
         await Bluebird.map(requests, async (file, idx) => {
@@ -58,8 +58,8 @@ class Snorlax {
             data: Buffer.from(raw).toString('base64'),
         };
         let id = _.padStart(reqId.toString(), 5, '0');
-        await fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8')
-   
+        await fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
+
         raw = await fs.readFile(`snorlax/${response}`);
         let base64 = Buffer.from(raw).toString('base64');
         await fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');

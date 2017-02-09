@@ -11,7 +11,7 @@ class IOSDump {
     async convert(): Promise<number> {
         try {
             await fs.mkdir('data');
-        } catch(e) {}
+        } catch (e) {}
 
         let files = await fs.readdir('ios.dump.noctem');
 
@@ -22,7 +22,7 @@ class IOSDump {
         let requests = _.filter(files, f =>  _.endsWith(f, '.request'));
         let responses = _.filter(files, f =>  _.endsWith(f, '.response'));
 
-        if (requests.length == 0) throw new Error('No file to import');
+        if (requests.length === 0) throw new Error('No file to import');
 
         let date = this.getTimestamp(requests[0]);
         let when = moment(+date);
@@ -31,8 +31,8 @@ class IOSDump {
         logger.info('Dest folder: data/%s', folder);
         try {
             await fs.mkdir('data/' + folder);
-        } catch(e) {}
-                 
+        } catch (e) {}
+
         await fs.writeFile(`data/${folder}/.info`, '(Noctem, iOS)', 'utf8');
 
         let reqId = 0;
@@ -46,7 +46,7 @@ class IOSDump {
     }
 
     getRequestId(file: string): number {
-        return +file.substring(file.lastIndexOf("-") + 1);
+        return +file.substring(file.lastIndexOf('-') + 1);
     }
 
     async handleReqFile(reqId: number, file: string, folder: string, responses: string[]): Promise<void> {
@@ -57,7 +57,7 @@ class IOSDump {
             id: reqId,
             when: this.getTimestamp(file),
             data: Buffer.from(raw).toString('base64'),
-        }
+        };
         await fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(content, null, 4), 'utf8');
         await this.handleResFile(reqId, file, folder, responses);
     }

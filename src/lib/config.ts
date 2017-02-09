@@ -55,8 +55,8 @@ export default class Config {
 
         if (config.logger.file) {
             logger.add(logger.transports.File, {
-                filename: loaded.logger.file, 
-                json: false, 
+                filename: loaded.logger.file,
+                json: false,
                 level: loaded.logger.level
             });
         }

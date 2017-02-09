@@ -43,7 +43,7 @@ class MitmProxy {
         return __awaiter(this, void 0, void 0, function* () {
             let config = this.config;
             let host = context.clientToProxyRequest.headers.host;
-            if (host == `${config.ip}:${config.proxy.port}` || (config.proxy.hostname && _.startsWith(host, config.proxy.hostname))) {
+            if (host === `${config.ip}:${config.proxy.port}` || (config.proxy.hostname && _.startsWith(host, config.proxy.hostname))) {
                 let res = context.proxyToClientResponse;
                 if (_.startsWith(context.clientToProxyRequest.url, '/proxy.pac')) {
                     // get proxy.pac
@@ -78,7 +78,7 @@ class MitmProxy {
                     res.end('what?', 'utf8');
                 }
             }
-            else if (host == endpoints.api) {
+            else if (host === endpoints.api) {
                 let requestChunks = [];
                 let responseChunks = [];
                 let id = ++this.config.reqId;

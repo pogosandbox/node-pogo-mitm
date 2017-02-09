@@ -11,10 +11,10 @@ class IOSDump {
     async convert(): Promise<number> {
         try {
             await fs.mkdir('data');
-        } catch(e) {}
+        } catch (e) {}
 
         let sessions = await fs.readdir('ios.dump');
-        var converted = await Bluebird.map(sessions, async session => this.handleSession(session));
+        let converted = await Bluebird.map(sessions, async session => this.handleSession(session));
         return _.sum(converted);
     }
 
@@ -22,7 +22,7 @@ class IOSDump {
         let files = await fs.readdir(`ios.dump/${session}`);
         files = _.filter(files, f => _.endsWith(f, 'req.raw.bin'));
 
-        if (files.length == 0) throw new Error('no file to import');
+        if (files.length === 0) throw new Error('no file to import');
 
         let date = _.trimEnd(files[0], '.req.raw.bin');
         let when = moment(+date);
@@ -31,7 +31,7 @@ class IOSDump {
         logger.info('Dest folder: data/%s', folder);
         try {
             await fs.mkdir('data/' + folder);
-        } catch(e) {}
+        } catch (e) {}
 
         await fs.writeFile(`data/${folder}/.info`, '(iOS)', 'utf8');
 
@@ -69,7 +69,7 @@ class IOSDump {
                 let base64 = Buffer.from(raw).toString('base64');
                 let id = _.padStart(reqId.toString(), 5, '0');
                 await fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');
-            } catch(e) {
+            } catch (e) {
                 logger.error('Error importing file %s', resfile);
                 logger.error(e);
             }

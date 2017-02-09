@@ -20,7 +20,7 @@ class Utils {
         // typing is bad but I can't find a way to make it works
         let ipv4 = _(os.networkInterfaces())
             .filter((i, name) => !/(loopback|vmware|internal)/gi.test(name))
-            .flatten().filter(ip => !ip.internal && ip.family == 'IPv4').first();
+            .flatten().filter(ip => !ip.internal && ip.family === 'IPv4').first();
         return ipv4.address;
     }
     initFolders() {
@@ -54,7 +54,7 @@ class Utils {
             let folders = yield this.getSessionFolders();
             folders = yield Bluebird.filter(folders, (dir) => __awaiter(this, void 0, void 0, function* () {
                 let content = yield fs.readdir(`data/${dir}`);
-                return content.length == 0;
+                return content.length === 0;
             }));
             yield Bluebird.map(folders, (dir) => __awaiter(this, void 0, void 0, function* () {
                 yield fs.rmdir(`data/${dir}`);

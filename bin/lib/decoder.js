@@ -25,7 +25,7 @@ class Decoder {
         function addPackedOption(ns) {
             if (ns instanceof protobuf.Reflect.Message) {
                 ns.getChildren(protobuf.Reflect.Message.Field).forEach(field => {
-                    if (field.repeated && protobuf.PACKABLE_WIRE_TYPES.indexOf(field.type.wireType) != -1) {
+                    if (field.repeated && protobuf.PACKABLE_WIRE_TYPES.indexOf(field.type.wireType) !== -1) {
                         field.options.packed = true;
                     }
                 });
@@ -46,7 +46,7 @@ class Decoder {
             }
             let content = yield fs.readFile(`data/${session}/${requestId}.req.bin`, 'utf8');
             let data = JSON.parse(content);
-            if (data.endpoint == '/plfe/version') {
+            if (data.endpoint === '/plfe/version') {
                 data.decoded = { request: 'check version', checkVersion: true };
             }
             else {
@@ -56,13 +56,13 @@ class Decoder {
                 data.decoded.request_id = '0x' + data.decoded.request_id.toString(16);
                 // decode plateform requests
                 _.each(data.decoded.platform_requests, req => {
-                    let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r == req.type);
+                    let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r === req.type);
                     req.request_name = reqname;
                     reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
                     let requestType = POGOProtos.Networking.Platform.Requests[reqname];
                     if (requestType) {
                         req.message = requestType.decode(req.request_message);
-                        if (req.type == POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
+                        if (req.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
                             // decrypt signature
                             try {
                                 let buffer = req.message.encrypted_signature.toBuffer();
@@ -95,7 +95,7 @@ class Decoder {
                 });
                 // decode requests
                 _.each(data.decoded.requests, req => {
-                    let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r == req.request_type);
+                    let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r === req.request_type);
                     req.request_name = reqname;
                     reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
                     let requestType = POGOProtos.Networking.Requests.Messages[reqname];
@@ -131,7 +131,7 @@ class Decoder {
                 let request = JSON.parse(requestJson).decoded;
                 let raw = '';
                 let data = {};
-                if (responseJson[0] == '{') {
+                if (responseJson[0] === '{') {
                     data = JSON.parse(responseJson);
                     raw = Buffer.from(data.data, 'base64');
                     delete data.data;
@@ -152,7 +152,7 @@ class Decoder {
                 if (allPtfmRequests.length > 0) {
                     decoded.platform_responses = _.map(decoded.platform_returns, (buffer, i) => {
                         let request = allPtfmRequests[i];
-                        if (request == 'GET_STORE_ITEMS') {
+                        if (request === 'GET_STORE_ITEMS') {
                             return {
                                 error: '(unable to decode)',
                                 request_name: request,
@@ -189,7 +189,7 @@ class Decoder {
                         if (responseType) {
                             let message = responseType.decode(buffer);
                             message.request_name = request;
-                            if (request == 'GET_ASSET_DIGEST') {
+                            if (request === 'GET_ASSET_DIGEST') {
                                 _.each(message.digest, digest => {
                                     digest.key = '(hidden)';
                                 });
@@ -236,7 +236,7 @@ class Decoder {
             if (value instanceof long) {
                 data[key] = value.toString();
             }
-            else if (typeof value == 'object') {
+            else if (typeof value === 'object') {
                 data[key] = this.fixLongToString(value);
             }
         });
