@@ -2,7 +2,7 @@
   "name": "node-pogo-mitm",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "bin/index.js",
   "author": "niico",
   "license": "MIT",
   "repository": {
@@ -14,6 +14,7 @@
     "cookie-session": "^2.0.0-alpha.2",
     "dotenv": "^4.0.0",
     "express": "^4.14.1",
+    "fs-promise": "^1.0.0",
     "geolib": "^2.0.22",
     "http-mitm-proxy": "joeferner/node-http-mitm-proxy",
     "js-yaml": "^3.7.0",
@@ -28,7 +29,13 @@
     "winston": "^2.3.1"
   },
   "devDependencies": {
-    "eslint": "^3.14.1",
-    "eslint-config-google": "^0.7.1"
+    "@types/bluebird": "^3.0.37",
+    "@types/express": "^4.0.35",
+    "@types/fs-promise": "^1.0.1",
+    "@types/lodash": "^4.14.52",
+    "@types/passport": "^0.3.2",
+    "@types/winston": "^2.2.0",
+    "tslint": "^4.4.2",
+    "typescript": "^2.1.6"
   }
 }

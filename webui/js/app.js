@@ -1,9 +1,16 @@
 $(function() {
     window.global = {};
 
+    $('#btn-all-sessions').click(function() {
+        $('#panel-all-sessions').show();
+        $('#panel-sesion').hide();       
+    });
+
     // session selection
-    $('.navbar-nav, .bs-allsessions-modal-lg').on('click', '.viewSession', function() {
+    $('.navbar-nav, #all-sessions').on('click', '.viewSession', function() {
         $('.bs-allsessions-modal-lg').modal('hide');
+        $('#panel-all-sessions').hide();
+        $('#panel-sesion').show();
 
         let session = $(this).data('session');
 
@@ -49,7 +56,6 @@ $(function() {
 
     // view a session
     function viewSession(id, req) {
-        console.log(id);
         $('#view-request').hide();
         $('#view-session-info').show();
         $('#jsonViewer').html('');
@@ -151,7 +157,7 @@ $(function() {
         // all sessions modal
         data.forEach(d => {
             $('#all-sessions').prepend(`
-                <li><a href="#session=${d.id}" class='viewSession' data-session='${d.id}'>${d.title}</a></li>
+                <a href="#session=${d.id}" class="viewSession list-group-item" data-session='${d.id}'>${d.title}</a>
             `);
         });
 
@@ -177,7 +183,6 @@ $(function() {
                     request = p.substring('request='.length);
                 }
             });
-            console.log(params);
         }
         viewSession(session, request);
     });

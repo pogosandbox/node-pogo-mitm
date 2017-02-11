@@ -8,43 +8,55 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceRoot}/index.js",
-            "cwd": "${workspaceRoot}"
+            "program": "${workspaceRoot}/src/index.ts",
+            "cwd": "${workspaceRoot}",
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true
         },
         {
             "type": "node",
             "request": "launch",
             "name": "Preload",
-            "program": "${workspaceRoot}/utils/preload.js",
-            "cwd": "${workspaceRoot}"
+            "program": "${workspaceRoot}/src/utils/preload.ts",
+            "cwd": "${workspaceRoot}",
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true
         },
         {
             "type": "node",
             "request": "launch",
             "name": "Import from iOS dump",
-            "program": "${workspaceRoot}/import/ios.dump.js",
-            "cwd": "${workspaceRoot}"
+            "program": "${workspaceRoot}/src/import/ios.dump.ts",
+            "cwd": "${workspaceRoot}",
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true
         },
         {
             "type": "node",
             "request": "launch",
             "name": "Import from Noctem iOS dump",
-            "program": "${workspaceRoot}/import/ios.dump.noctem.js",
-            "cwd": "${workspaceRoot}"
+            "program": "${workspaceRoot}/src/import/ios.dump.noctem.ts",
+            "cwd": "${workspaceRoot}",
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true
         },
         {
             "type": "node",
             "request": "launch",
             "name": "Import Snorlax",
-            "program": "${workspaceRoot}/import/snorlax.js",
-            "cwd": "${workspaceRoot}"
+            "program": "${workspaceRoot}/src/import/snorlax.ts",
+            "cwd": "${workspaceRoot}",
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true
         },
         {
             "type": "node",
             "request": "launch",
             "name": "CSV Export",
-            "program": "${workspaceRoot}/export/csv.js",
-            "cwd": "${workspaceRoot}"
+            "program": "${workspaceRoot}/src/export/csv.ts",
+            "cwd": "${workspaceRoot}",
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true
         },
         {
             "type": "node",
