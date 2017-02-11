@@ -39,6 +39,7 @@ export default class WebUI {
                 next();
             });
 
+            app.get('/api/config', <express.RequestHandler>_.bind(this.getConfig, this));
             app.get('/api/sessions', <express.RequestHandler>_.bind(this.getSessions, this));
             app.get('/api/session/:session', <express.RequestHandler>_.bind(this.getRequests, this));
             app.get('/api/request/:session/:request', <express.RequestHandler>_.bind(this.decodeRequest, this));
@@ -60,7 +61,7 @@ export default class WebUI {
         }
     }
 
-    activateAuth() {
+    activateAuth(): void {
         logger.info('Activate GitHub authentication.');
         let config = this.config.ui;
         let GitHubStrategy = require('passport-github2').Strategy;
@@ -124,6 +125,10 @@ export default class WebUI {
                 next();
             }
         });
+    }
+
+    async getConfig(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
+        return res.json({});
     }
 
     async getSessions(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {

@@ -36,6 +36,7 @@ class WebUI {
                 res.header('Pragma', 'no-cache');
                 next();
             });
+            app.get('/api/config', _.bind(this.getConfig, this));
             app.get('/api/sessions', _.bind(this.getSessions, this));
             app.get('/api/session/:session', _.bind(this.getRequests, this));
             app.get('/api/request/:session/:request', _.bind(this.decodeRequest, this));
@@ -105,6 +106,11 @@ class WebUI {
             else {
                 next();
             }
+        });
+    }
+    getConfig(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return res.json({});
         });
     }
     getSessions(req, res, next) {

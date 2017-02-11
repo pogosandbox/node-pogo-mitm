@@ -31,8 +31,10 @@ class Utils {
     }
     createCurrentFolder() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.config.datadir = 'data/' + moment().format('YYYYMMDD.HHmmss');
-            yield fs.mkdir(this.config.datadir);
+            if (this.config.proxy.active) {
+                this.config.datadir = 'data/' + moment().format('YYYYMMDD.HHmmss');
+                yield fs.mkdir(this.config.datadir);
+            }
         });
     }
     getSessionFolders() {

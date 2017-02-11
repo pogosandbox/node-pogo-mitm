@@ -27,8 +27,10 @@ export default class Utils {
     }
 
     async createCurrentFolder() {
-        this.config.datadir = 'data/' + moment().format('YYYYMMDD.HHmmss');
-        await fs.mkdir(this.config.datadir);
+        if (this.config.proxy.active) {
+            this.config.datadir = 'data/' + moment().format('YYYYMMDD.HHmmss');
+            await fs.mkdir(this.config.datadir);
+        }
     }
 
     async getSessionFolders(): Promise<string[]> {
