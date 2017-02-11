@@ -34,31 +34,36 @@ let config = {
 class Config {
     load() {
         let loaded = config;
-        if (!fs.existsSync('data')) {
-            fs.mkdirSync('data');
-        }
-        if (!fs.existsSync('data/config.yaml')) {
-            logger.info('Config file not found in data/config.yaml, using default.');
-        }
-        else {
-            logger.info('Loading data/config.yaml');
-            let loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
-            loaded = _.defaultsDeep(loaded, config);
-        }
-        logger.remove(logger.transports.Console);
-        logger.add(logger.transports.Console, {
-            'timestamp': function () {
-                return moment().format('HH:mm:ss');
-            },
-            'colorize': true,
-            'level': loaded.logger.level,
-        });
-        if (config.logger.file) {
-            logger.add(logger.transports.File, {
-                filename: loaded.logger.file,
-                json: false,
-                level: loaded.logger.level
+        try {
+            if (!fs.existsSync('data')) {
+                fs.mkdirSync('data');
+            }
+            if (!fs.existsSync('data/config.yaml')) {
+                logger.info('Config file not found in data/config.yaml, using default.');
+            }
+            else {
+                logger.info('Loading data/config.yaml');
+                loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
+                loaded = _.defaultsDeep(loaded, config);
+            }
+            logger.remove(logger.transports.Console);
+            logger.add(logger.transports.Console, {
+                'timestamp': function () {
+                    return moment().format('HH:mm:ss');
+                },
+                'colorize': true,
+                'level': loaded.logger.level,
             });
+            if (config.logger.file) {
+                logger.add(logger.transports.File, {
+                    filename: loaded.logger.file,
+                    json: false,
+                    level: loaded.logger.level
+                });
+            }
+        }
+        catch (e) {
+            logger.error(e);
         }
         return loaded;
     }

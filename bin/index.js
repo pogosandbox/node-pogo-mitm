@@ -13,12 +13,11 @@ const config_1 = require("./lib/config");
 const proxy_1 = require("./lib/proxy");
 const webui_1 = require("./lib/webui");
 const utils_1 = require("./lib/utils");
-let config = new config_1.default().load();
-let utils = new utils_1.default(config);
 function Main() {
     return __awaiter(this, void 0, void 0, function* () {
+        let config = new config_1.default().load();
+        let utils = new utils_1.default(config);
         yield utils.initFolders();
-        logger.debug('Launching proxy...');
         let proxy = new proxy_1.default(config);
         yield proxy.launch();
         let webui = new webui_1.default(config);

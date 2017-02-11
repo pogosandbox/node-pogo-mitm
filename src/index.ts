@@ -7,13 +7,12 @@ import Proxy from './lib/proxy';
 import WebUI from './lib/webui';
 import Utils from './lib/utils';
 
-let config = new Config().load();
-let utils = new Utils(config);
-
 async function Main() {
+    let config = new Config().load();
+    let utils = new Utils(config);
+
     await utils.initFolders();
 
-    logger.debug('Launching proxy...');
     let proxy = new Proxy(config);
     await proxy.launch();
 
