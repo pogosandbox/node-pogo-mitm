@@ -1,6 +1,6 @@
 {
   "name": "node-pogo-mitm",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "",
   "main": "bin/index.js",
   "author": "niico",
@@ -17,7 +17,7 @@
     "fs-promise": "^1.0.0",
     "geolib": "^2.0.22",
     "http-mitm-proxy": "joeferner/node-http-mitm-proxy",
-    "js-yaml": "^3.7.0",
+    "js-yaml": "^3.8.1",
     "json2csv": "^3.7.3",
     "lodash": "^4.17.4",
     "long": "^3.2.0",

@@ -35,14 +35,14 @@ let config = {
 
 export default class Config {
     load(): any {
+        let loaded = config;
         if (!fs.existsSync('data/config.yaml')) {
             logger.info('Config file not found in data/config.yaml, using default.');
-            return config;
+        } else {
+            logger.info('Loading data/config.yaml');
+            let loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
+            loaded = _.defaultsDeep(loaded, config);
         }
-
-        logger.info('Loading data/config.yaml');
-        let loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
-        loaded = _.defaultsDeep(loaded, config);
 
         logger.remove(logger.transports.Console);
         logger.add(logger.transports.Console, {
