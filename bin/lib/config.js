@@ -34,6 +34,9 @@ let config = {
 class Config {
     load() {
         let loaded = config;
+        if (!fs.existsSync('data')) {
+            fs.mkdirSync('data');
+        }
         if (!fs.existsSync('data/config.yaml')) {
             logger.info('Config file not found in data/config.yaml, using default.');
         }
