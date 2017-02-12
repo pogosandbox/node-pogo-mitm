@@ -51,7 +51,7 @@ class Config {
                 'timestamp': function () {
                     return moment().format('HH:mm:ss');
                 },
-                'colorize': true,
+                'colorize': false,
                 'level': loaded.logger.level,
             });
             if (config.logger.file) {
