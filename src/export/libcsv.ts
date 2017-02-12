@@ -1,7 +1,7 @@
 import * as logger from 'winston';
 import * as fs from 'fs-promise';
 import * as _ from 'lodash';
-import * as Bluebird from 'Bluebird';
+import * as Bluebird from 'bluebird';
 
 let json2csv = require('json2csv');
 const geolib = require('geolib');

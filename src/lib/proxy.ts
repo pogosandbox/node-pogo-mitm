@@ -37,17 +37,6 @@ export default class MitmProxy {
                 .onError(_.bind(this.onError, this))
                 .onRequest(_.bind(this.onRequest, this))
                 .listen({port: config.proxy.port, silent: true});
-
-            // if (config.ngrok.active) {
-            //     ngrok.connect({
-            //         proto: 'tcp',
-            //         addr: config.proxy.port,
-            //         region: config.ngrok.region,
-            //         authtoken: config.ngrok.token,
-            //     }, (err, url) => {
-            //         logger.info('ngrok listening at %s', url);
-            //     });
-            // }
         } else {
             logger.info('Proxy deactivated.');
         }
