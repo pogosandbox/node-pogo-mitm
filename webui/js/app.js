@@ -8,10 +8,6 @@ $(function() {
 
     // session selection
     $('.navbar-nav, #all-sessions').on('click', '.viewSession', function() {
-        $('.bs-allsessions-modal-lg').modal('hide');
-        $('#panel-all-sessions').hide();
-        $('#panel-sesion').show();
-
         let session = $(this).data('session');
 
         $('.navbar-nav .active').removeClass('active');
@@ -56,6 +52,8 @@ $(function() {
 
     // view a session
     function viewSession(id, req) {
+        $('#panel-all-sessions').hide();
+        $('#panel-sesion').show();
         $('#view-request').hide();
         $('#view-session-info').show();
         $('#jsonViewer').html('');
@@ -172,7 +170,7 @@ $(function() {
             `);
         });
 
-        let session = last.id;
+        let session = undefined;
         let request = undefined;
         if (window.location.hash.length > 0 && window.location.hash[0] == '#') {
             let params = window.location.hash.substring(1).split('&');
@@ -184,6 +182,8 @@ $(function() {
                 }
             });
         }
-        viewSession(session, request);
+        if (session) {
+            viewSession(session, request);
+        }
     });
 });

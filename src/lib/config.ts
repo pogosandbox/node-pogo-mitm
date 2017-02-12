@@ -58,15 +58,19 @@ export default class Config {
                 'level': loaded.logger.level,
             });
 
-            if (config.logger.file) {
+            if (loaded.logger.file) {
                 logger.add(logger.transports.File, {
-                    filename: loaded.logger.file,
-                    json: false,
-                    level: loaded.logger.level
+                    'timestamp': function() {
+                        return moment().format('HH:mm:ss');
+                    },
+                    'filename': loaded.logger.file,
+                    'json': false,
+                    'level': loaded.logger.level,
                 });
             }
         } catch (e) {
             logger.error(e);
+            debugger;
         }
 
         return loaded;
