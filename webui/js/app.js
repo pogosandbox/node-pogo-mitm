@@ -1,7 +1,7 @@
 $(function() {
     window.global = {};
 
-    $('#btn-all-sessions').click(function() {
+    $('.btn-all-sessions').click(function() {
         $('#panel-all-sessions').show();
         $('#panel-sesion').hide();       
     });
