@@ -160,7 +160,7 @@ $(function() {
         });
 
         // current session menu
-        let last = data.pop();
+        let last = data[data.length - 1];
         $('#last-session').data('session', last.id);
 
         // previous sessions drop down
