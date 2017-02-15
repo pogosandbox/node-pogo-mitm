@@ -5,13 +5,14 @@
   "main": "bin/index.js",
   "author": "niico",
   "license": "MIT",
+  "engines" : { "node" : ">=6.0.0" },
   "repository": {
     "type": "git",
     "url": "https://github.com/pogosandbox/node-pogo-mitm.git"
   },
   "dependencies": {
     "bluebird": "^3.4.7",
-    "cookie-session": "^2.0.0-alpha.2",
+    "cookie-session": "^2.0.0-alpha.3",
     "dotenv": "^4.0.0",
     "express": "^4.14.1",
     "fs-promise": "^1.0.0",
