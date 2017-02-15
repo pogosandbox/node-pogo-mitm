@@ -2,8 +2,8 @@ import * as logger from 'winston';
 import * as fs from 'fs-promise';
 import * as _ from 'lodash';
 import * as moment from 'moment';
+import * as POGOProtos from 'node-pogo-protos';
 
-let POGOProtos = require('node-pogo-protos');
 let pcrypt = require('pcrypt');
 let protobuf = require('protobufjs');
 let long = require('long');
@@ -150,7 +150,7 @@ export default class Decoder {
                 };
             }
 
-            let decoded = POGOProtos.Networking.Envelopes.ResponseEnvelope.decode(raw);
+            let decoded = POGOProtos.Networking.Envelopes.ResponseEnvelope.decode(raw) as any;
             decoded.request_id = '0x' + decoded.request_id.toString(16);
 
             // decode plateform response
