@@ -12,19 +12,13 @@
 # Proxy config.
 # - port=8888 is the port the proxy will listen to
 proxy:
+    active: true
     port: 8888
-
-# Use ngrok to publish proxy online. Allows mitm while walking out of your network
-# - activated=false true to activated
-# - region=eu change ngrok region (us, eu, au, ap)
-# - token=null use your ngrok token if you have one
-ngrok: 
-    active: false
-    region: eu
 
 # Web UI config.
 # - port=8080 is the port the ui will listen to
 ui:
+    active: true
     port: 8080
 
 # Logging config

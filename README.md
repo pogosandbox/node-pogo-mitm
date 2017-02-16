@@ -8,6 +8,13 @@ On iOS:
  - then install and launch this app
  - add cert to your phone by going to http://[ip]:[port]/cert.crt
  - then modify ios proxy settings to http://[ip]:[port]/proxy.pac
- 
+
+## install
+ - Install node (version 6 or 7)
+ - git clone
+ - npm install
+ - create a file named data/config.yml if needed (there is an example in that folder)
+ - node bin/index.js
+
 ## Troubleshoot
  - Sometime iOS do not reload proxy.pac, try to forget your wifi and reconfigure it
