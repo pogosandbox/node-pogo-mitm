@@ -24,7 +24,7 @@ class Snorlax {
             fs.mkdirSync('data/' + folder);
         } catch (e) {}
 
-        await fs.writeFile(`data/${folder}/.info`, '(snorlax)', 'utf8');
+        await fs.writeFile(`data/${folder}/.info`, '(android)', 'utf8');
 
         let requests = _.filter(<string[]>files, f => f.indexOf('REQUEST') >= 0);
         let responses =  _.filter(<string[]>files, f => f.indexOf('RESPONSE') >= 0);

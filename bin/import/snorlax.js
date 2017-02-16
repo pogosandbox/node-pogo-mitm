@@ -33,7 +33,7 @@ class Snorlax {
                 fs.mkdirSync('data/' + folder);
             }
             catch (e) { }
-            yield fs.writeFile(`data/${folder}/.info`, '(snorlax)', 'utf8');
+            yield fs.writeFile(`data/${folder}/.info`, '(android)', 'utf8');
             let requests = _.filter(files, f => f.indexOf('REQUEST') >= 0);
             let responses = _.filter(files, f => f.indexOf('RESPONSE') >= 0);
             yield Bluebird.map(requests, file => {
