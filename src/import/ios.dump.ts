@@ -14,6 +14,7 @@ class IOSDump {
         } catch (e) {}
 
         let sessions = await fs.readdir('ios.dump');
+        sessions = _.filter(sessions, session => _.startsWith('mitm.'));
         let converted = await Bluebird.map(sessions, async session => this.handleSession(session));
         return _.sum(converted);
     }
