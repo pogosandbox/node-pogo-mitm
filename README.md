@@ -13,7 +13,7 @@ On iOS:
  - Install node (version 6 or 7)
  - git clone
  - npm install
- - create a file named data/config.yml if needed (there is an example in that folder)
+ - create a file named data/config.yaml if needed (there is an example in that folder)
  - node bin/index.js
 
 ## Troubleshoot
