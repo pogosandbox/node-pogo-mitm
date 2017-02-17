@@ -17,6 +17,9 @@ let config = {
             active: false,
             users: [],
         },
+        ga: {
+            key: 'UA-92205812-1',
+        }
     },
     protos: {
         cachejson: true,

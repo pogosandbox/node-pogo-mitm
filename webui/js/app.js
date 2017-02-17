@@ -150,40 +150,60 @@ $(function() {
         viewRequestDetail('request', session, request);
     });
 
-    // attach handler for session selection
-    $.getJSON('/api/sessions', function(data) {
-        // all sessions modal
-        data.forEach(d => {
-            $('#all-sessions').prepend(`
-                <a href="#session=${d.id}" class="viewSession list-group-item" data-session='${d.id}'>${d.title}</a>
-            `);
-        });
-
-        // current session menu
-        let last = data[data.length - 1];
-        $('#last-session').data('session', last.id);
-
-        // previous sessions drop down
-        data.slice(-15).forEach(d => {
-            $('#session-dropdown').prepend(`
-                <li><a href="#session=${d.id}" class='viewSession' data-session='${d.id}'>${d.title}</a></li>
-            `);
-        });
-
-        let session = undefined;
-        let request = undefined;
-        if (window.location.hash.length > 0 && window.location.hash[0] == '#') {
-            let params = window.location.hash.substring(1).split('&');
-            params.forEach(p => {
-                if (p.startsWith('session=')) {
-                    session = p.substring('session='.length);
-                } else if (p.startsWith('request=')) {
-                    request = p.substring('request='.length);
-                }
+    function initSessions() {
+        // attach handler for session selection
+        return $.getJSON('/api/sessions').done(data => {
+            // all sessions modal
+            data.forEach(d => {
+                $('#all-sessions').prepend(`
+                    <a href="#session=${d.id}" class="viewSession list-group-item" data-session='${d.id}'>${d.title}</a>
+                `);
             });
-        }
-        if (session) {
-            viewSession(session, request);
-        }
-    });
+
+            // current session menu
+            let last = data[data.length - 1];
+            $('#last-session').data('session', last.id);
+
+            // previous sessions drop down
+            data.slice(-15).forEach(d => {
+                $('#session-dropdown').prepend(`
+                    <li><a href="#session=${d.id}" class='viewSession' data-session='${d.id}'>${d.title}</a></li>
+                `);
+            });
+
+            let session = undefined;
+            let request = undefined;
+            if (window.location.hash.length > 0 && window.location.hash[0] == '#') {
+                let params = window.location.hash.substring(1).split('&');
+                params.forEach(p => {
+                    if (p.startsWith('session=')) {
+                        session = p.substring('session='.length);
+                    } else if (p.startsWith('request=')) {
+                        request = p.substring('request='.length);
+                    }
+                });
+            }
+            if (session) {
+                viewSession(session, request);
+            }
+        });
+    }
+
+    function getConfig() {
+        return $.getJSON('/api/config').done(data => {
+            if(data.ga) {
+                try {
+                    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+                    ga('create', data.ga, 'auto');
+                    ga('send', 'pageview');
+                } catch(e) {}
+            }
+        });
+    }
+
+    getConfig().done(() => initSessions());
 });

@@ -128,7 +128,10 @@ export default class WebUI {
     }
 
     async getConfig(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
-        return res.json({});
+        return res.json({
+            auth: this.config.ui.auth.active,
+            ga: this.config.ui.ga.key,
+        });
     }
 
     async getSessions(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {

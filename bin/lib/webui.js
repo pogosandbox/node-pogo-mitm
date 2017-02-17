@@ -110,7 +110,10 @@ class WebUI {
     }
     getConfig(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            return res.json({});
+            return res.json({
+                auth: this.config.ui.auth.active,
+                ga: this.config.ui.ga.key,
+            });
         });
     }
     getSessions(req, res, next) {

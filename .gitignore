@@ -4,4 +4,4 @@ data/*
 snorlax/*
 .env
 ios.dump*/*
-debug.log
+*.log
