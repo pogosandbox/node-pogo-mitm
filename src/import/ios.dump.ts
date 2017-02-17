@@ -22,8 +22,7 @@ class IOSDump {
     async handleSession(session: string): Promise<number> {
         let files = await fs.readdir(`ios.dump/${session}`);
         files = _.filter(files, f => _.endsWith(f, 'req.raw.bin'));
-
-        if (files.length === 0) throw new Error('no file to import');
+        if (files.length === 0) return 0;
 
         let date = _.trimEnd(files[0], '.req.raw.bin');
         let when = moment(+date);
