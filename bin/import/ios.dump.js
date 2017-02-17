@@ -22,7 +22,7 @@ class IOSDump {
             }
             catch (e) { }
             let sessions = yield fs.readdir('ios.dump');
-            sessions = _.filter(sessions, session => _.startsWith('mitm.'));
+            sessions = _.filter(sessions, session => _.startsWith(session, 'mitm.'));
             let converted = yield Bluebird.map(sessions, (session) => __awaiter(this, void 0, void 0, function* () { return this.handleSession(session); }));
             return _.sum(converted);
         });
