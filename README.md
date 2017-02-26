@@ -2,6 +2,9 @@
 
 [![dependencies](https://david-dm.org/pogosandbox/node-pogo-mitm.svg)](https://david-dm.org/pogosandbox/node-pogo-mitm) 
 
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/niicodev)
+
+
 Act as a proxy between pokemon go app on the phone and niantic servers.  
 
 ## Install

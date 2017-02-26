@@ -150,6 +150,24 @@ $(function() {
         viewRequestDetail('request', session, request);
     });
 
+    function showSessionFromUrl() {
+        let session = undefined;
+        let request = undefined;
+        if (window.location.hash.length > 0 && window.location.hash[0] == '#') {
+            let params = window.location.hash.substring(1).split('&');
+            params.forEach(p => {
+                if (p.startsWith('session=')) {
+                    session = p.substring('session='.length);
+                } else if (p.startsWith('request=')) {
+                    request = p.substring('request='.length);
+                }
+            });
+        }
+        if (session) {
+            viewSession(session, request);
+        }
+    }
+
     function initSessions() {
         // attach handler for session selection
         return $.getJSON('/api/sessions').done(data => {
@@ -171,23 +189,14 @@ $(function() {
                 `);
             });
 
-            let session = undefined;
-            let request = undefined;
-            if (window.location.hash.length > 0 && window.location.hash[0] == '#') {
-                let params = window.location.hash.substring(1).split('&');
-                params.forEach(p => {
-                    if (p.startsWith('session=')) {
-                        session = p.substring('session='.length);
-                    } else if (p.startsWith('request=')) {
-                        request = p.substring('request='.length);
-                    }
-                });
-            }
-            if (session) {
-                viewSession(session, request);
-            }
+            showSessionFromUrl();
         });
     }
+
+    // window.onhashchange = function() {
+    //     console.log('onhashchange');
+    //     showSessionFromUrl();
+    // }
 
     function getConfig() {
         return $.getJSON('/api/config').done(data => {

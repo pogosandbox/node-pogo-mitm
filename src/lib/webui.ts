@@ -56,6 +56,7 @@ export default class WebUI {
             app.listen(config.port, () => {
                 logger.info('UI started, port %s.', config.port);
             });
+
         } else {
             logger.info('UI deactivated.');
         }

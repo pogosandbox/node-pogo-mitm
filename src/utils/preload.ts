@@ -24,17 +24,32 @@ class Preload {
         await Bluebird.map(folders, folder => this.preloadSession(folder));
     }
 
-    async preloadSession(folder: string): Promise<void> {
+    async preloadSession(folder: string) {
         if (fs.existsSync(`data/${folder}/.preload`)) return;
 
         logger.info('Preload session %s', folder);
         let files = await fs.readdir(`data/${folder}`);
 
         let data = await this.processRequests(folder, files);
-        data = _.filter(data, d => d.lat && d.lng);
-        await fs.writeFile(`data/${folder}/.preload`, JSON.stringify(data), 'utf8');
+
+        await this.validateData(folder, data);
+
+        // save coords to display a nice map
+        let coords = _.map(data, d => {
+            return {lat: d.lat, lng: d.lng};
+        });
+        coords = _.filter(coords, d => d.lat && d.lng);
+        await fs.writeFile(`data/${folder}/.preload`, JSON.stringify(coords), 'utf8');
 
         await this.processResponses(folder, files);
+    }
+
+    async validateData(folder: string, data: any[]) {
+        try {
+
+        } catch (e) {
+            logger.warn(e);
+        }
     }
 
     async processRequests(session: string, files: string[]): Promise<any[]> {
@@ -44,6 +59,7 @@ class Preload {
         });
         return _.map(data, d => {
             return {
+                requestId: d.decoded.request_id,
                 lat: d.decoded.latitude,
                 lng: d.decoded.longitude,
             };

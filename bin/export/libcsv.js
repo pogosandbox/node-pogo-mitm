@@ -42,7 +42,7 @@ class Csv {
                 });
             }));
             let requests = _.flatten(sessionsArOfAr);
-            Bluebird.each(requests, (request) => __awaiter(this, void 0, void 0, function* () {
+            yield Bluebird.each(requests, (request) => __awaiter(this, void 0, void 0, function* () {
                 let exists = yield fs.exists(`data/${request.session}/.info`);
                 if (exists) {
                     request.info = yield fs.readFile(`data/${request.session}/.info`, 'utf8');

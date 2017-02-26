@@ -44,7 +44,7 @@ export default class Csv {
 
         let requests = _.flatten(sessionsArOfAr);
 
-        Bluebird.each(requests, async request => {
+        await Bluebird.each(requests, async request => {
             let exists = await fs.exists(`data/${request.session}/.info`);
             if (exists) {
                 request.info = await fs.readFile(`data/${request.session}/.info`, 'utf8');
