@@ -29,6 +29,7 @@ class MitmProxy {
         if (config.proxy.active) {
             let ip = config.ip = this.utils.getIp();
             logger.info('Proxy listening at %s:%s', ip, config.proxy.port);
+            logger.info('Proxy config url available at http://%s:%s/proxy.pac', ip, config.proxy.port);
             this.proxy = mitmproxy()
                 .use(mitmproxy.gunzip)
                 .onError(_.bind(this.onError, this))
