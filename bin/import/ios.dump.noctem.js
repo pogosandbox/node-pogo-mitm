@@ -44,10 +44,11 @@ class IOSDump {
         });
     }
     getTimestamp(file) {
-        return +file.substring('iOS-'.length, file.indexOf('-', 'iOS-'.length + 1));
+        file = file.replace('iOS-', '');
+        return +file.substring(0, file.indexOf('-'));
     }
     getRequestId(file) {
-        return +file.substring(file.lastIndexOf('-') + 1);
+        return file.substring(file.lastIndexOf('-') + 1, file.length - '.request'.length);
     }
     handleReqFile(reqId, file, folder, responses) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -67,11 +68,14 @@ class IOSDump {
         return __awaiter(this, void 0, void 0, function* () {
             let requestId = this.getRequestId(file);
             let resfile = _.find(responses, f => f.endsWith(requestId + '.response'));
-            if (fs.existsSync(`ios.dump/${resfile}`)) {
+            if (fs.existsSync(`ios.dump.noctem/${resfile}`)) {
                 let raw = yield fs.readFile(`ios.dump.noctem/${resfile}`);
                 let base64 = Buffer.from(raw).toString('base64');
                 let id = _.padStart(reqId.toString(), 5, '0');
                 yield fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');
+            }
+            else {
+                logger.warn('Response file does not exist: ', resfile);
             }
         });
     }

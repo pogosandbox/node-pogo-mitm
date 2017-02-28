@@ -42,14 +42,15 @@ class IOSDump {
     }
 
     getTimestamp(file: string): number {
-        return +file.substring('iOS-'.length, file.indexOf('-', 'iOS-'.length + 1));
+        file = file.replace('iOS-', '');
+        return +file.substring(0, file.indexOf('-'));
     }
 
-    getRequestId(file: string): number {
-        return +file.substring(file.lastIndexOf('-') + 1);
+    getRequestId(file: string): string {
+        return file.substring(file.lastIndexOf('-') + 1, file.length - '.request'.length);
     }
 
-    async handleReqFile(reqId: number, file: string, folder: string, responses: string[]): Promise<void> {
+    async handleReqFile(reqId: number, file: string, folder: string, responses: string[]) {
         logger.info('Convert file %s in folder %s', file, folder);
         let raw = await fs.readFile(`ios.dump.noctem/${file}`);
         let id = _.padStart(reqId.toString(), 5, '0');
@@ -62,14 +63,16 @@ class IOSDump {
         await this.handleResFile(reqId, file, folder, responses);
     }
 
-    async handleResFile(reqId: number, file: string, folder: string, responses: string[]): Promise<void> {
+    async handleResFile(reqId: number, file: string, folder: string, responses: string[]) {
         let requestId = this.getRequestId(file);
         let resfile = _.find(<string[]>responses, f => f.endsWith(requestId + '.response'));
-        if (fs.existsSync(`ios.dump/${resfile}`)) {
+        if (fs.existsSync(`ios.dump.noctem/${resfile}`)) {
             let raw = await fs.readFile(`ios.dump.noctem/${resfile}`);
             let base64 = Buffer.from(raw).toString('base64');
             let id = _.padStart(reqId.toString(), 5, '0');
             await fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');
+        } else {
+            logger.warn('Response file does not exist: ', resfile);
         }
     }
 }
