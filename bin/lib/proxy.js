@@ -79,6 +79,11 @@ class MitmProxy {
                     res.end('what?', 'utf8');
                 }
             }
+            else if (host === endpoints.ptc) {
+                logger.debug('Dump sso.pokemon.com headers');
+                logger.debug(context.proxyToServerRequest._headers);
+                callback();
+            }
             else if (host === endpoints.api) {
                 let requestChunks = [];
                 let responseChunks = [];
