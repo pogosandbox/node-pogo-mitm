@@ -44,11 +44,11 @@ export default class Config {
                 fs.mkdirSync('data');
             }
 
-            if (!fs.existsSync('data/config.yaml')) {
-                logger.info('Config file not found in data/config.yaml, using default.');
+            if (!fs.existsSync('config/config.yaml')) {
+                logger.info('Config file not found in config/config.yaml, using default.');
             } else {
-                logger.info('Loading data/config.yaml');
-                loaded = yaml.safeLoad(fs.readFileSync('data/config.yaml', 'utf8'));
+                logger.info('Loading config/config.yaml');
+                loaded = yaml.safeLoad(fs.readFileSync('config/config.yaml', 'utf8'));
                 loaded = _.defaultsDeep(loaded, config);
             }
 
