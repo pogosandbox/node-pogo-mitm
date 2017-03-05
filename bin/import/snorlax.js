@@ -75,6 +75,7 @@ let snorlax = new Snorlax();
 snorlax.convert()
     .then(num => {
     logger.info('%s file(s) converted.', num);
+    logger.info('Done.');
     process.exit();
 })
     .catch(e => logger.error(e));
