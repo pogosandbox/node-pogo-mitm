@@ -22,6 +22,10 @@ let config = {
             key: 'UA-92205812-1',
         }
     },
+    alternate_endpoint: {
+        active: false,
+        port: 443,
+    },
     protos: {
         cachejson: true,
     },
@@ -38,7 +42,7 @@ let config = {
 
 export default class Config {
     load(): any {
-        let loaded = config as any;
+        let loaded = null;
         try {
             if (!fs.existsSync('data')) {
                 fs.mkdirSync('data');
@@ -48,7 +52,8 @@ export default class Config {
                 logger.info('Config file not found in config/config.yaml, using default.');
             } else {
                 logger.info('Loading config/config.yaml');
-                loaded = yaml.safeLoad(fs.readFileSync('config/config.yaml', 'utf8'));
+                let content = fs.readFileSync('config/config.yaml', 'utf8');
+                loaded = yaml.safeLoad(content);
                 loaded = _.defaultsDeep(loaded, config);
             }
 
