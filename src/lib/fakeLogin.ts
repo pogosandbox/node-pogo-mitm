@@ -1,6 +1,7 @@
 import * as logger from 'winston';
-import * as fs from 'fs';
+import * as fs from 'fs-promise';
 import * as _ from 'lodash';
+import * as moment from 'moment';
 import * as http from 'http';
 import * as https from 'https';
 import * as request from 'request-promise';
@@ -19,12 +20,12 @@ export default class FakeLogin {
         this.utils = new Utils(config);
     }
 
-    launch() {
+    async launch() {
         let config = this.config.fakeLogin;
         if (config.active) {
             const options = {
-                key: fs.readFileSync('.http-mitm-proxy/keys/ca.private.key'),
-                cert: fs.readFileSync('.http-mitm-proxy/certs/ca.pem')
+                key: await fs.readFile('.http-mitm-proxy/keys/ca.private.key'),
+                cert: await fs.readFile('.http-mitm-proxy/certs/ca.pem')
             };
 
             let server = https.createServer(options, _.bind(this.onRequest, this));
@@ -55,8 +56,9 @@ export default class FakeLogin {
                 simple: false,
             };
             let response = await request(options);
-
             response.headers['content-length'] = response.body ? response.body.length : 0;
+
+            await this.saveToFile(req.url, req.headers, response);
 
             res.writeHead(response.statusCode, response.headers);
             res.end(response.body, 'binary');
@@ -65,5 +67,22 @@ export default class FakeLogin {
             res.writeHead(500, {'Content-Type': 'text/plain'});
             res.end(e.toString());
         }
+    }
+
+    async saveToFile(url, headers, response) {
+        let when = +moment();
+        let data = {
+            when: when,
+            request: {
+                endpoint: url,
+                headers: headers,
+            },
+            response: {
+                statusCode: response.statusCode,
+                response: response.headers,
+                data: response.body.toString('base64'),
+            }
+        };
+        await fs.writeFile(`${this.config.datadir}/${when}.login.bin`, JSON.stringify(data, null, 4), 'utf8');
     }
 }

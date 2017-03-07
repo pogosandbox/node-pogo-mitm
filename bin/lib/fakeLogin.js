@@ -8,8 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 const logger = require("winston");
-const fs = require("fs");
+const fs = require("fs-promise");
 const _ = require("lodash");
+const moment = require("moment");
 const https = require("https");
 const request = require("request-promise");
 const getRawBody = require("raw-body");
@@ -20,18 +21,20 @@ class FakeLogin {
         this.utils = new utils_1.default(config);
     }
     launch() {
-        let config = this.config.fakeLogin;
-        if (config.active) {
-            const options = {
-                key: fs.readFileSync('.http-mitm-proxy/keys/ca.private.key'),
-                cert: fs.readFileSync('.http-mitm-proxy/certs/ca.pem')
-            };
-            let server = https.createServer(options, _.bind(this.onRequest, this));
-            server.listen(config.port, () => {
-                let ip = this.utils.getIp();
-                logger.info('Fake login listening at %s:%s', ip, config.port);
-            });
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            let config = this.config.fakeLogin;
+            if (config.active) {
+                const options = {
+                    key: yield fs.readFile('.http-mitm-proxy/keys/ca.private.key'),
+                    cert: yield fs.readFile('.http-mitm-proxy/certs/ca.pem')
+                };
+                let server = https.createServer(options, _.bind(this.onRequest, this));
+                server.listen(config.port, () => {
+                    let ip = this.utils.getIp();
+                    logger.info('Fake login listening at %s:%s', ip, config.port);
+                });
+            }
+        });
     }
     onRequest(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -54,6 +57,7 @@ class FakeLogin {
                 };
                 let response = yield request(options);
                 response.headers['content-length'] = response.body ? response.body.length : 0;
+                yield this.saveToFile(req.url, req.headers, response);
                 res.writeHead(response.statusCode, response.headers);
                 res.end(response.body, 'binary');
             }
@@ -62,6 +66,24 @@ class FakeLogin {
                 res.writeHead(500, { 'Content-Type': 'text/plain' });
                 res.end(e.toString());
             }
+        });
+    }
+    saveToFile(url, headers, response) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let when = +moment();
+            let data = {
+                when: when,
+                request: {
+                    endpoint: url,
+                    headers: headers,
+                },
+                response: {
+                    statusCode: response.statusCode,
+                    response: response.headers,
+                    data: response.body.toString('base64'),
+                }
+            };
+            yield fs.writeFile(`${this.config.datadir}/${when}.login.bin`, JSON.stringify(data, null, 4), 'utf8');
         });
     }
 }
