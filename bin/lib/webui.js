@@ -159,9 +159,22 @@ class WebUI {
                 }
                 let files = yield fs.readdir(`data/${req.params.session}`);
                 files = _.filter(files, d => _.endsWith(d, '.req.bin'));
+                let force = !this.config.protos.cachejson;
                 result.files = yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () {
                     let content = yield fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
                     let request = JSON.parse(content);
+                    request.title = '';
+                    try {
+                        let decoded = yield this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
+                        if (decoded && decoded.decoded) {
+                            let main = _.first(decoded.decoded.requests);
+                            if (main) {
+                                request.title = main.request_name;
+                            }
+                            request.title += ` (${decoded.decoded.requests.length})`;
+                        }
+                    }
+                    catch (e) { }
                     delete request.data;
                     request.id = _.trimEnd(file, '.req.bin');
                     return request;
