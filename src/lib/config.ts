@@ -22,7 +22,7 @@ let config = {
             key: 'UA-92205812-1',
         }
     },
-    alternate_endpoint: {
+    fakeLogin: {
         active: false,
         port: 443,
     },
