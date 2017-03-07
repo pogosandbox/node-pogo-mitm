@@ -24,13 +24,14 @@ export default class FakeLogin {
         let config = this.config.fakeLogin;
         if (config.active) {
             const options = {
-                key: await fs.readFile('.http-mitm-proxy/keys/ca.private.key'),
-                cert: await fs.readFile('.http-mitm-proxy/certs/ca.pem')
+                key: await fs.readFile('.http-mitm-proxy/keys/sso.pokemon.com.key'),
+                cert: await fs.readFile('.http-mitm-proxy/certs/sso.pokemon.com.pem')
             };
 
             let server = https.createServer(options, _.bind(this.onRequest, this));
+
             server.listen(config.port, () => {
-                 let ip = this.utils.getIp();
+                let ip = this.utils.getIp();
                 logger.info('Fake login listening at %s:%s', ip, config.port);
             });
         }

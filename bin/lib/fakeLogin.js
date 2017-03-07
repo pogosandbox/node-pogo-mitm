@@ -25,8 +25,8 @@ class FakeLogin {
             let config = this.config.fakeLogin;
             if (config.active) {
                 const options = {
-                    key: yield fs.readFile('.http-mitm-proxy/keys/ca.private.key'),
-                    cert: yield fs.readFile('.http-mitm-proxy/certs/ca.pem')
+                    key: yield fs.readFile('.http-mitm-proxy/keys/sso.pokemon.com.key'),
+                    cert: yield fs.readFile('.http-mitm-proxy/certs/sso.pokemon.com.pem')
                 };
                 let server = https.createServer(options, _.bind(this.onRequest, this));
                 server.listen(config.port, () => {
