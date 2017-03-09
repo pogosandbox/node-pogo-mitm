@@ -10,6 +10,7 @@ let config = {
     proxy: {
         active: true,
         port: process.env.PROXY_PORT || 8888,
+        plugins: [],
     },
     ui: {
         active: true,

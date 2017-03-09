@@ -7,12 +7,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("fs-promise");
 const _ = require("lodash");
 const moment = require("moment");
+const Bluebird = require("bluebird");
 let mitmproxy = require('http-mitm-proxy');
 const utils_1 = require("./utils");
+const decoder_1 = require("./decoder");
 let endpoints = {
     api: 'pgorelease.nianticlabs.com',
     oauth: 'accounts.google.com',
@@ -23,22 +26,47 @@ class MitmProxy {
     constructor(config) {
         this.config = config;
         this.utils = new utils_1.default(config);
+        this.decoder = new decoder_1.default(config);
     }
     launch() {
-        let config = this.config;
-        if (config.proxy.active) {
-            let ip = config.ip = this.utils.getIp();
-            logger.info('Proxy listening at %s:%s', ip, config.proxy.port);
-            logger.info('Proxy config url available at http://%s:%s/proxy.pac', ip, config.proxy.port);
-            this.proxy = mitmproxy()
-                .use(mitmproxy.gunzip)
-                .onError(_.bind(this.onError, this))
-                .onRequest(_.bind(this.onRequest, this))
-                .listen({ port: config.proxy.port, silent: true });
-        }
-        else {
-            logger.info('Proxy deactivated.');
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            let config = this.config;
+            if (config.proxy.active) {
+                let ip = config.ip = this.utils.getIp();
+                logger.info('Proxy listening at %s:%s', ip, config.proxy.port);
+                logger.info('Proxy config url available at http://%s:%s/proxy.pac', ip, config.proxy.port);
+                this.config.proxy.plugins = yield this.loadPlugins();
+                this.proxy = mitmproxy()
+                    .use(mitmproxy.gunzip)
+                    .onError(_.bind(this.onError, this))
+                    .onRequest(_.bind(this.onRequest, this))
+                    .listen({ port: config.proxy.port, silent: true });
+            }
+            else {
+                logger.info('Proxy deactivated.');
+            }
+        });
+    }
+    loadPlugins() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let plugins = this.config.proxy.plugins;
+            let loaded = yield Bluebird.map(plugins, (name) => __awaiter(this, void 0, void 0, function* () {
+                try {
+                    let plugin = require(`../plugins/${name}`);
+                    plugin.name = name;
+                    if (_.hasIn(plugin, 'init')) {
+                        logger.debug('Load plugin %s', name);
+                        yield plugin.init(this);
+                    }
+                    return plugin;
+                }
+                catch (e) {
+                    logger.error('Error loading plugin %s', name, e);
+                    return null;
+                }
+            }));
+            return _.filter(loaded, l => l != null);
+        });
     }
     onRequest(context, callback) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -78,11 +106,10 @@ class MitmProxy {
                     logger.info('Incorrect request');
                     res.end('what?', 'utf8');
                 }
-            }
-            else if (host === endpoints.ptc) {
-                logger.debug('Dump sso.pokemon.com headers');
-                logger.debug(context.proxyToServerRequest._headers);
-                callback();
+                // } else if (host === endpoints.ptc) {
+                //     logger.debug('Dump sso.pokemon.com headers');
+                //     logger.debug(context.proxyToServerRequest._headers);
+                //     callback();
             }
             else if (host === endpoints.api) {
                 let requestChunks = [];
@@ -97,7 +124,7 @@ class MitmProxy {
                     let buffer = Buffer.concat(requestChunks);
                     let url = ctx.clientToProxyRequest.url;
                     try {
-                        yield this.handleApiRequest(requestId, ctx, buffer, url);
+                        buffer = yield this.handleApiRequest(requestId, ctx, buffer, url);
                     }
                     catch (e) {
                         logger.error(e);
@@ -112,7 +139,7 @@ class MitmProxy {
                 context.onResponseEnd((ctx, callback) => __awaiter(this, void 0, void 0, function* () {
                     let buffer = Buffer.concat(responseChunks);
                     try {
-                        yield this.handleApiResponse(requestId, ctx, buffer);
+                        buffer = yield this.handleApiResponse(requestId, ctx, buffer);
                     }
                     catch (e) {
                         logger.error(e);
@@ -139,6 +166,21 @@ class MitmProxy {
                 data: buffer.toString('base64'),
             };
             yield fs.writeFile(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
+            if (this.config.proxy.plugins.length > 0) {
+                let plugins = this.config.proxy.plugins;
+                yield Bluebird.each(plugins, (plugin) => __awaiter(this, void 0, void 0, function* () {
+                    try {
+                        if (_.hasIn(plugin, 'handleRequest')) {
+                            logger.debug('Passing request through %s', plugin.name);
+                            buffer = (yield plugin.handleRequest(ctx, buffer)) || buffer;
+                        }
+                    }
+                    catch (e) {
+                        logger.error('Error passing request through %s', plugin.name, e);
+                    }
+                }));
+            }
+            return buffer;
         });
     }
     handleApiResponse(id, ctx, buffer) {
@@ -148,12 +190,32 @@ class MitmProxy {
                 data: buffer.toString('base64'),
             };
             yield fs.writeFile(`${this.config.datadir}/${id}.res.bin`, JSON.stringify(data, null, 4), 'utf8');
+            if (this.config.proxy.plugins.length > 0) {
+                let plugins = this.config.proxy.plugins;
+                let response = this.decoder.decodeResponseBuffer(buffer);
+                let modified = false;
+                yield Bluebird.each(plugins, (plugin) => __awaiter(this, void 0, void 0, function* () {
+                    try {
+                        if (_.hasIn(plugin, 'handleResponse')) {
+                            logger.debug('Passing response through %s', plugin.name);
+                            modified = (yield plugin.handleResponse(ctx, response)) || modified;
+                        }
+                    }
+                    catch (e) {
+                        logger.error('Error passing response through %s', plugin.name, e);
+                    }
+                }));
+                if (modified) {
+                    // request has been modified, reencode it
+                    buffer = this.decoder.encodeResponseToBuffer(response);
+                }
+            }
+            return buffer;
         });
     }
     onError(ctx, err) {
         logger.error('Proxy error:', err);
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = MitmProxy;
 //# sourceMappingURL=proxy.js.map

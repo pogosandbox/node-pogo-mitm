@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("fs-promise");
 const _ = require("lodash");
@@ -231,6 +232,18 @@ class Decoder {
             }
         });
     }
+    encodeRequestToBuffer(request) {
+        return request.toBuffer();
+    }
+    encodeResponseToBuffer(response) {
+        return response.toBuffer();
+    }
+    decodeRequestBuffer(buffer) {
+        return POGOProtos.Networking.Envelopes.RequestEnvelope.decode(buffer);
+    }
+    decodeResponseBuffer(buffer) {
+        return POGOProtos.Networking.Envelopes.ResponseEnvelope.decode(buffer);
+    }
     fixLongToString(data) {
         _.forIn(data, (value, key) => {
             if (value instanceof long) {
@@ -243,6 +256,5 @@ class Decoder {
         return data;
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Decoder;
 //# sourceMappingURL=decoder.js.map

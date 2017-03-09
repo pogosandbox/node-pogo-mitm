@@ -236,6 +236,22 @@ export default class Decoder {
         }
     }
 
+    encodeRequestToBuffer(request: POGOProtos.Networking.Envelopes.RequestEnvelope): Buffer {
+        return request.toBuffer();
+    }
+
+    encodeResponseToBuffer(response: POGOProtos.Networking.Envelopes.ResponseEnvelope): Buffer {
+        return response.toBuffer();
+    }
+
+    decodeRequestBuffer(buffer: Buffer) {
+        return POGOProtos.Networking.Envelopes.RequestEnvelope.decode(buffer);
+    }
+
+    decodeResponseBuffer(buffer: Buffer) {
+        return POGOProtos.Networking.Envelopes.ResponseEnvelope.decode(buffer);
+    }
+
     fixLongToString(data: any): any {
         _.forIn(data, (value, key) => {
             if (value instanceof long) {

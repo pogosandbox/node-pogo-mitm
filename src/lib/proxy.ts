@@ -8,6 +8,7 @@ let mitmproxy = require('http-mitm-proxy');
 
 import Config from './config';
 import Utils from './utils';
+import Decoder from './decoder';
 
 let endpoints = {
     api: 'pgorelease.nianticlabs.com',
@@ -20,18 +21,22 @@ export default class MitmProxy {
     config: any;
     utils: Utils;
     proxy: any;
+    decoder: Decoder;
 
     constructor(config) {
         this.config = config;
         this.utils = new Utils(config);
+        this.decoder = new Decoder(config);
     }
 
-    launch() {
+    async launch() {
         let config = this.config;
         if (config.proxy.active) {
             let ip = config.ip = this.utils.getIp();
             logger.info('Proxy listening at %s:%s', ip, config.proxy.port);
             logger.info('Proxy config url available at http://%s:%s/proxy.pac', ip, config.proxy.port);
+
+            this.config.proxy.plugins = await this.loadPlugins();
 
             this.proxy = mitmproxy()
                 .use(mitmproxy.gunzip)
@@ -41,6 +46,25 @@ export default class MitmProxy {
         } else {
             logger.info('Proxy deactivated.');
         }
+    }
+
+    async loadPlugins() {
+        let plugins: string[] = this.config.proxy.plugins;
+        let loaded = await Bluebird.map(plugins, async name => {
+            try {
+                let plugin = require(`../plugins/${name}`);
+                plugin.name = name;
+                if (_.hasIn(plugin, 'init')) {
+                    logger.debug('Load plugin %s', name);
+                    await plugin.init(this);
+                }
+                return plugin;
+            } catch (e) {
+                logger.error('Error loading plugin %s', name, e);
+                return null;
+            }
+        });
+        return _.filter(loaded, l => l != null);
     }
 
     async onRequest(context, callback) {
@@ -77,10 +101,10 @@ export default class MitmProxy {
                 res.end('what?', 'utf8');
             }
 
-        } else if (host === endpoints.ptc) {
-            logger.debug('Dump sso.pokemon.com headers');
-            logger.debug(context.proxyToServerRequest._headers);
-            callback();
+        // } else if (host === endpoints.ptc) {
+        //     logger.debug('Dump sso.pokemon.com headers');
+        //     logger.debug(context.proxyToServerRequest._headers);
+        //     callback();
 
         } else if (host === endpoints.api) {
             let requestChunks = [];
@@ -99,7 +123,7 @@ export default class MitmProxy {
                 let url = ctx.clientToProxyRequest.url;
 
                 try {
-                    await this.handleApiRequest(requestId, ctx, buffer, url);
+                    buffer = await this.handleApiRequest(requestId, ctx, buffer, url);
                 } catch (e) {
                     logger.error(e);
                 }
@@ -117,7 +141,7 @@ export default class MitmProxy {
                 let buffer = Buffer.concat(responseChunks);
 
                 try {
-                    await this.handleApiResponse(requestId, ctx, buffer);
+                    buffer = await this.handleApiResponse(requestId, ctx, buffer);
                 } catch (e) {
                     logger.error(e);
                 }
@@ -135,7 +159,7 @@ export default class MitmProxy {
         }
     }
 
-    async handleApiRequest(id, ctx, buffer, url) {
+    async handleApiRequest(id, ctx, buffer: Buffer, url): Promise<Buffer> {
         logger.info('Pogo request: %s', url);
         let data = {
             id: id,
@@ -145,14 +169,55 @@ export default class MitmProxy {
             data: buffer.toString('base64'),
         };
         await fs.writeFile(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
+
+        if (this.config.proxy.plugins.length > 0) {
+            let plugins: any[] = this.config.proxy.plugins;
+            await Bluebird.each(plugins, async plugin => {
+                try {
+                    if (_.hasIn(plugin, 'handleRequest')) {
+                        logger.debug('Passing request through %s', plugin.name);
+                        buffer = (await plugin.handleRequest(ctx, buffer)) || buffer;
+                    }
+                } catch (e) {
+                    logger.error('Error passing request through %s', plugin.name, e);
+                }
+            });
+        }
+
+        return buffer;
     }
 
-    async handleApiResponse(id, ctx, buffer) {
+    async handleApiResponse(id, ctx, buffer: Buffer): Promise<Buffer> {
         let data = {
             when: +moment(),
             data: buffer.toString('base64'),
         };
         await fs.writeFile(`${this.config.datadir}/${id}.res.bin`, JSON.stringify(data, null, 4), 'utf8');
+
+        if (this.config.proxy.plugins.length > 0) {
+            let plugins: any[] = this.config.proxy.plugins;
+
+            let response = this.decoder.decodeResponseBuffer(buffer);
+            let modified = false;
+
+            await Bluebird.each(plugins, async plugin => {
+                try {
+                    if (_.hasIn(plugin, 'handleResponse')) {
+                        logger.debug('Passing response through %s', plugin.name);
+                        modified = await plugin.handleResponse(ctx, response) || modified;
+                    }
+                } catch (e) {
+                    logger.error('Error passing response through %s', plugin.name, e);
+                }
+            });
+
+            if (modified) {
+                // request has been modified, reencode it
+                buffer = this.decoder.encodeResponseToBuffer(response);
+            }
+        }
+
+        return buffer;
     }
 
     onError(ctx, err) {
