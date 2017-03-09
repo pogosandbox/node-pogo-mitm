@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("fs-promise");
 const _ = require("lodash");
@@ -255,6 +256,5 @@ class Decoder {
         return data;
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Decoder;
 //# sourceMappingURL=decoder.js.map

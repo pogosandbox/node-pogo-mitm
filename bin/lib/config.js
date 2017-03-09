@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("fs");
 const _ = require("lodash");
@@ -76,6 +77,5 @@ class Config {
         return loaded;
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Config;
 //# sourceMappingURL=config.js.map

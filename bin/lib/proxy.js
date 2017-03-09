@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("fs-promise");
 const _ = require("lodash");
@@ -200,6 +201,7 @@ class MitmProxy {
                     }
                 }
                 catch (e) {
+                    // logger.error('Error during plugins execution', e);
                 }
             }
             let data = {
@@ -214,6 +216,5 @@ class MitmProxy {
         logger.error('Proxy error:', err);
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = MitmProxy;
 //# sourceMappingURL=proxy.js.map

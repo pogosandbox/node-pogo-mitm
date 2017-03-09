@@ -7,15 +7,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger = require("winston");
 const BasePlugin_1 = require("./BasePlugin");
 class LoginError100 extends BasePlugin_1.default {
     handleResponse(context, response) {
         return __awaiter(this, void 0, void 0, function* () {
-            logger.debug('DummyOne.handleResponse');
             let requestId = response.request_id.toString(16);
             if (context.clientToProxyRequest.url === '/plfe/rpc') {
-                logger.debug('First request');
                 response.api_url = '';
                 response.status_code = 100;
             }

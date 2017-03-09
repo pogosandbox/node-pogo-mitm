@@ -7,10 +7,8 @@ import * as POGOProtos from 'node-pogo-protos';
 
 class LoginError100 extends BasePlugin {
     async handleResponse(context, response: POGOProtos.Networking.Envelopes.ResponseEnvelope) {
-        logger.debug('DummyOne.handleResponse');
         let requestId = response.request_id.toString(16);
         if (context.clientToProxyRequest.url === '/plfe/rpc') {
-            logger.debug('First request');
             response.api_url = '';
             response.status_code = 100;
         }
