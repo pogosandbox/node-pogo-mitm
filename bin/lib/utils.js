@@ -7,7 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
 const os = require("os");
 const fs = require("fs-promise");
 const moment = require("moment");
@@ -65,5 +64,6 @@ class Utils {
         });
     }
 }
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Utils;
 //# sourceMappingURL=utils.js.map

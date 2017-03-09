@@ -7,7 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("fs-promise");
 const _ = require("lodash");
@@ -106,10 +105,6 @@ class MitmProxy {
                     logger.info('Incorrect request');
                     res.end('what?', 'utf8');
                 }
-                // } else if (host === endpoints.ptc) {
-                //     logger.debug('Dump sso.pokemon.com headers');
-                //     logger.debug(context.proxyToServerRequest._headers);
-                //     callback();
             }
             else if (host === endpoints.api) {
                 let requestChunks = [];
@@ -166,50 +161,52 @@ class MitmProxy {
                 data: buffer.toString('base64'),
             };
             yield fs.writeFile(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
-            if (this.config.proxy.plugins.length > 0) {
-                let plugins = this.config.proxy.plugins;
-                yield Bluebird.each(plugins, (plugin) => __awaiter(this, void 0, void 0, function* () {
-                    try {
-                        if (_.hasIn(plugin, 'handleRequest')) {
-                            logger.debug('Passing request through %s', plugin.name);
-                            buffer = (yield plugin.handleRequest(ctx, buffer)) || buffer;
-                        }
-                    }
-                    catch (e) {
-                        logger.error('Error passing request through %s', plugin.name, e);
-                    }
-                }));
-            }
+            // if (this.config.proxy.plugins.length > 0) {
+            //     let plugins: any[] = this.config.proxy.plugins;
+            //     await Bluebird.each(plugins, async plugin => {
+            //         try {
+            //             if (_.hasIn(plugin, 'handleRequest')) {
+            //                 logger.debug('Passing request through %s', plugin.name);
+            //                 buffer = (await plugin.handleRequest(ctx, buffer)) || buffer;
+            //             }
+            //         } catch (e) {
+            //             logger.error('Error passing request through %s', plugin.name, e);
+            //         }
+            //     });
+            // }
             return buffer;
         });
     }
     handleApiResponse(id, ctx, buffer) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (this.config.proxy.plugins.length > 0 && ctx.clientToProxyRequest !== '/plfe/version') {
+                try {
+                    let plugins = this.config.proxy.plugins;
+                    let response = this.decoder.decodeResponseBuffer(buffer);
+                    let modified = false;
+                    yield Bluebird.each(plugins, (plugin) => __awaiter(this, void 0, void 0, function* () {
+                        try {
+                            if (_.hasIn(plugin, 'handleResponse')) {
+                                modified = (yield plugin.handleResponse(ctx, response)) || modified;
+                            }
+                        }
+                        catch (e) {
+                            logger.error('Error passing response through %s', plugin.name, e);
+                        }
+                    }));
+                    if (modified) {
+                        // request has been modified, reencode it
+                        buffer = this.decoder.encodeResponseToBuffer(response);
+                    }
+                }
+                catch (e) {
+                }
+            }
             let data = {
                 when: +moment(),
                 data: buffer.toString('base64'),
             };
             yield fs.writeFile(`${this.config.datadir}/${id}.res.bin`, JSON.stringify(data, null, 4), 'utf8');
-            if (this.config.proxy.plugins.length > 0) {
-                let plugins = this.config.proxy.plugins;
-                let response = this.decoder.decodeResponseBuffer(buffer);
-                let modified = false;
-                yield Bluebird.each(plugins, (plugin) => __awaiter(this, void 0, void 0, function* () {
-                    try {
-                        if (_.hasIn(plugin, 'handleResponse')) {
-                            logger.debug('Passing response through %s', plugin.name);
-                            modified = (yield plugin.handleResponse(ctx, response)) || modified;
-                        }
-                    }
-                    catch (e) {
-                        logger.error('Error passing response through %s', plugin.name, e);
-                    }
-                }));
-                if (modified) {
-                    // request has been modified, reencode it
-                    buffer = this.decoder.encodeResponseToBuffer(response);
-                }
-            }
             return buffer;
         });
     }
@@ -217,5 +214,6 @@ class MitmProxy {
         logger.error('Proxy error:', err);
     }
 }
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = MitmProxy;
 //# sourceMappingURL=proxy.js.map

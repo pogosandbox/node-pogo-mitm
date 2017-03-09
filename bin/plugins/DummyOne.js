@@ -8,14 +8,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 const logger = require("winston");
-const libcsv_1 = require("./libcsv");
-function exportCsv() {
-    return __awaiter(this, void 0, void 0, function* () {
-        let csv = new libcsv_1.default();
-        yield csv.exportRequestsSignature();
-        logger.info('Done.');
-        process.exit();
-    });
+const BasePlugin_1 = require("./BasePlugin");
+class DummyOne extends BasePlugin_1.default {
+    init(proxy) {
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.debug('DummyOne Init');
+        });
+    }
+    handleResponse(context, response) {
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.debug('DummyOne.handleResponse');
+            logger.debug('response', response.returns.length);
+            // false = we did not modify anything
+            return false;
+        });
+    }
 }
-exportCsv().catch(e => logger.error(e));
-//# sourceMappingURL=csv.js.map
+module.exports = new DummyOne();
+//# sourceMappingURL=DummyOne.js.map

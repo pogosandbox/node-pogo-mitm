@@ -10,6 +10,7 @@ class DummyOne extends BasePlugin {
 
     async handleResponse(context, response) {
         logger.debug('DummyOne.handleResponse');
+        logger.debug('response', response.returns.length);
 
         // false = we did not modify anything
         return false;

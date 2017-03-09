@@ -101,11 +101,6 @@ export default class MitmProxy {
                 res.end('what?', 'utf8');
             }
 
-        // } else if (host === endpoints.ptc) {
-        //     logger.debug('Dump sso.pokemon.com headers');
-        //     logger.debug(context.proxyToServerRequest._headers);
-        //     callback();
-
         } else if (host === endpoints.api) {
             let requestChunks = [];
             let responseChunks = [];
@@ -170,52 +165,55 @@ export default class MitmProxy {
         };
         await fs.writeFile(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
 
-        if (this.config.proxy.plugins.length > 0) {
-            let plugins: any[] = this.config.proxy.plugins;
-            await Bluebird.each(plugins, async plugin => {
-                try {
-                    if (_.hasIn(plugin, 'handleRequest')) {
-                        logger.debug('Passing request through %s', plugin.name);
-                        buffer = (await plugin.handleRequest(ctx, buffer)) || buffer;
-                    }
-                } catch (e) {
-                    logger.error('Error passing request through %s', plugin.name, e);
-                }
-            });
-        }
+        // if (this.config.proxy.plugins.length > 0) {
+        //     let plugins: any[] = this.config.proxy.plugins;
+        //     await Bluebird.each(plugins, async plugin => {
+        //         try {
+        //             if (_.hasIn(plugin, 'handleRequest')) {
+        //                 logger.debug('Passing request through %s', plugin.name);
+        //                 buffer = (await plugin.handleRequest(ctx, buffer)) || buffer;
+        //             }
+        //         } catch (e) {
+        //             logger.error('Error passing request through %s', plugin.name, e);
+        //         }
+        //     });
+        // }
 
         return buffer;
     }
 
     async handleApiResponse(id, ctx, buffer: Buffer): Promise<Buffer> {
+        if (this.config.proxy.plugins.length > 0 && ctx.clientToProxyRequest !== '/plfe/version') {
+            try {
+                let plugins: any[] = this.config.proxy.plugins;
+
+                let response = this.decoder.decodeResponseBuffer(buffer);
+                let modified = false;
+
+                await Bluebird.each(plugins, async plugin => {
+                    try {
+                        if (_.hasIn(plugin, 'handleResponse')) {
+                            modified = await plugin.handleResponse(ctx, response) || modified;
+                        }
+                    } catch (e) {
+                        logger.error('Error passing response through %s', plugin.name, e);
+                    }
+                });
+
+                if (modified) {
+                    // request has been modified, reencode it
+                    buffer = this.decoder.encodeResponseToBuffer(response);
+                }
+            } catch (e) {
+                // logger.error('Error during plugins execution', e);
+            }
+        }
+
         let data = {
             when: +moment(),
             data: buffer.toString('base64'),
         };
         await fs.writeFile(`${this.config.datadir}/${id}.res.bin`, JSON.stringify(data, null, 4), 'utf8');
-
-        if (this.config.proxy.plugins.length > 0) {
-            let plugins: any[] = this.config.proxy.plugins;
-
-            let response = this.decoder.decodeResponseBuffer(buffer);
-            let modified = false;
-
-            await Bluebird.each(plugins, async plugin => {
-                try {
-                    if (_.hasIn(plugin, 'handleResponse')) {
-                        logger.debug('Passing response through %s', plugin.name);
-                        modified = await plugin.handleResponse(ctx, response) || modified;
-                    }
-                } catch (e) {
-                    logger.error('Error passing response through %s', plugin.name, e);
-                }
-            });
-
-            if (modified) {
-                // request has been modified, reencode it
-                buffer = this.decoder.encodeResponseToBuffer(response);
-            }
-        }
 
         return buffer;
     }
