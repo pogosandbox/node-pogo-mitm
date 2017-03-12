@@ -7,16 +7,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const logger = require("winston");
-const libcsv_1 = require("./libcsv");
-function exportCsv() {
-    return __awaiter(this, void 0, void 0, function* () {
-        let csv = new libcsv_1.default();
-        yield csv.exportRequestsSignature();
-        logger.info('Done.');
-        process.exit();
-    });
+const BasePlugin_1 = require("./BasePlugin");
+class LoginError100 extends BasePlugin_1.default {
+    handleResponse(context, response) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let requestId = response.request_id.toString(16);
+            if (context.clientToProxyRequest.url === '/plfe/rpc') {
+                response.api_url = '';
+                response.status_code = 100;
+            }
+            return true; // we modified something
+        });
+    }
 }
-exportCsv().catch(e => logger.error(e));
-//# sourceMappingURL=csv.js.map
+module.exports = new LoginError100();
+//# sourceMappingURL=LoginError100.js.map

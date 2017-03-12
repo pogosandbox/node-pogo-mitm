@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("fs-promise");
 const _ = require("lodash");
@@ -57,39 +58,44 @@ class Decoder {
                 // decode plateform requests
                 _.each(data.decoded.platform_requests, req => {
                     let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r === req.type);
-                    req.request_name = reqname;
-                    reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
-                    let requestType = POGOProtos.Networking.Platform.Requests[reqname];
-                    if (requestType) {
-                        req.message = requestType.decode(req.request_message);
-                        if (req.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
-                            // decrypt signature
-                            try {
-                                let buffer = req.message.encrypted_signature.toBuffer();
-                                let decrypted = pcrypt.decrypt(buffer);
+                    if (reqname) {
+                        req.request_name = reqname;
+                        reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
+                        let requestType = POGOProtos.Networking.Platform.Requests[reqname];
+                        if (requestType) {
+                            req.message = requestType.decode(req.request_message);
+                            if (req.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
+                                // decrypt signature
                                 try {
-                                    req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
+                                    let buffer = req.message.encrypted_signature.toBuffer();
+                                    let decrypted = pcrypt.decrypt(buffer);
+                                    try {
+                                        req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
+                                    }
+                                    catch (e) {
+                                        req.message = this.altProtos.Networking.Envelopes.Signature.decode(decrypted);
+                                        logger.debug('Decrypted with alternate protos');
+                                    }
+                                    if (req.message.device_info) {
+                                        req.message.device_info.device_id = '(hidden)';
+                                    }
+                                    if (req.message.session_hash) {
+                                        req.message.session_hash = '(hidden)';
+                                    }
                                 }
                                 catch (e) {
-                                    req.message = this.altProtos.Networking.Envelopes.Signature.decode(decrypted);
-                                    logger.debug('Decrypted with alternate protos');
-                                }
-                                if (req.message.device_info) {
-                                    req.message.device_info.device_id = '(hidden)';
-                                }
-                                if (req.message.session_hash) {
-                                    req.message.session_hash = '(hidden)';
+                                    // try with an alternate proto
+                                    req.message = 'Error while decrypting: ' + e.message;
+                                    logger.error(e);
                                 }
                             }
-                            catch (e) {
-                                // try with an alternate proto
-                                req.message = 'Error while decrypting: ' + e.message;
-                                logger.error(e);
-                            }
+                        }
+                        else {
+                            req.message = `unable to decode ${reqname}, type=${req.type}`;
                         }
                     }
                     else {
-                        req.message = `unable to decode ${reqname}, type=${req.type}`;
+                        req.message = `unable to decrypt ptfm request ${req.type}`;
                     }
                     delete req.request_message;
                 });
@@ -231,6 +237,18 @@ class Decoder {
             }
         });
     }
+    encodeRequestToBuffer(request) {
+        return request.toBuffer();
+    }
+    encodeResponseToBuffer(response) {
+        return response.toBuffer();
+    }
+    decodeRequestBuffer(buffer) {
+        return POGOProtos.Networking.Envelopes.RequestEnvelope.decode(buffer);
+    }
+    decodeResponseBuffer(buffer) {
+        return POGOProtos.Networking.Envelopes.ResponseEnvelope.decode(buffer);
+    }
     fixLongToString(data) {
         _.forIn(data, (value, key) => {
             if (value instanceof long) {
@@ -243,6 +261,5 @@ class Decoder {
         return data;
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Decoder;
 //# sourceMappingURL=decoder.js.map

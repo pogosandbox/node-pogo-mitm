@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("fs-promise");
 const Bluebird = require("bluebird");
@@ -17,6 +18,7 @@ let config = new config_1.default().load();
 class IOSDump {
     convert() {
         return __awaiter(this, void 0, void 0, function* () {
+            logger.info('Import from ios.dump...');
             try {
                 yield fs.mkdir('data');
             }

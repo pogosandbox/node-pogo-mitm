@@ -13,14 +13,14 @@
     "url": "https://github.com/pogosandbox/node-pogo-mitm.git"
   },
   "dependencies": {
-    "bluebird": "^3.4.7",
+    "bluebird": "^3.5.0",
     "cookie-session": "^2.0.0-beta.1",
     "dotenv": "^4.0.0",
-    "express": "^4.14.1",
+    "express": "^4.15.2",
     "fs-promise": "^2.0.0",
     "geolib": "^2.0.22",
     "http-mitm-proxy": "joeferner/node-http-mitm-proxy",
-    "js-yaml": "^3.8.1",
+    "js-yaml": "^3.8.2",
     "json2csv": "^3.7.3",
     "lodash": "^4.17.4",
     "long": "^3.2.0",
@@ -36,12 +36,12 @@
     "@types/bytebuffer": "^5.0.33",
     "@types/express": "^4.0.35",
     "@types/fs-promise": "^1.0.1",
-    "@types/lodash": "^4.14.53",
+    "@types/lodash": "^4.14.54",
     "@types/long": "^3.0.31",
-    "@types/node": "^7.0.5",
+    "@types/node": "^7.0.7",
     "@types/passport": "^0.3.3",
     "@types/winston": "^2.2.0",
-    "tslint": "^4.5.0",
+    "tslint": "^4.5.1",
     "typescript": "^2.2.1"
   }
 }

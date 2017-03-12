@@ -9,6 +9,7 @@ let config = new Config().load();
 
 class IOSDump {
     async convert(): Promise<number> {
+        logger.info('Import from ios.dump...');
         try {
             await fs.mkdir('data');
         } catch (e) {}
