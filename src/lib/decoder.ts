@@ -116,6 +116,7 @@ export default class Decoder {
         }
 
         data = this.fixLongToString(data);
+
         await fs.writeFile(`data/${session}/${requestId}.req.json`, JSON.stringify(data, null, 4), 'utf8');
 
         return data;
@@ -222,7 +223,9 @@ export default class Decoder {
             }
 
             data.decoded = decoded;
+
             data = this.fixLongToString(data);
+
             await fs.writeFile(`data/${session}/${requestId}.res.json`, JSON.stringify(data, null, 4), 'utf8');
 
             return data;

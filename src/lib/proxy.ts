@@ -12,9 +12,10 @@ import Decoder from './decoder';
 
 let endpoints = {
     api: 'pgorelease.nianticlabs.com',
-    oauth: 'accounts.google.com',
     ptc: 'sso.pokemon.com',
-    storage: 'storage.googleapis.com',
+    googleauth: 'accounts.google.com',
+    googleapi: 'www.googleapis.com',
+    // storage: 'storage.googleapis.com',
 };
 
 export default class MitmProxy {
@@ -70,6 +71,7 @@ export default class MitmProxy {
     async onRequest(context, callback) {
         let config = this.config;
         let host = context.clientToProxyRequest.headers.host;
+        let endpoint = _.findKey(endpoints, endpoint => endpoint === host);
         if (host === `${config.ip}:${config.proxy.port}` || (config.proxy.hostname && _.startsWith(host, config.proxy.hostname))) {
             let res = context.proxyToClientResponse;
             if (_.startsWith(context.clientToProxyRequest.url, '/proxy.pac')) {
@@ -101,12 +103,15 @@ export default class MitmProxy {
                 res.end('what?', 'utf8');
             }
 
-        } else if (host === endpoints.api) {
+        } else if (endpoint) {
             let requestChunks = [];
             let responseChunks = [];
 
-            let id = ++this.config.reqId;
-            let requestId = _.padStart(id.toString(), 5, '0');
+            let id = 0, requestId = '';
+            if (endpoint === 'api') {
+                id = ++this.config.reqId;
+                requestId = _.padStart(id.toString(), 5, '0');
+            }
 
             context.onRequestData((ctx, chunk, callback) => {
                 requestChunks.push(chunk);
@@ -118,7 +123,11 @@ export default class MitmProxy {
                 let url = ctx.clientToProxyRequest.url;
 
                 try {
-                    buffer = await this.handleApiRequest(requestId, ctx, buffer, url);
+                    if (endpoint === 'api') {
+                        buffer = await this.handleApiRequest(requestId, ctx, buffer, url);
+                    } else if (!this.config.proxy.onlyApi) {
+                        await this.simpleDumpRequest(endpoint, ctx, buffer, url);
+                    }
                 } catch (e) {
                     logger.error(e);
                 }
@@ -136,7 +145,11 @@ export default class MitmProxy {
                 let buffer = Buffer.concat(responseChunks);
 
                 try {
-                    buffer = await this.handleApiResponse(requestId, ctx, buffer);
+                    if (endpoint === 'api') {
+                        buffer = await this.handleApiResponse(requestId, ctx, buffer);
+                    } else if (!this.config.proxy.onlyApi) {
+                        await this.simpleDumpResponse(endpoint, ctx, buffer);
+                    }
                 } catch (e) {
                     logger.error(e);
                 }
@@ -148,10 +161,32 @@ export default class MitmProxy {
             callback();
 
         } else {
-            logger.debug('unhandled: %s', host);
+            logger.debug('unhandled: %s%s', host, context.clientToProxyRequest.url);
             callback();
 
         }
+    }
+
+    async simpleDumpRequest(name, ctx, buffer: Buffer, url: string) {
+        logger.debug('Dumping request to %s %s', name, url);
+        let id = +moment();
+        let data = {
+            when: id,
+            url: url,
+            headers: ctx.clientToProxyRequest.headers,
+        };
+        await fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.req.info`, JSON.stringify(data, null, 4), 'utf8');
+        await fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.req.content`, buffer);
+    }
+
+    async simpleDumpResponse(name, ctx, buffer: Buffer) {
+        let id = +moment();
+        let data = {
+            when: id,
+            headers: ctx.serverToProxyResponse.headers,
+        };
+        await fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.res.info`, JSON.stringify(data, null, 4), 'utf8');
+        await fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.res.content`, buffer.toString('utf8'), 'utf8');
     }
 
     async handleApiRequest(id, ctx, buffer: Buffer, url): Promise<Buffer> {

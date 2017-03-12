@@ -18,9 +18,9 @@ const utils_1 = require("./utils");
 const decoder_1 = require("./decoder");
 let endpoints = {
     api: 'pgorelease.nianticlabs.com',
-    oauth: 'accounts.google.com',
     ptc: 'sso.pokemon.com',
-    storage: 'storage.googleapis.com',
+    googleauth: 'accounts.google.com',
+    googleapi: 'www.googleapis.com',
 };
 class MitmProxy {
     constructor(config) {
@@ -72,6 +72,7 @@ class MitmProxy {
         return __awaiter(this, void 0, void 0, function* () {
             let config = this.config;
             let host = context.clientToProxyRequest.headers.host;
+            let endpoint = _.findKey(endpoints, endpoint => endpoint === host);
             if (host === `${config.ip}:${config.proxy.port}` || (config.proxy.hostname && _.startsWith(host, config.proxy.hostname))) {
                 let res = context.proxyToClientResponse;
                 if (_.startsWith(context.clientToProxyRequest.url, '/proxy.pac')) {
@@ -107,11 +108,14 @@ class MitmProxy {
                     res.end('what?', 'utf8');
                 }
             }
-            else if (host === endpoints.api) {
+            else if (endpoint) {
                 let requestChunks = [];
                 let responseChunks = [];
-                let id = ++this.config.reqId;
-                let requestId = _.padStart(id.toString(), 5, '0');
+                let id = 0, requestId = '';
+                if (endpoint === 'api') {
+                    id = ++this.config.reqId;
+                    requestId = _.padStart(id.toString(), 5, '0');
+                }
                 context.onRequestData((ctx, chunk, callback) => {
                     requestChunks.push(chunk);
                     return callback(null, null);
@@ -120,7 +124,12 @@ class MitmProxy {
                     let buffer = Buffer.concat(requestChunks);
                     let url = ctx.clientToProxyRequest.url;
                     try {
-                        buffer = yield this.handleApiRequest(requestId, ctx, buffer, url);
+                        if (endpoint === 'api') {
+                            buffer = yield this.handleApiRequest(requestId, ctx, buffer, url);
+                        }
+                        else if (!this.config.proxy.onlyApi) {
+                            yield this.simpleDumpRequest(endpoint, ctx, buffer, url);
+                        }
                     }
                     catch (e) {
                         logger.error(e);
@@ -135,7 +144,12 @@ class MitmProxy {
                 context.onResponseEnd((ctx, callback) => __awaiter(this, void 0, void 0, function* () {
                     let buffer = Buffer.concat(responseChunks);
                     try {
-                        buffer = yield this.handleApiResponse(requestId, ctx, buffer);
+                        if (endpoint === 'api') {
+                            buffer = yield this.handleApiResponse(requestId, ctx, buffer);
+                        }
+                        else if (!this.config.proxy.onlyApi) {
+                            yield this.simpleDumpResponse(endpoint, ctx, buffer);
+                        }
                     }
                     catch (e) {
                         logger.error(e);
@@ -146,9 +160,33 @@ class MitmProxy {
                 callback();
             }
             else {
-                logger.debug('unhandled: %s', host);
+                logger.debug('unhandled: %s%s', host, context.clientToProxyRequest.url);
                 callback();
             }
+        });
+    }
+    simpleDumpRequest(name, ctx, buffer, url) {
+        return __awaiter(this, void 0, void 0, function* () {
+            logger.debug('Dumping request to %s %s', name, url);
+            let id = +moment();
+            let data = {
+                when: id,
+                url: url,
+                headers: ctx.clientToProxyRequest.headers,
+            };
+            yield fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.req.info`, JSON.stringify(data, null, 4), 'utf8');
+            yield fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.req.content`, buffer);
+        });
+    }
+    simpleDumpResponse(name, ctx, buffer) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let id = +moment();
+            let data = {
+                when: id,
+                headers: ctx.serverToProxyResponse.headers,
+            };
+            yield fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.res.info`, JSON.stringify(data, null, 4), 'utf8');
+            yield fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.res.content`, buffer.toString('utf8'), 'utf8');
         });
     }
     handleApiRequest(id, ctx, buffer, url) {

@@ -18,6 +18,7 @@ let config = new config_1.default().load();
 class IOSDump {
     convert() {
         return __awaiter(this, void 0, void 0, function* () {
+            logger.info('Import from ios.dump...');
             try {
                 yield fs.mkdir('data');
             }
