@@ -254,6 +254,6 @@ export default class MitmProxy {
     }
 
     onError(ctx, err) {
-        logger.error('Proxy error:', err);
+        logger.error('Proxy error: ', err);
     }
 }

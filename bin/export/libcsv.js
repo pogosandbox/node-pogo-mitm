@@ -81,6 +81,8 @@ class Csv {
                     apiCall: apiCall,
                     ptr8: ptr8,
                     version_hash: versionHash,
+                    latitude: request.decoded.latitude,
+                    longitude: request.decoded.longitude,
                     signature: signature,
                     fullRequest: request.decoded,
                 };
@@ -116,6 +118,8 @@ class Csv {
                     'version_hash',
                     // 'timeFromPrev',
                     // 'distFromPrev',
+                    'latitude',
+                    'longitude',
                     'signature.device_info.device_brand',
                     'signature.device_info.device_model',
                     'signature.device_info.device_model_boot',
