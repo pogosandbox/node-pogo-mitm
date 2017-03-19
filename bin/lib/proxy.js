@@ -111,6 +111,7 @@ class MitmProxy {
             else if (endpoint) {
                 let requestChunks = [];
                 let responseChunks = [];
+                let request = null;
                 let id = 0, requestId = '';
                 if (endpoint === 'api') {
                     id = ++this.config.reqId;
@@ -125,7 +126,7 @@ class MitmProxy {
                     let url = ctx.clientToProxyRequest.url;
                     try {
                         if (endpoint === 'api') {
-                            buffer = yield this.handleApiRequest(requestId, ctx, buffer, url);
+                            ({ buffer, request } = yield this.handleApiRequest(requestId, ctx, buffer, url));
                         }
                         else if (!this.config.proxy.onlyApi) {
                             yield this.simpleDumpRequest(endpoint, ctx, buffer, url);
@@ -145,7 +146,7 @@ class MitmProxy {
                     let buffer = Buffer.concat(responseChunks);
                     try {
                         if (endpoint === 'api') {
-                            buffer = yield this.handleApiResponse(requestId, ctx, buffer);
+                            buffer = yield this.handleApiResponse(requestId, ctx, buffer, request);
                         }
                         else if (!this.config.proxy.onlyApi) {
                             yield this.simpleDumpResponse(endpoint, ctx, buffer);
@@ -200,33 +201,48 @@ class MitmProxy {
                 data: buffer.toString('base64'),
             };
             yield fs.writeFile(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
-            // if (this.config.proxy.plugins.length > 0) {
-            //     let plugins: any[] = this.config.proxy.plugins;
-            //     await Bluebird.each(plugins, async plugin => {
-            //         try {
-            //             if (_.hasIn(plugin, 'handleRequest')) {
-            //                 logger.debug('Passing request through %s', plugin.name);
-            //                 buffer = (await plugin.handleRequest(ctx, buffer)) || buffer;
-            //             }
-            //         } catch (e) {
-            //             logger.error('Error passing request through %s', plugin.name, e);
-            //         }
-            //     });
-            // }
-            return buffer;
+            let decoded = null;
+            if (this.config.proxy.plugins.length > 0) {
+                try {
+                    let plugins = this.config.proxy.plugins;
+                    decoded = this.decoder.decodeRequestBuffer(buffer);
+                    let modified = false;
+                    yield Bluebird.each(plugins, (plugin) => __awaiter(this, void 0, void 0, function* () {
+                        try {
+                            if (_.hasIn(plugin, 'handleRequest')) {
+                                modified = yield plugin.handleRequest(ctx, decoded);
+                            }
+                        }
+                        catch (e) {
+                            logger.error('Error passing request through %s', plugin.name, e);
+                        }
+                    }));
+                    if (modified) {
+                        // request has been modified, reencode it (not implemented yet)
+                        // buffer = this.decoder.encodeRequestToBuffer(decoded);
+                    }
+                }
+                catch (e) {
+                    // logger.error('Error during plugins execution', e);
+                }
+            }
+            return {
+                buffer: buffer,
+                request: decoded,
+            };
         });
     }
-    handleApiResponse(id, ctx, buffer) {
+    handleApiResponse(id, ctx, buffer, request) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.config.proxy.plugins.length > 0 && ctx.clientToProxyRequest !== '/plfe/version') {
                 try {
                     let plugins = this.config.proxy.plugins;
-                    let response = this.decoder.decodeResponseBuffer(buffer);
+                    let response = this.decoder.decodeResponseBuffer(request, buffer);
                     let modified = false;
                     yield Bluebird.each(plugins, (plugin) => __awaiter(this, void 0, void 0, function* () {
                         try {
                             if (_.hasIn(plugin, 'handleResponse')) {
-                                modified = (yield plugin.handleResponse(ctx, response)) || modified;
+                                modified = (yield plugin.handleResponse(ctx, response, request)) || modified;
                             }
                         }
                         catch (e) {
@@ -234,7 +250,7 @@ class MitmProxy {
                         }
                     }));
                     if (modified) {
-                        // request has been modified, reencode it
+                        // response has been modified, reencode it (not for now)
                         buffer = this.decoder.encodeResponseToBuffer(response);
                     }
                 }
