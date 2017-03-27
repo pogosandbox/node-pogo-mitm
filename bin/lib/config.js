@@ -24,9 +24,9 @@ let config = {
             key: 'UA-92205812-1',
         }
     },
-    fakeLogin: {
+    alternateEndpoint: {
         active: false,
-        port: 443,
+        https: false,
     },
     protos: {
         cachejson: true,

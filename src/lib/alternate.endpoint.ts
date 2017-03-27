@@ -10,7 +10,7 @@ import * as getRawBody from 'raw-body';
 import Config from './config';
 import Utils from './utils';
 
-export default class FakeLogin {
+export default class AlternateEndpoint {
     config: any;
     utils: Utils;
     proxy: any;
@@ -21,33 +21,40 @@ export default class FakeLogin {
     }
 
     async launch() {
-        let config = this.config.fakeLogin;
+        let config = this.config.alternateEndpoint;
         if (config.active) {
-            const options = {
-                key: await fs.readFile('.http-mitm-proxy/keys/sso.pokemon.com.key'),
-                cert: await fs.readFile('.http-mitm-proxy/certs/sso.pokemon.com.pem')
-            };
-
-            let server = https.createServer(options, _.bind(this.onRequest, this));
+            let server = null;
+            if (config.https) {
+                const options = {
+                    key: await fs.readFile('.http-mitm-proxy/keys/sso.pokemon.com.key'),
+                    cert: await fs.readFile('.http-mitm-proxy/certs/sso.pokemon.com.pem')
+                };
+                server = https.createServer(options, _.bind(this.onRequest, this));
+            } else {
+                server = http.createServer(<any>_.bind(this.onRequest, this));
+            }
 
             server.listen(config.port, () => {
                 let ip = this.utils.getIp();
-                logger.info('Fake login listening at %s:%s', ip, config.port);
+                logger.info('Alternate endpoint listening at %s:%s', ip, config.https ? 443 : 80);
             });
         }
     }
 
     async onRequest(req: http.IncomingMessage, res: http.ServerResponse) {
-        logger.debug('Fake login request to %s', req.url);
+        logger.debug('Fake login request to %s%s', req.headers.host, req.url);
         try {
             let buffer = await getRawBody(req);
             if (buffer.length === 0) buffer = null;
 
+            let host = req.headers.host;
             delete req.headers.host;
             delete req.headers['content-length'];
 
+            logger.debug(`Making request to https://${host}${req.url}`);
+
             let options = {
-                uri: `https://sso.pokemon.com${req.url}`,
+                uri: `https://${host}${req.url}`,
                 method: req.method,
                 body: buffer,
                 encoding: null,

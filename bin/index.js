@@ -14,7 +14,7 @@ const config_1 = require("./lib/config");
 const utils_1 = require("./lib/utils");
 const proxy_1 = require("./lib/proxy");
 const webui_1 = require("./lib/webui");
-const fakeLogin_1 = require("./lib/fakeLogin");
+const alternate_endpoint_1 = require("./lib/alternate.endpoint");
 function Main() {
     return __awaiter(this, void 0, void 0, function* () {
         let config = new config_1.default().load();
@@ -22,8 +22,8 @@ function Main() {
         yield utils.initFolders();
         let proxy = new proxy_1.default(config);
         yield proxy.launch();
-        let login = new fakeLogin_1.default(config);
-        yield login.launch();
+        let endpoint = new alternate_endpoint_1.default(config);
+        yield endpoint.launch();
         let webui = new webui_1.default(config);
         yield webui.launch();
         logger.info('App ready.');
