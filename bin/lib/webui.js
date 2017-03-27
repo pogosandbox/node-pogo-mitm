@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const logger = require("winston");
 const fs = require("fs-promise");
@@ -159,9 +160,22 @@ class WebUI {
                 }
                 let files = yield fs.readdir(`data/${req.params.session}`);
                 files = _.filter(files, d => _.endsWith(d, '.req.bin'));
+                let force = !this.config.protos.cachejson;
                 result.files = yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () {
                     let content = yield fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
                     let request = JSON.parse(content);
+                    request.title = '';
+                    try {
+                        let decoded = yield this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
+                        if (decoded && decoded.decoded) {
+                            let main = _.first(decoded.decoded.requests);
+                            if (main) {
+                                request.title = main.request_name;
+                            }
+                            request.title += ` (${decoded.decoded.requests.length})`;
+                        }
+                    }
+                    catch (e) { }
                     delete request.data;
                     request.id = _.trimEnd(file, '.req.bin');
                     return request;
@@ -223,6 +237,5 @@ class WebUI {
         });
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = WebUI;
 //# sourceMappingURL=webui.js.map

@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("fs-promise");
 const _ = require("lodash");
@@ -80,6 +81,8 @@ class Csv {
                     apiCall: apiCall,
                     ptr8: ptr8,
                     version_hash: versionHash,
+                    latitude: request.decoded.latitude,
+                    longitude: request.decoded.longitude,
                     signature: signature,
                     fullRequest: request.decoded,
                 };
@@ -115,6 +118,8 @@ class Csv {
                     'version_hash',
                     // 'timeFromPrev',
                     // 'distFromPrev',
+                    'latitude',
+                    'longitude',
                     'signature.device_info.device_brand',
                     'signature.device_info.device_model',
                     'signature.device_info.device_model_boot',
@@ -162,6 +167,5 @@ class Csv {
         });
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Csv;
 //# sourceMappingURL=libcsv.js.map

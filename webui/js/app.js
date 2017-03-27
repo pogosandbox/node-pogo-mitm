@@ -73,11 +73,17 @@ $(function() {
                 `);
                 data.files.forEach(d => {
                     let item = $('#request-template').clone().show().addClass('item').addClass(d.id).attr('id', d.id);
+
                     item.find('.id').data('id', d.id).text(d.id).attr('href', `#session=${id}&request=${d.id}`);
+
+                    item.find('.title').text(d.title);
+
                     let fromStart = moment.duration(d.when - first.when).asSeconds().toFixed(1);
                     item.find('.when').text('+' + fromStart + 's');
+
                     let fromPrev = moment.duration(d.when - previous.when).asSeconds().toFixed(1);
                     item.find('.prev').text('+' + fromPrev + 's');
+
                     item.appendTo('#requests');
                     previous = d;
                 });

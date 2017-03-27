@@ -179,9 +179,23 @@ export default class WebUI {
             let files = await fs.readdir(`data/${req.params.session}`);
             files = _.filter(files, d => _.endsWith(d, '.req.bin'));
 
+            let force = !this.config.protos.cachejson;
             result.files = await Bluebird.map(files, async file => {
                 let content = await fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
                 let request = JSON.parse(content);
+
+                request.title = '';
+                try {
+                    let decoded = await this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
+                    if (decoded && decoded.decoded) {
+                        let main = _.first(decoded.decoded.requests) as any;
+                        if (main) {
+                            request.title = main.request_name;
+                        }
+                        request.title += ` (${decoded.decoded.requests.length})`;
+                    }
+                } catch (e) {}
+
                 delete request.data;
                 request.id = _.trimEnd(file, '.req.bin');
                 return request;

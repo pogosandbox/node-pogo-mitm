@@ -7,16 +7,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const logger = require("winston");
-const libcsv_1 = require("./libcsv");
-function exportCsv() {
-    return __awaiter(this, void 0, void 0, function* () {
-        let csv = new libcsv_1.default();
-        yield csv.exportRequestsSignature();
-        logger.info('Done.');
-        process.exit();
-    });
+const _ = require("lodash");
+const BasePlugin_1 = require("./BasePlugin");
+class FakeWarn extends BasePlugin_1.default {
+    handleResponse(context, response) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let main = _.first(response.responses);
+            if (main && main.request_name === 'GET_PLAYER') {
+                // getPlayer()
+                main.warn = true;
+                // we modified something
+                return true;
+            }
+            return false;
+        });
+    }
 }
-exportCsv().catch(e => logger.error(e));
-//# sourceMappingURL=csv.js.map
+module.exports = new FakeWarn();
+//# sourceMappingURL=FakeWarn.js.map

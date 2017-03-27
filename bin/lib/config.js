@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("fs");
 const _ = require("lodash");
@@ -9,6 +10,8 @@ let config = {
     proxy: {
         active: true,
         port: process.env.PROXY_PORT || 8888,
+        onlyApi: true,
+        plugins: [],
     },
     ui: {
         active: true,
@@ -80,6 +83,5 @@ class Config {
         return loaded;
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Config;
 //# sourceMappingURL=config.js.map
