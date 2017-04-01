@@ -3,9 +3,10 @@ require('dotenv').config({silent: true});
 import * as logger from 'winston';
 
 import Config from './lib/config';
+import Utils from './lib/utils';
 import Proxy from './lib/proxy';
 import WebUI from './lib/webui';
-import Utils from './lib/utils';
+import AlternateEndpoint from './lib/alternate.endpoint';
 
 async function Main() {
     let config = new Config().load();
@@ -16,6 +17,9 @@ async function Main() {
     let proxy = new Proxy(config);
     await proxy.launch();
 
+    let endpoint = new AlternateEndpoint(config);
+    await endpoint.launch();
+
     let webui = new WebUI(config);
     await webui.launch();
 
@@ -24,6 +28,6 @@ async function Main() {
 
 try {
     Main();
-} catch(e) {
+} catch (e) {
     logger.error(e);
 }
