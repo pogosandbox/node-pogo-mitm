@@ -43,7 +43,9 @@ class IOSDump {
                 yield fs.mkdir('data/' + folder);
             }
             catch (e) { }
-            yield fs.writeFile(`data/${folder}/.info`, '(iOS)', 'utf8');
+            if (!fs.existsSync(`data/${folder}/.info`)) {
+                yield fs.writeFile(`data/${folder}/.info`, '(iOS)', 'utf8');
+            }
             let reqId = 0;
             yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () { return this.handleReqFile(++reqId, session, file, folder); }));
             return files.length;

@@ -34,7 +34,9 @@ class IOSDump {
             await fs.mkdir('data/' + folder);
         } catch (e) {}
 
-        await fs.writeFile(`data/${folder}/.info`, '(iOS)', 'utf8');
+        if (!fs.existsSync(`data/${folder}/.info`)) {
+            await fs.writeFile(`data/${folder}/.info`, '(iOS)', 'utf8');
+        }
 
         let reqId = 0;
         await Bluebird.map(files, async file => this.handleReqFile(++reqId, session, file, folder));
