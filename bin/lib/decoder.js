@@ -213,7 +213,7 @@ class Decoder {
                 return data;
             }
             catch (e) {
-                logger.error('Error decrypting request %s of session %s', requestId, session);
+                logger.error('Error decrypting response %s of session %s', requestId, session);
                 logger.error(e);
                 return {
                     decoded: { error: 'unable to decode response' },
