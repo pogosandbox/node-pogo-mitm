@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const os = require("os");
-const fs = require("fs-promise");
+const fs = require("mz/fs");
 const moment = require("moment");
 const _ = require("lodash");
 const Bluebird = require("bluebird");

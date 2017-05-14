@@ -1,7 +1,7 @@
 import * as express from 'express';
 import * as logger from 'winston';
 import * as path from 'path';
-import * as fs from 'fs-promise';
+import * as fs from 'mz/fs';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 import * as passport from 'passport';
