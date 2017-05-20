@@ -1,5 +1,5 @@
 import * as logger from 'winston';
-import * as fs from 'ms/fs';
+import * as fs from 'mz/fs';
 import * as Bluebird from 'bluebird';
 import * as moment from 'moment';
 import * as _ from 'lodash';
