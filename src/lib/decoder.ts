@@ -102,7 +102,7 @@ export default class Decoder {
             // prettify
             data.decoded.request_id = '0x' + data.decoded.request_id.toString(16);
 
-            // hide auth info
+            // hide sensitive info
             if (data.decoded.auth_info) {
                 if (data.decoded.auth_info.token) data.decoded.auth_info.token.contents = '(hidden)';
             }
@@ -136,8 +136,8 @@ export default class Decoder {
                     req.message = {
                         base64: req.request_message.toString('base64'),
                     };
-                    delete req.request_message;
                 }
+                delete req.request_message;
             } else {
                 logger.error('Unable to find request type %d', req.request_type);
             }
@@ -194,7 +194,10 @@ export default class Decoder {
                             message.request_name = request;
                             return message;
                         } else {
-                            return {error: 'unable to decrypt ' + request};
+                            return {
+                                error: 'unable to decrypt ' + request,
+                                data: buffer.response.toString('base64'),
+                            };
                         }
                     }
                 });
@@ -216,6 +219,10 @@ export default class Decoder {
                     _.each(response.digest, digest => {
                         digest.key = '(hidden)';
                     });
+                } else if (response.request_name === 'SFIDA_REGISTRATION') {
+                    response.access_token = {
+                        base64: response.access_token.toString('base64'),
+                    };
                 }
             });
 
@@ -248,7 +255,7 @@ export default class Decoder {
         // decode response messages
         let allRequests = _.map(<any[]>request.requests, r => r.request_name);
         if (allRequests.length > 0) {
-            decoded.responses = _.map(decoded.returns, (buffer, i) => {
+            decoded.responses = _.map(decoded.returns, (buffer: Buffer, i) => {
                 let request = allRequests[i];
                 let responseType = POGOProtos.Networking.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
                 if (responseType) {
@@ -256,7 +263,10 @@ export default class Decoder {
                     message.request_name = request;
                     return message;
                 } else {
-                    return {error: 'unable to decrypt ' + request};
+                    return {
+                        error: 'unable to decrypt ' + request,
+                        data: buffer.toString('base64'),
+                    };
                 }
             });
         } else {

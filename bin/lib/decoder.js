@@ -101,7 +101,7 @@ class Decoder {
                 });
                 // prettify
                 data.decoded.request_id = '0x' + data.decoded.request_id.toString(16);
-                // hide auth info
+                // hide sensitive info
                 if (data.decoded.auth_info) {
                     if (data.decoded.auth_info.token)
                         data.decoded.auth_info.token.contents = '(hidden)';
@@ -135,8 +135,8 @@ class Decoder {
                     req.message = {
                         base64: req.request_message.toString('base64'),
                     };
-                    delete req.request_message;
                 }
+                delete req.request_message;
             }
             else {
                 logger.error('Unable to find request type %d', req.request_type);
@@ -190,7 +190,10 @@ class Decoder {
                                 return message;
                             }
                             else {
-                                return { error: 'unable to decrypt ' + request };
+                                return {
+                                    error: 'unable to decrypt ' + request,
+                                    data: buffer.response.toString('base64'),
+                                };
                             }
                         }
                     });
@@ -211,6 +214,11 @@ class Decoder {
                         _.each(response.digest, digest => {
                             digest.key = '(hidden)';
                         });
+                    }
+                    else if (response.request_name === 'SFIDA_REGISTRATION') {
+                        response.access_token = {
+                            base64: response.access_token.toString('base64'),
+                        };
                     }
                 });
                 // hide auth info
@@ -248,7 +256,10 @@ class Decoder {
                     return message;
                 }
                 else {
-                    return { error: 'unable to decrypt ' + request };
+                    return {
+                        error: 'unable to decrypt ' + request,
+                        data: buffer.toString('base64'),
+                    };
                 }
             });
         }
