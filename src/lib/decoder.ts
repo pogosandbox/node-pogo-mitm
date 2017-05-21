@@ -125,11 +125,22 @@ export default class Decoder {
         // decode requests
         _.each(request.requests, req => {
             let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r === req.request_type);
-            req.request_name = reqname;
-            reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
-            let requestType = POGOProtos.Networking.Requests.Messages[reqname];
-            req.message = requestType.decode(req.request_message);
-            delete req.request_message;
+            if (reqname) {
+                req.request_name = reqname;
+                reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
+                let requestType = POGOProtos.Networking.Requests.Messages[reqname];
+                if (requestType) {
+                    req.message = requestType.decode(req.request_message);
+                } else {
+                    logger.error('Unable to find request type %s (%d)', reqname, req.request_type);
+                    req.message = {
+                        base64: req.request_message.toString('base64'),
+                    };
+                    delete req.request_message;
+                }
+            } else {
+                logger.error('Unable to find request type %d', req.request_type);
+            }
         });
 
         return request;
