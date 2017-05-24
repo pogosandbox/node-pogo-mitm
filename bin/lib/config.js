@@ -38,7 +38,6 @@ let config = {
     },
     logger: {
         level: 'info',
-        file: null,
     },
 };
 class Config {
@@ -50,6 +49,7 @@ class Config {
             }
             if (!fs.existsSync('config/config.yaml')) {
                 logger.info('Config file not found in config/config.yaml, using default.');
+                loaded = config;
             }
             else {
                 logger.info('Loading config/config.yaml');
@@ -78,7 +78,6 @@ class Config {
         }
         catch (e) {
             logger.error(e);
-            debugger;
         }
         return loaded;
     }
