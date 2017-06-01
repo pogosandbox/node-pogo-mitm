@@ -73,6 +73,7 @@ class Decoder {
                                         req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
                                     }
                                     catch (e) {
+                                        // try with an alternate proto
                                         req.message = this.altProtos.Networking.Envelopes.Signature.decode(decrypted);
                                         logger.debug('Decrypted with alternate protos');
                                     }
@@ -84,7 +85,6 @@ class Decoder {
                                     }
                                 }
                                 catch (e) {
-                                    // try with an alternate proto
                                     req.message = 'Error while decrypting: ' + e.message;
                                     logger.error(e);
                                 }

@@ -75,6 +75,7 @@ export default class Decoder {
                                 try {
                                     req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
                                 } catch (e) {
+                                    // try with an alternate proto
                                     req.message = this.altProtos.Networking.Envelopes.Signature.decode(decrypted);
                                     logger.debug('Decrypted with alternate protos');
                                 }
@@ -85,7 +86,6 @@ export default class Decoder {
                                     req.message.session_hash = '(hidden)';
                                 }
                             } catch (e) {
-                                // try with an alternate proto
                                 req.message = 'Error while decrypting: ' + e.message;
                                 logger.error(e);
                             }
