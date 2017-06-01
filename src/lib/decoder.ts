@@ -79,7 +79,7 @@ export default class Decoder {
                                     logger.debug('Decrypted with alternate protos');
                                 }
                                 if (req.message.device_info) {
-                                    //req.message.device_info.device_id = '(hidden)';
+                                    req.message.device_info.device_id = '(hidden)';
                                 }
                                 if (req.message.session_hash) {
                                     req.message.session_hash = '(hidden)';
