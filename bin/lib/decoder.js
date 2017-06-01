@@ -77,7 +77,7 @@ class Decoder {
                                         logger.debug('Decrypted with alternate protos');
                                     }
                                     if (req.message.device_info) {
-                                        req.message.device_info.device_id = '(hidden)';
+                                        //req.message.device_info.device_id = '(hidden)';
                                     }
                                     if (req.message.session_hash) {
                                         req.message.session_hash = '(hidden)';
@@ -92,6 +92,7 @@ class Decoder {
                         }
                         else {
                             req.message = `unable to decode ${reqname}, type=${req.type}`;
+                            req.data = req.request_message.toString('base64');
                         }
                     }
                     else {
@@ -176,25 +177,17 @@ class Decoder {
                 if (allPtfmRequests.length > 0) {
                     decoded.platform_responses = _.map(decoded.platform_returns, (buffer, i) => {
                         let request = allPtfmRequests[i];
-                        if (request === 'GET_STORE_ITEMS') {
-                            return {
-                                error: '(unable to decode)',
-                                request_name: request,
-                            };
+                        let responseType = POGOProtos.Networking.Platform.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
+                        if (responseType) {
+                            let message = responseType.decode(buffer.response);
+                            message.request_name = request;
+                            return message;
                         }
                         else {
-                            let responseType = POGOProtos.Networking.Platform.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
-                            if (responseType) {
-                                let message = responseType.decode(buffer.response);
-                                message.request_name = request;
-                                return message;
-                            }
-                            else {
-                                return {
-                                    error: 'unable to decrypt ' + request,
-                                    data: buffer.response.toString('base64'),
-                                };
-                            }
+                            return {
+                                error: 'unable to decrypt ' + request,
+                                data: buffer.response.toString('base64'),
+                            };
                         }
                     });
                 }
