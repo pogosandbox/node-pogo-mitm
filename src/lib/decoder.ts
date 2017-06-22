@@ -51,15 +51,17 @@ export default class Decoder {
                     reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
                     let requestType = POGOProtos.Networking.Platform.Requests[reqname];
                     if (requestType) {
-                        req.message = requestType.decode(req.request_message).toObject({ defaults: true });
+                        req.message = requestType.toObject(requestType.decode(req.request_message), { defaults: true });
                         if (req.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
                             // decrypt signature
                             try {
                                 let decrypted = pcrypt.decrypt(req.message.encrypted_signature);
                                 try {
-                                    req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted).toObject({ defaults: true });
+                                    req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
+                                    req.message = POGOProtos.Networking.Envelopes.Signature.toObject(req.message, { defaults: true });
                                 } catch (e) {
-                                    req.message = this.altProtos.Networking.Envelopes.Signature.decode(decrypted).toObject({ defaults: true });
+                                    req.message = this.altProtos.Networking.Envelopes.Signature.decode(decrypted);
+                                    req.message = this.altProtos.Networking.Envelopes.Signature.toObject(req.message, { defaults: true });
                                     logger.debug('Decrypted with alternate protos');
                                 }
                                 if (req.message.device_info) {
@@ -69,13 +71,13 @@ export default class Decoder {
                                     req.message.session_hash = '(hidden)';
                                 }
                             } catch (e) {
-                                // try with an alternate proto
                                 req.message = 'Error while decrypting: ' + e.message;
                                 logger.error(e);
                             }
                         }
                     } else {
                         req.message = `unable to decode ${reqname}, type=${req.type}`;
+                        req.data = req.request_message.toString('base64');
                     }
                 } else {
                     req.message = `unable to decrypt ptfm request ${req.type}`;
@@ -169,23 +171,16 @@ export default class Decoder {
             if (allPtfmRequests.length > 0) {
                 decoded.platform_responses = _.map(<any[]>decoded.platform_returns, (buffer, i) => {
                     let request = allPtfmRequests[i];
-                    if (request === 'GET_STORE_ITEMS') { // crash. bad protos?
-                        return {
-                            error: '(unable to decode)',
-                            request_name: request,
-                        };
+                    let responseType = POGOProtos.Networking.Platform.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
+                    if (responseType) {
+                        let message = responseType.toObject(responseType.decode(buffer.response), { defaults: true });
+                        message.request_name = request;
+                        return message;
                     } else {
-                        let responseType = POGOProtos.Networking.Platform.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
-                        if (responseType) {
-                            let message = responseType.decode(buffer.response).toObject({ defaults: true });
-                            message.request_name = request;
-                            return message;
-                        } else {
-                            return {
-                                error: 'unable to decrypt ' + request,
-                                data: buffer.response.toString('base64'),
-                            };
-                        }
+                        return {
+                            error: 'unable to decrypt ' + request,
+                            data: buffer.response.toString('base64'),
+                        };
                     }
                 });
             } else {
@@ -239,7 +234,8 @@ export default class Decoder {
     }
 
     decodeResponseBuffer(request: POGOProtos.Networking.Envelopes.RequestEnvelope, buffer: Buffer) {
-        let decoded = POGOProtos.Networking.Envelopes.ResponseEnvelope.decode(buffer).toObject({ defaults: true });
+        let ResponseEnvelope = POGOProtos.Networking.Envelopes.ResponseEnvelope;
+        let decoded = ResponseEnvelope.toObject(ResponseEnvelope.decode(buffer), { defaults: true });
 
         // decode response messages
         let allRequests = _.map(<any[]>request.requests, r => r.request_name);
@@ -248,7 +244,7 @@ export default class Decoder {
                 let request = allRequests[i];
                 let responseType = POGOProtos.Networking.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
                 if (responseType) {
-                    let message = responseType.decode(buffer).toObject({ defaults: true });
+                    let message = responseType.toObject(responseType.decode(buffer), { defaults: true });
                     message.request_name = request;
                     return message;
                 } else {

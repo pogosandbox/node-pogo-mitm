@@ -39,7 +39,6 @@ let config = {
     },
     logger: {
         level: 'info',
-        file: null,
     },
 };
 
@@ -63,6 +62,7 @@ export default class Config {
 
             if (!fs.existsSync('config/config.yaml')) {
                 logger.info('Config file not found in config/config.yaml, using default.');
+                loaded = config;
             } else {
                 logger.info('Loading config/config.yaml');
                 let content = fs.readFileSync('config/config.yaml', 'utf8');
@@ -91,7 +91,6 @@ export default class Config {
             }
         } catch (e) {
             logger.error(e);
-            debugger;
         }
 
         return loaded;
