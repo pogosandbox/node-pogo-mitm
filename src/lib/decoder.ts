@@ -2,7 +2,7 @@ import * as logger from 'winston';
 import * as fs from 'mz/fs';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import * as POGOProtos from 'node-pogo-protos';
+import * as POGOProtos from 'node-pogo-protos/fs';
 
 let pcrypt = require('pcrypt');
 let protobuf = require('protobufjs');
@@ -17,10 +17,11 @@ export default class Decoder {
 
     constructor(config) {
         this.config = config;
-        this.loadAltProtos();
+        this.loadProtos();
     }
 
-    async loadAltProtos(): Promise<any> {
+    async loadProtos(): Promise<any> {
+        // alt protos for Android
         let load = await protobuf.load('protos/Alternate.Signature.proto');
         this.altProtos = load.POGOProtos;
     }
@@ -105,7 +106,8 @@ export default class Decoder {
     }
 
     decodeRequestBuffer(buffer: Buffer) {
-        let request = POGOProtos.Networking.Envelopes.RequestEnvelope.decode(buffer).toObject({ defaults: true });
+        let RequestEnvelope = POGOProtos.Networking.Envelopes.RequestEnvelope;
+        let request = RequestEnvelope.toObject(RequestEnvelope.decode(buffer), { defaults: true });
 
         // decode requests
         _.each(request.requests, req => {
@@ -115,7 +117,7 @@ export default class Decoder {
                 reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
                 let requestType = POGOProtos.Networking.Requests.Messages[reqname];
                 if (requestType) {
-                    req.message = requestType.decode(req.request_message).toObject({ defaults: true });
+                    req.message = requestType.toObject(requestType.decode(req.request_message), { defaults: true });
                 } else {
                     logger.error('Unable to find request type %s (%d)', reqname, req.request_type);
                     req.message = {

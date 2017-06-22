@@ -3,7 +3,8 @@ import * as fs from 'fs';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 
-let yaml = require('js-yaml');
+const yaml = require('js-yaml');
+const winstonCommon = require('winston/lib/winston/common');
 
 let config = {
     reqId: 0,
@@ -49,6 +50,16 @@ export default class Config {
             if (!fs.existsSync('data')) {
                 fs.mkdirSync('data');
             }
+
+            logger.transports.Console.prototype.log = function (level, message, meta, callback) {
+                const output = winstonCommon.log(Object.assign({}, this, {
+                    level,
+                    message,
+                    meta,
+                }));
+                console[level in console ? level : 'log'](output);
+                setImmediate(callback, null, true);
+            };
 
             if (!fs.existsSync('config/config.yaml')) {
                 logger.info('Config file not found in config/config.yaml, using default.');
