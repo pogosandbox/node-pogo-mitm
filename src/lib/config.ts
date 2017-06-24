@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 
-let yaml = require('js-yaml');
+const yaml = require('js-yaml');
 const winstonCommon = require('winston/lib/winston/common');
 
 let config = {

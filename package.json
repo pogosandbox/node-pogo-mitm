@@ -6,7 +6,7 @@
   "author": "niico",
   "license": "MIT",
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=7.0.0"
   },
   "repository": {
     "type": "git",
@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "bluebird": "^3.5.0",
-    "cookie-session": "^2.0.0-beta.1",
+    "bytebuffer": "^5.0.1",
+    "cookie-session": "^2.0.0-beta.2",
     "dotenv": "^4.0.0",
     "express": "^4.15.3",
     "geolib": "^2.0.22",
@@ -25,7 +26,7 @@
     "long": "^3.2.0",
     "moment": "^2.18.1",
     "mz": "^2.6.0",
-    "node-pogo-protos": "^2.10.0",
+    "node-pogo-protos-vnext": "pogosandbox/node-pogo-protos#custom",
     "passport": "^0.3.2",
     "passport-github2": "^0.1.10",
     "pcrypt": "laverdet/pcrypt",
@@ -35,18 +36,18 @@
     "winston": "^2.3.1"
   },
   "devDependencies": {
-    "@types/bluebird": "^3.5.4",
+    "@types/bluebird": "^3.5.7",
     "@types/bytebuffer": "^5.0.33",
-    "@types/express": "^4.0.35",
+    "@types/express": "^4.0.36",
     "@types/fs-promise": "^1.0.3",
-    "@types/lodash": "^4.14.64",
+    "@types/lodash": "^4.14.66",
     "@types/long": "^3.0.31",
-    "@types/node": "^7.0.21",
+    "@types/node": "^8.0.2",
     "@types/passport": "^0.3.3",
     "@types/raw-body": "^2.1.4",
-    "@types/request-promise": "^4.1.33",
-    "@types/winston": "^2.3.2",
-    "tslint": "^5.2.0",
-    "typescript": "^2.3.2"
+    "@types/request-promise": "^4.1.35",
+    "@types/winston": "^2.3.3",
+    "tslint": "^5.4.3",
+    "typescript": "^2.3.4"
   }
 }

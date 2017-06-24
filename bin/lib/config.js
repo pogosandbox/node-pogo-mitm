@@ -4,7 +4,7 @@ const logger = require("winston");
 const fs = require("fs");
 const _ = require("lodash");
 const moment = require("moment");
-let yaml = require('js-yaml');
+const yaml = require('js-yaml');
 const winstonCommon = require('winston/lib/winston/common');
 let config = {
     reqId: 0,

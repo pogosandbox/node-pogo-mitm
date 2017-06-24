@@ -11,7 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("mz/fs");
 const _ = require("lodash");
-const POGOProtos = require("node-pogo-protos");
+const POGOProtos = require("node-pogo-protos-vnext/fs");
 let pcrypt = require('pcrypt');
 let protobuf = require('protobufjs');
 let long = require('long');
@@ -19,26 +19,14 @@ let ByteBuffer = require('bytebuffer');
 class Decoder {
     constructor(config) {
         this.config = config;
-        this.loadAltProtos();
+        this.loadProtos();
     }
-    loadAltProtos() {
-        let builder = protobuf.newBuilder();
-        protobuf.loadProtoFile('protos/Alternate.Signature.proto', builder);
-        function addPackedOption(ns) {
-            if (ns instanceof protobuf.Reflect.Message) {
-                ns.getChildren(protobuf.Reflect.Message.Field).forEach(field => {
-                    if (field.repeated && protobuf.PACKABLE_WIRE_TYPES.indexOf(field.type.wireType) !== -1) {
-                        field.options.packed = true;
-                    }
-                });
-                ns.getChildren(protobuf.Reflect.Message).forEach(addPackedOption);
-            }
-            else if (ns instanceof protobuf.Reflect.Namespace) {
-                ns.children.forEach(addPackedOption);
-            }
-        }
-        addPackedOption(builder.lookup('POGOProtos'));
-        this.altProtos = builder.build('POGOProtos');
+    loadProtos() {
+        return __awaiter(this, void 0, void 0, function* () {
+            // alt protos for Android
+            let load = yield protobuf.load('protos/Alternate.Signature.proto');
+            this.altProtos = load.POGOProtos;
+        });
     }
     decodeRequest(session, requestId, force = false) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -63,18 +51,18 @@ class Decoder {
                         reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
                         let requestType = POGOProtos.Networking.Platform.Requests[reqname];
                         if (requestType) {
-                            req.message = requestType.decode(req.request_message);
+                            req.message = requestType.toObject(requestType.decode(req.request_message), { defaults: true });
                             if (req.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
                                 // decrypt signature
                                 try {
-                                    let buffer = req.message.encrypted_signature.toBuffer();
-                                    let decrypted = pcrypt.decrypt(buffer);
+                                    let decrypted = pcrypt.decrypt(req.message.encrypted_signature);
                                     try {
                                         req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
+                                        req.message = POGOProtos.Networking.Envelopes.Signature.toObject(req.message, { defaults: true });
                                     }
                                     catch (e) {
-                                        // try with an alternate proto
                                         req.message = this.altProtos.Networking.Envelopes.Signature.decode(decrypted);
+                                        req.message = this.altProtos.Networking.Envelopes.Signature.toObject(req.message, { defaults: true });
                                         logger.debug('Decrypted with alternate protos');
                                     }
                                     if (req.message.device_info) {
@@ -101,7 +89,9 @@ class Decoder {
                     delete req.request_message;
                 });
                 // prettify
-                data.decoded.request_id = '0x' + data.decoded.request_id.toString(16);
+                if (data.decoded.request_id) {
+                    data.decoded.request_id = '0x' + data.decoded.request_id.toString(16);
+                }
                 // hide sensitive info
                 if (data.decoded.auth_info) {
                     if (data.decoded.auth_info.token)
@@ -120,7 +110,8 @@ class Decoder {
         });
     }
     decodeRequestBuffer(buffer) {
-        let request = POGOProtos.Networking.Envelopes.RequestEnvelope.decode(buffer);
+        let RequestEnvelope = POGOProtos.Networking.Envelopes.RequestEnvelope;
+        let request = RequestEnvelope.toObject(RequestEnvelope.decode(buffer), { defaults: true });
         // decode requests
         _.each(request.requests, req => {
             let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r === req.request_type);
@@ -129,7 +120,7 @@ class Decoder {
                 reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
                 let requestType = POGOProtos.Networking.Requests.Messages[reqname];
                 if (requestType) {
-                    req.message = requestType.decode(req.request_message);
+                    req.message = requestType.toObject(requestType.decode(req.request_message), { defaults: true });
                 }
                 else {
                     logger.error('Unable to find request type %s (%d)', reqname, req.request_type);
@@ -179,7 +170,7 @@ class Decoder {
                         let request = allPtfmRequests[i];
                         let responseType = POGOProtos.Networking.Platform.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
                         if (responseType) {
-                            let message = responseType.decode(buffer.response);
+                            let message = responseType.toObject(responseType.decode(buffer.response), { defaults: true });
                             message.request_name = request;
                             return message;
                         }
@@ -223,6 +214,7 @@ class Decoder {
                 }
                 data.decoded = decoded;
                 data = this.fixLongToString(data);
+                data = _.cloneDeep(data);
                 yield fs.writeFile(`data/${session}/${requestId}.res.json`, JSON.stringify(data, null, 4), 'utf8');
                 return data;
             }
@@ -236,7 +228,8 @@ class Decoder {
         });
     }
     decodeResponseBuffer(request, buffer) {
-        let decoded = POGOProtos.Networking.Envelopes.ResponseEnvelope.decode(buffer);
+        let ResponseEnvelope = POGOProtos.Networking.Envelopes.ResponseEnvelope;
+        let decoded = ResponseEnvelope.toObject(ResponseEnvelope.decode(buffer), { defaults: true });
         // decode response messages
         let allRequests = _.map(request.requests, r => r.request_name);
         if (allRequests.length > 0) {
@@ -244,7 +237,7 @@ class Decoder {
                 let request = allRequests[i];
                 let responseType = POGOProtos.Networking.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
                 if (responseType) {
-                    let message = responseType.decode(buffer);
+                    let message = responseType.toObject(responseType.decode(buffer), { defaults: true });
                     message.request_name = request;
                     return message;
                 }
@@ -268,7 +261,7 @@ class Decoder {
         return decoded;
     }
     encodeRequestToBuffer(request) {
-        return request.toBuffer();
+        return POGOProtos.Networking.Envelopes.RequestEnvelope.encode(request).finish();
     }
     encodeResponseToBuffer(response) {
         response.returns = _.map(response.responses, response => {
@@ -277,7 +270,7 @@ class Decoder {
             return responseType.encode(response);
         });
         delete response.responses;
-        return response.toBuffer();
+        return POGOProtos.Networking.Envelopes.ResponseEnvelope.encode(response).finish();
     }
     fixLongToString(data) {
         _.forIn(data, (value, key) => {
