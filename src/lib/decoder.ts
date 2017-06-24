@@ -2,7 +2,7 @@ import * as logger from 'winston';
 import * as fs from 'mz/fs';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import * as POGOProtos from 'node-pogo-protos/fs';
+import * as POGOProtos from 'node-pogo-protos-vnext/fs';
 
 let pcrypt = require('pcrypt');
 let protobuf = require('protobufjs');

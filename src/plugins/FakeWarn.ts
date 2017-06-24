@@ -4,7 +4,7 @@ import * as _ from 'lodash';
 import MitmProxy from '../lib/proxy';
 import BasePlugin from './BasePlugin';
 
-import * as POGOProtos from 'node-pogo-protos';
+import * as POGOProtos from 'node-pogo-protos-vnext';
 
 class FakeWarn extends BasePlugin {
     async handleResponse(context, response) {

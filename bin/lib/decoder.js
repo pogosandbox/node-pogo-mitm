@@ -11,7 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("mz/fs");
 const _ = require("lodash");
-const POGOProtos = require("node-pogo-protos/fs");
+const POGOProtos = require("node-pogo-protos-vnext/fs");
 let pcrypt = require('pcrypt');
 let protobuf = require('protobufjs');
 let long = require('long');
