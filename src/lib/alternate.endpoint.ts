@@ -29,7 +29,7 @@ export default class AlternateEndpoint {
                     key: await fs.readFile('.http-mitm-proxy/keys/sso.pokemon.com.key'),
                     cert: await fs.readFile('.http-mitm-proxy/certs/sso.pokemon.com.pem')
                 };
-                server = https.createServer(options, _.bind(this.onRequest, this));
+                server = https.createServer(options, <any>_.bind(this.onRequest, this));
             } else {
                 server = http.createServer(<any>_.bind(this.onRequest, this));
             }
