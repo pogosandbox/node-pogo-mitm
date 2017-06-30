@@ -182,23 +182,16 @@ export default class Decoder {
             if (allPtfmRequests.length > 0) {
                 decoded.platform_responses = _.map(<any[]>decoded.platform_returns, (buffer, i) => {
                     let request = allPtfmRequests[i];
-                    if (request === 'GET_STORE_ITEMS') { // crash. bad protos?
-                        return {
-                            error: '(unable to decode)',
-                            request_name: request,
-                        };
+                    let responseType = POGOProtos.Networking.Platform.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
+                    if (responseType) {
+                        let message = responseType.decode(buffer.response);
+                        message.request_name = request;
+                        return message;
                     } else {
-                        let responseType = POGOProtos.Networking.Platform.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
-                        if (responseType) {
-                            let message = responseType.decode(buffer.response);
-                            message.request_name = request;
-                            return message;
-                        } else {
-                            return {
-                                error: 'unable to decrypt ' + request,
-                                data: buffer.response.toString('base64'),
-                            };
-                        }
+                        return {
+                            error: 'unable to decrypt ' + request,
+                            data: buffer.response.toString('base64'),
+                        };
                     }
                 });
             } else {
