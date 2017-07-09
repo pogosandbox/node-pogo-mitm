@@ -53,6 +53,15 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Import Fiddler",
+            "program": "${workspaceRoot}/src/import/fiddler.ts",
+            "cwd": "${workspaceRoot}",
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "CSV Export",
             "program": "${workspaceRoot}/src/export/csv.ts",
             "cwd": "${workspaceRoot}",
