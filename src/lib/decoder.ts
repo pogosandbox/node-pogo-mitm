@@ -7,7 +7,6 @@ import * as POGOProtos from 'node-pogo-protos-vnext/fs';
 let pcrypt = require('pcrypt');
 let protobuf = require('protobufjs');
 let long = require('long');
-let ByteBuffer = require('bytebuffer');
 
 import Config from './config';
 
@@ -101,7 +100,7 @@ export default class Decoder {
             }
         }
 
-        data = this.fixLongToString(data);
+        data = this.fixLongAndBuffer(data);
 
         await fs.writeFile(`data/${session}/${requestId}.req.json`, JSON.stringify(data, null, 4), 'utf8');
 
@@ -197,17 +196,6 @@ export default class Decoder {
 
             // prettify
             decoded.request_id = '0x' + decoded.request_id.toString(16);
-            _.each(decoded.responses, response => {
-                if (response.request_name === 'GET_ASSET_DIGEST') {
-                    _.each(response.digest, digest => {
-                        digest.key = '(hidden)';
-                    });
-                } else if (response.request_name === 'SFIDA_REGISTRATION') {
-                    response.access_token = {
-                        base64: response.access_token.toString('base64'),
-                    };
-                }
-            });
 
             // hide auth info
             if (decoded.auth_ticket) {
@@ -217,7 +205,7 @@ export default class Decoder {
 
             data.decoded = decoded;
 
-            data = this.fixLongToString(data);
+            data = this.fixLongAndBuffer(data);
 
             data = _.cloneDeep(data);
 
@@ -284,12 +272,14 @@ export default class Decoder {
         return POGOProtos.Networking.Envelopes.ResponseEnvelope.encode(response).finish() as Buffer;
     }
 
-    fixLongToString(data: any): any {
+    fixLongAndBuffer(data: any): any {
         _.forIn(data, (value, key) => {
-            if (value instanceof long) {
+            if (value && value.constructor.name === 'Long') {
                 data[key] = value.toString();
-            } else if (typeof value === 'object' && !(value instanceof ByteBuffer)) {
-                data[key] = this.fixLongToString(value);
+            } else if (value instanceof Buffer) {
+                data[key] = value.toString('base64');
+            } else if (typeof value === 'object') {
+                data[key] = this.fixLongAndBuffer(value);
             }
         });
         return data;

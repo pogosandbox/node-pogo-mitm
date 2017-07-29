@@ -15,7 +15,6 @@ const POGOProtos = require("node-pogo-protos-vnext/fs");
 let pcrypt = require('pcrypt');
 let protobuf = require('protobufjs');
 let long = require('long');
-let ByteBuffer = require('bytebuffer');
 class Decoder {
     constructor(config) {
         this.config = config;
@@ -105,7 +104,7 @@ class Decoder {
                         data.decoded.auth_ticket.end = '(hidden)';
                 }
             }
-            data = this.fixLongToString(data);
+            data = this.fixLongAndBuffer(data);
             yield fs.writeFile(`data/${session}/${requestId}.req.json`, JSON.stringify(data, null, 4), 'utf8');
             return data;
         });
@@ -194,18 +193,6 @@ class Decoder {
                 delete decoded.platform_returns;
                 // prettify
                 decoded.request_id = '0x' + decoded.request_id.toString(16);
-                _.each(decoded.responses, response => {
-                    if (response.request_name === 'GET_ASSET_DIGEST') {
-                        _.each(response.digest, digest => {
-                            digest.key = '(hidden)';
-                        });
-                    }
-                    else if (response.request_name === 'SFIDA_REGISTRATION') {
-                        response.access_token = {
-                            base64: response.access_token.toString('base64'),
-                        };
-                    }
-                });
                 // hide auth info
                 if (decoded.auth_ticket) {
                     if (decoded.auth_ticket.start)
@@ -214,7 +201,7 @@ class Decoder {
                         decoded.auth_ticket.end = '(hidden)';
                 }
                 data.decoded = decoded;
-                data = this.fixLongToString(data);
+                data = this.fixLongAndBuffer(data);
                 data = _.cloneDeep(data);
                 yield fs.writeFile(`data/${session}/${requestId}.res.json`, JSON.stringify(data, null, 4), 'utf8');
                 return data;
@@ -273,13 +260,16 @@ class Decoder {
         delete response.responses;
         return POGOProtos.Networking.Envelopes.ResponseEnvelope.encode(response).finish();
     }
-    fixLongToString(data) {
+    fixLongAndBuffer(data) {
         _.forIn(data, (value, key) => {
-            if (value instanceof long) {
+            if (value && value.constructor.name === 'Long') {
                 data[key] = value.toString();
             }
-            else if (typeof value === 'object' && !(value instanceof ByteBuffer)) {
-                data[key] = this.fixLongToString(value);
+            else if (value instanceof Buffer) {
+                data[key] = value.toString('base64');
+            }
+            else if (typeof value === 'object') {
+                data[key] = this.fixLongAndBuffer(value);
             }
         });
         return data;
