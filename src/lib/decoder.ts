@@ -81,6 +81,7 @@ export default class Decoder {
                     }
                 } else {
                     req.message = `unable to decrypt ptfm request ${req.type}`;
+                    req.data = req.request_message.toString('base64');
                 }
                 delete req.request_message;
             });
