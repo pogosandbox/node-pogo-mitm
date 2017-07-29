@@ -7,3 +7,11 @@
     z-index: 1;
     height: 450px;
 }
+
+#view-request {
+    position: fixed;
+    width: inherit;
+    padding-right: 25px;
+    overflow-y: scroll; 
+    max-height: calc(100vh - 52px);
+}
