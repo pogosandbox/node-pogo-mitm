@@ -11,7 +11,7 @@
 #view-request {
     position: fixed;
     width: inherit;
-    padding-right: 25px;
-    overflow-y: scroll; 
+    padding: 0 25px 25px 0;
+    overflow-y: scroll;
     max-height: calc(100vh - 52px);
 }
