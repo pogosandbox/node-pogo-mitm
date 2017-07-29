@@ -7,3 +7,9 @@
     z-index: 1;
     height: 450px;
 }
+
+#view-request {
+    position: fixed;
+    width: inherit;
+    padding-right: 25px;
+}

@@ -1,13 +1,13 @@
-$(function() {
+$(function () {
     window.global = {};
 
-    $('.btn-all-sessions').click(function() {
+    $('.btn-all-sessions').click(function () {
         $('#panel-all-sessions').show();
-        $('#panel-sesion').hide();       
+        $('#panel-sesion').hide();
     });
 
     // session selection
-    $('.navbar-nav, #all-sessions').on('click', '.viewSession', function() {
+    $('.navbar-nav, #all-sessions').on('click', '.viewSession', function () {
         let session = $(this).data('session');
 
         $('.navbar-nav .active').removeClass('active');
@@ -17,7 +17,7 @@ $(function() {
     });
 
     // view request or response
-    $('.viewRequestResponse').click(function() {
+    $('.viewRequestResponse').click(function () {
         $(this).find('.request').toggleClass('btn-primary');
         $(this).find('.response').toggleClass('btn-primary');
         let session = $('#requests').data('session');
@@ -26,12 +26,12 @@ $(function() {
         if (session && request) viewRequestDetail(which, session, request);
     });
 
-    $('#next-request').click(function() {
+    $('#next-request').click(function () {
         prevNext(+1);
         return false;
     });
 
-    $('#prev-request').click(function() {
+    $('#prev-request').click(function () {
         prevNext(-1);
         return false;
     });
@@ -59,7 +59,7 @@ $(function() {
         $('#jsonViewer').html('');
         $('#requests tr.item').empty();
         $('#requests').data('session', id);
-        $.getJSON('/api/session/' + id, function(data) {
+        $.getJSON('/api/session/' + id, function (data) {
             $('.info-session').html(`
                 <div>${data.title}</div>
             `);
@@ -106,7 +106,7 @@ $(function() {
             let map = window.mapobj = L.map('map').setView([51.505, -0.09], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             let pts = Array.from(data.steps, pt => L.latLng(pt.lat, pt.lng));
-            let path = L.polyline(pts, {color: 'red'}).addTo(map);
+            let path = L.polyline(pts, { color: 'red' }).addTo(map);
             let bounds = path.getBounds();
             map.fitBounds(bounds);
         }
@@ -118,17 +118,16 @@ $(function() {
         $('#view-session-info').hide();
         $('#jsonViewer').html('<h3>loading...</h3>');
         $('.' + request).addClass('success');
-        $.getJSON(`/api/${which}/${session}/${request}`, function(data) {
-            $('#jsonViewer').jsonViewer(data.decoded, {collapsed: true});
+        $.getJSON(`/api/${which}/${session}/${request}`, function (data) {
+            $('#jsonViewer').jsonViewer(data.decoded, { collapsed: true });
             displayNicely();
-            window.scrollTo(0, 0);
         });
     }
 
     function displayNicely() {
         $('#jsonViewer a').first().click();
         let res = $('#jsonViewer a:contains("requests")');
-        res = res.filter(function() {
+        res = res.filter(function () {
             return $(this).text() === 'requests';
         }).first();
         if (res.length == 1) {
@@ -136,7 +135,7 @@ $(function() {
             res.parent().find('ol').first().find('a').first().click();
         } else {
             res = $('#jsonViewer a:contains("responses")');
-            res = res.filter(function() {
+            res = res.filter(function () {
                 return $(this).text() === 'responses';
             }).first();
             if (res.length == 1) {
@@ -147,7 +146,7 @@ $(function() {
     }
 
     // display a specific request
-    $('#requests').on('click', '.id', function() {
+    $('#requests').on('click', '.id', function () {
         let session = $('#requests').data('session');
         let request = $(this).data('id');
         $('#requests .success').removeClass('success');
@@ -206,16 +205,18 @@ $(function() {
 
     function getConfig() {
         return $.getJSON('/api/config').done(data => {
-            if(data.ga) {
+            if (data.ga) {
                 try {
-                    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-                    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-                    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-                    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+                    (function (i, s, o, g, r, a, m) {
+                    i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+                        (i[r].q = i[r].q || []).push(arguments)
+                    }, i[r].l = 1 * new Date(); a = s.createElement(o),
+                        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+                    })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
 
                     ga('create', data.ga, 'auto');
                     ga('send', 'pageview');
-                } catch(e) {}
+                } catch (e) { }
             }
         });
     }
