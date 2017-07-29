@@ -6,3 +6,4 @@ snorlax/*
 ios.dump*/*
 *.log
 config/config.yaml
+config/*/**

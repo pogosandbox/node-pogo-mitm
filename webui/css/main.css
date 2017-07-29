@@ -12,4 +12,6 @@
     position: fixed;
     width: inherit;
     padding-right: 25px;
+    overflow-y: scroll; 
+    max-height: calc(100vh - 52px);
 }
