@@ -4,13 +4,13 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 import * as Bluebird from 'bluebird';
 
-let mitmproxy = require('http-mitm-proxy');
+const mitmproxy = require('http-mitm-proxy');
 
 import Config from './config';
 import Utils from './utils';
 import Decoder from './decoder';
 
-let endpoints = {
+const endpoints = {
     api: 'pgorelease.nianticlabs.com',
     ptc: 'sso.pokemon.com',
     googleauth: 'accounts.google.com',
@@ -31,9 +31,9 @@ export default class MitmProxy {
     }
 
     async launch() {
-        let config = this.config;
+        const config = this.config;
         if (config.proxy.active) {
-            let ip = config.ip = this.utils.getIp();
+            const ip = config.ip = this.utils.getIp();
             logger.info('Proxy listening at %s:%s', ip, config.proxy.port);
             logger.info('Proxy config url available at http://%s:%s/proxy.pac', ip, config.proxy.port);
 
@@ -50,10 +50,10 @@ export default class MitmProxy {
     }
 
     async loadPlugins() {
-        let plugins: string[] = this.config.proxy.plugins;
-        let loaded = await Bluebird.map(plugins, async name => {
+        const plugins: string[] = this.config.proxy.plugins;
+        const loaded = await Bluebird.map(plugins, async name => {
             try {
-                let plugin = require(`../plugins/${name}`);
+                const plugin = require(`../plugins/${name}`);
                 plugin.name = name;
                 if (_.hasIn(plugin, 'init')) {
                     logger.debug('Load plugin %s', name);
@@ -69,11 +69,11 @@ export default class MitmProxy {
     }
 
     async onRequest(context, callback) {
-        let config = this.config;
-        let host = context.clientToProxyRequest.headers.host;
-        let endpoint = _.findKey(endpoints, endpoint => endpoint === host);
+        const config = this.config;
+        const host = context.clientToProxyRequest.headers.host;
+        const endpoint = _.findKey(endpoints, endpoint => endpoint === host);
         if (host === `${config.ip}:${config.proxy.port}` || (config.proxy.hostname && _.startsWith(host, config.proxy.hostname))) {
-            let res = context.proxyToClientResponse;
+            const res = context.proxyToClientResponse;
             if (_.startsWith(context.clientToProxyRequest.url, '/proxy.pac')) {
                 // get proxy.pac
                 logger.info('Get proxy.pac');
@@ -94,8 +94,8 @@ export default class MitmProxy {
             } else if (_.startsWith(context.clientToProxyRequest.url, '/cert')) {
                 // get cert
                 logger.info('Get certificate');
-                let path = this.proxy.sslCaDir + '/certs/ca.pem';
-                let data = await fs.readFile(path);
+                const path = this.proxy.sslCaDir + '/certs/ca.pem';
+                const data = await fs.readFile(path);
                 res.writeHead(200, {'Content-Type': 'application/x-x509-ca-cert', 'Content-Length': data.length});
                 res.end(data, 'binary');
             } else {
@@ -104,8 +104,8 @@ export default class MitmProxy {
             }
 
         } else if (endpoint) {
-            let requestChunks = [];
-            let responseChunks = [];
+            const requestChunks = [];
+            const responseChunks = [];
             let request = null;
 
             let id = 0, requestId = '';
@@ -121,7 +121,7 @@ export default class MitmProxy {
 
             context.onRequestEnd(async (ctx, callback) => {
                 let buffer = Buffer.concat(requestChunks);
-                let url = ctx.clientToProxyRequest.url;
+                const url = ctx.clientToProxyRequest.url;
 
                 try {
                     if (endpoint === 'api') {
@@ -170,10 +170,10 @@ export default class MitmProxy {
 
     async simpleDumpRequest(name, ctx, buffer: Buffer, url: string) {
         logger.debug('Dumping request to %s %s', name, url);
-        let id = +moment();
-        let data = {
+        const id = +moment();
+        const data = {
             when: id,
-            url: url,
+            url,
             headers: ctx.clientToProxyRequest.headers,
         };
         await fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.req.info`, JSON.stringify(data, null, 4), 'utf8');
@@ -181,8 +181,8 @@ export default class MitmProxy {
     }
 
     async simpleDumpResponse(name, ctx, buffer: Buffer) {
-        let id = +moment();
-        let data = {
+        const id = +moment();
+        const data = {
             when: id,
             headers: ctx.serverToProxyResponse.headers,
         };
@@ -192,8 +192,8 @@ export default class MitmProxy {
 
     async handleApiRequest(id, ctx, buffer: Buffer, url) {
         logger.info('Pogo request: %s', url);
-        let data = {
-            id: id,
+        const data = {
+            id,
             when: +moment(),
             endpoint: url,
             headers: ctx.proxyToServerRequest._headers,
@@ -204,7 +204,7 @@ export default class MitmProxy {
         let decoded = null;
         if (this.config.proxy.plugins.length > 0) {
             try {
-                let plugins: any[] = this.config.proxy.plugins;
+                const plugins: any[] = this.config.proxy.plugins;
 
                 decoded = this.decoder.decodeRequestBuffer(buffer);
 
@@ -229,7 +229,7 @@ export default class MitmProxy {
         }
 
         return {
-            buffer: buffer,
+            buffer,
             request: decoded,
         };
     }
@@ -237,9 +237,9 @@ export default class MitmProxy {
     async handleApiResponse(id, ctx, buffer: Buffer, request) {
         if (this.config.proxy.plugins.length > 0 && ctx.clientToProxyRequest !== '/plfe/version') {
             try {
-                let plugins: any[] = this.config.proxy.plugins;
+                const plugins: any[] = this.config.proxy.plugins;
 
-                let response = this.decoder.decodeResponseBuffer(request, buffer);
+                const response = this.decoder.decodeResponseBuffer(request, buffer);
 
                 let modified = false;
                 await Bluebird.each(plugins, async plugin => {
@@ -261,7 +261,7 @@ export default class MitmProxy {
             }
         }
 
-        let data = {
+        const data = {
             when: +moment(),
             data: buffer.toString('base64'),
         };

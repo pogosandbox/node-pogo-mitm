@@ -19,7 +19,7 @@ class Utils {
     }
     getIp() {
         // typing is bad but I can't find a way to make it works
-        let ipv4 = _(os.networkInterfaces())
+        const ipv4 = _(os.networkInterfaces())
             .filter((i, name) => !/(loopback|vmware|internal)/gi.test(name))
             .flatten().filter(ip => !ip.internal && ip.family === 'IPv4').first();
         return ipv4.address;
@@ -40,9 +40,9 @@ class Utils {
     }
     getSessionFolders() {
         return __awaiter(this, void 0, void 0, function* () {
-            let content = yield fs.readdir('data');
-            let files = yield Bluebird.filter(content, (file) => __awaiter(this, void 0, void 0, function* () {
-                let stat = yield fs.stat('data/' + file);
+            const content = yield fs.readdir('data');
+            const files = yield Bluebird.filter(content, (file) => __awaiter(this, void 0, void 0, function* () {
+                const stat = yield fs.stat('data/' + file);
                 return stat.isDirectory() && !file.startsWith('.');
             }));
             return _.sortBy(files);
@@ -56,7 +56,7 @@ class Utils {
             catch (e) { }
             let folders = yield this.getSessionFolders();
             folders = yield Bluebird.filter(folders, (dir) => __awaiter(this, void 0, void 0, function* () {
-                let content = yield fs.readdir(`data/${dir}`);
+                const content = yield fs.readdir(`data/${dir}`);
                 return content.length === 0;
             }));
             yield Bluebird.map(folders, (dir) => __awaiter(this, void 0, void 0, function* () {

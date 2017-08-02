@@ -15,7 +15,7 @@ export default class Utils {
 
     getIp(): string {
         // typing is bad but I can't find a way to make it works
-        let ipv4: any = _(os.networkInterfaces())
+        const ipv4: any = _(os.networkInterfaces())
                 .filter((i, name) => !/(loopback|vmware|internal)/gi.test(name))
                 .flatten().filter(ip => !(<any>ip).internal && (<any>ip).family === 'IPv4').first();
         return ipv4.address;
@@ -34,9 +34,9 @@ export default class Utils {
     }
 
     async getSessionFolders(): Promise<string[]> {
-        let content: string[] = await fs.readdir('data');
-        let files = await Bluebird.filter(content, async file => {
-            let stat = await fs.stat('data/' + file);
+        const content = await fs.readdir('data');
+        const files = await Bluebird.filter(content, async file => {
+            const stat = await fs.stat('data/' + file);
             return stat.isDirectory() && !file.startsWith('.');
         });
         return _.sortBy(files);
@@ -49,7 +49,7 @@ export default class Utils {
 
         let folders = await this.getSessionFolders();
         folders = await Bluebird.filter(folders, async dir => {
-            let content = await fs.readdir(`data/${dir}`);
+            const content = await fs.readdir(`data/${dir}`);
             return content.length === 0;
         });
 

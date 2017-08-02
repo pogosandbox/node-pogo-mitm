@@ -20,7 +20,7 @@ class Preload {
 
     async preload() {
         await this.utils.cleanDataFolders();
-        let folders = await this.utils.getSessionFolders();
+        const folders = await this.utils.getSessionFolders();
         await Bluebird.map(folders, folder => this.preloadSession(folder));
     }
 
@@ -28,9 +28,9 @@ class Preload {
         if (fs.existsSync(`data/${folder}/.preload`)) return;
 
         logger.info('Preload session %s', folder);
-        let files = await fs.readdir(`data/${folder}`);
+        const files = await fs.readdir(`data/${folder}`);
 
-        let data = await this.processRequests(folder, files);
+        const data = await this.processRequests(folder, files);
 
         await this.validateData(folder, data);
 
@@ -54,7 +54,7 @@ class Preload {
 
     async processRequests(session: string, files: string[]): Promise<any[]> {
         files = _.filter(files, f => _.endsWith(f, '.req.bin'));
-        let data = await Bluebird.map(files, async file => {
+        const data = await Bluebird.map(files, async file => {
             return await this.decoder.decodeRequest(session, _.trimEnd(file, '.req.bin'), true);
         });
         return _.map(data, d => {
@@ -74,8 +74,8 @@ class Preload {
     }
 }
 
-let preload = new Preload();
+const preload = new Preload();
 preload.preload()
-.then(() => logger.info('Done.'))
-.then(() => process.exit())
-.catch(e => logger.error(e));
+    .then(() => logger.info('Done.'))
+    .then(() => process.exit())
+    .catch(e => logger.error(e));

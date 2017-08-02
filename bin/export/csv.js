@@ -12,7 +12,7 @@ const logger = require("winston");
 const libcsv_1 = require("./libcsv");
 function exportCsv() {
     return __awaiter(this, void 0, void 0, function* () {
-        let csv = new libcsv_1.default();
+        const csv = new libcsv_1.default();
         yield csv.exportRequestsSignature();
         logger.info('Done.');
         process.exit();

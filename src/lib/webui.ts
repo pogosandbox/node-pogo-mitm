@@ -25,9 +25,9 @@ export default class WebUI {
     }
 
     launch() {
-        let config = this.config.ui;
+        const config = this.config.ui;
         if (config.active) {
-            let app = this.app = express();
+            const app = this.app = express();
             app.set('etag', false);
 
             if (config.auth.active) this.activateAuth();
@@ -64,8 +64,8 @@ export default class WebUI {
 
     activateAuth(): void {
         logger.info('Activate GitHub authentication.');
-        let config = this.config.ui;
-        let GitHubStrategy = require('passport-github2').Strategy;
+        const config = this.config.ui;
+        const GitHubStrategy = require('passport-github2').Strategy;
         passport.use(new GitHubStrategy(
             {
                 clientID: config.auth.githubClientId,
@@ -94,7 +94,7 @@ export default class WebUI {
             }
         });
 
-        let cookieSession = require('cookie-session');
+        const cookieSession = require('cookie-session');
         this.app.use(cookieSession({
             name: 'mitm.session',
             secret: config.auth.secret,
@@ -138,14 +138,14 @@ export default class WebUI {
     async getSessions(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
         logger.info('Getting sessions.');
         try {
-            let folders = await this.utils.getSessionFolders();
-            let data = await Bluebird.map(folders, async folder => {
-                let info = {
+            const folders = await this.utils.getSessionFolders();
+            const data = await Bluebird.map(folders, async folder => {
+                const info = {
                     id: folder,
                     title: moment(folder, 'YYYYMMDD.HHmmss').format('DD MMM YY - HH:mm:ss'),
                 };
                 if (fs.existsSync(`data/${folder}/.info`)) {
-                    let content = await fs.readFile(`data/${folder}/.info`, 'utf8');
+                    const content = await fs.readFile(`data/${folder}/.info`, 'utf8');
                     info.title += ' ' + content;
                 }
                 return info;
@@ -160,35 +160,35 @@ export default class WebUI {
     async getRequests(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
         logger.info('Getting requests for session %s', req.params.session);
         try {
-            let result =  {
+            const result =  {
                 title: '',
                 steps: [],
                 files: [],
             };
 
             if (fs.existsSync(`data/${req.params.session}/.info`)) {
-                let info = await fs.readFile(`data/${req.params.session}/.info`, 'utf8');
+                const info = await fs.readFile(`data/${req.params.session}/.info`, 'utf8');
                 result.title = info;
             }
 
             if (fs.existsSync(`data/${req.params.session}/.preload`)) {
-                let preload = await fs.readFile(`data/${req.params.session}/.preload`, 'utf8');
+                const preload = await fs.readFile(`data/${req.params.session}/.preload`, 'utf8');
                 result.steps = JSON.parse(preload);
             }
 
             let files = await fs.readdir(`data/${req.params.session}`);
             files = _.filter(files, d => _.endsWith(d, '.req.bin'));
 
-            let force = !this.config.protos.cachejson;
+            const force = !this.config.protos.cachejson;
             result.files = await Bluebird.map(files, async file => {
-                let content = await fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
-                let request = JSON.parse(content);
+                const content = await fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
+                const request = JSON.parse(content);
 
                 request.title = '';
                 try {
-                    let decoded = await this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
+                    const decoded = await this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
                     if (decoded && decoded.decoded) {
-                        let main = _.first(decoded.decoded.requests) as any;
+                        const main = _.first(decoded.decoded.requests) as any;
                         if (main) {
                             request.title = main.request_name;
                         }
@@ -211,8 +211,8 @@ export default class WebUI {
     async decodeRequest(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
         logger.info('Decrypting session %d, request %s', req.params.session, req.params.request);
         try {
-            let force = !this.config.protos.cachejson;
-            let data = await this.decoder.decodeRequest(req.params.session, req.params.request, force);
+            const force = !this.config.protos.cachejson;
+            const data = await this.decoder.decodeRequest(req.params.session, req.params.request, force);
             return res.json(data);
         } catch (e) {
             logger.error(e);
@@ -223,8 +223,8 @@ export default class WebUI {
     async decodeResponse(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
         logger.info('Decrypting session %d, response %s', req.params.session, req.params.request);
         try {
-            let force = !this.config.protos.cachejson;
-            let data = await this.decoder.decodeResponse(req.params.session, req.params.request, force);
+            const force = !this.config.protos.cachejson;
+            const data = await this.decoder.decodeResponse(req.params.session, req.params.request, force);
             return res.json(data);
         } catch (e) {
             logger.error(e);
@@ -234,8 +234,8 @@ export default class WebUI {
 
     async exportCsv(req: express.Request, res: express.Response, next: Function): Promise<void> {
         try {
-            let stats = await fs.stat('data/requests.signatures.csv');
-            let mtime = moment(stats.mtime);
+            const stats = await fs.stat('data/requests.signatures.csv');
+            const mtime = moment(stats.mtime);
             if (mtime.add(15, 'm').isAfter(moment())) {
                 return res.sendFile('requests.signatures.csv', {root: 'data'});
             } else {
@@ -243,8 +243,8 @@ export default class WebUI {
             }
         } catch (e) {
             logger.info('Export signatures to CSV.');
-            let csv = new Csv(this.config);
-            let file = await csv.exportRequestsSignature('requests.signatures.csv');
+            const csv = new Csv(this.config);
+            const file = await csv.exportRequestsSignature('requests.signatures.csv');
             res.sendFile(file, {root: 'data'});
         }
     }

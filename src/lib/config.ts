@@ -6,7 +6,7 @@ import * as moment from 'moment';
 const yaml = require('js-yaml');
 const winstonCommon = require('winston/lib/winston/common');
 
-let config = {
+const config = {
     reqId: 0,
     proxy: {
         active: true,
@@ -65,25 +65,21 @@ export default class Config {
                 loaded = config;
             } else {
                 logger.info('Loading config/config.yaml');
-                let content = fs.readFileSync('config/config.yaml', 'utf8');
+                const content = fs.readFileSync('config/config.yaml', 'utf8');
                 loaded = yaml.safeLoad(content);
                 loaded = _.defaultsDeep(loaded, config);
             }
 
             logger.remove(logger.transports.Console);
             logger.add(logger.transports.Console, {
-                'timestamp': function() {
-                    return moment().format('HH:mm:ss');
-                },
+                'timestamp': () => moment().format('HH:mm:ss'),
                 'colorize': false,
                 'level': loaded.logger.level,
             });
 
             if (loaded.logger.file) {
                 logger.add(logger.transports.File, {
-                    'timestamp': function() {
-                        return moment().format('HH:mm:ss');
-                    },
+                    'timestamp': () => moment().format('HH:mm:ss'),
                     'filename': loaded.logger.file,
                     'json': false,
                     'level': loaded.logger.level,

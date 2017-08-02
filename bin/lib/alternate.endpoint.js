@@ -24,7 +24,7 @@ class AlternateEndpoint {
     }
     launch() {
         return __awaiter(this, void 0, void 0, function* () {
-            let config = this.config.alternateEndpoint;
+            const config = this.config.alternateEndpoint;
             if (config.active) {
                 let server = null;
                 if (config.https) {
@@ -38,7 +38,7 @@ class AlternateEndpoint {
                     server = http.createServer(_.bind(this.onRequest, this));
                 }
                 server.listen(config.port, () => {
-                    let ip = this.utils.getIp();
+                    const ip = this.utils.getIp();
                     logger.info('Alternate endpoint listening at %s:%s', ip, config.https ? 443 : 80);
                 });
             }
@@ -51,11 +51,11 @@ class AlternateEndpoint {
                 let buffer = yield getRawBody(req);
                 if (buffer.length === 0)
                     buffer = null;
-                let host = req.headers.host;
+                const host = req.headers.host;
                 delete req.headers.host;
                 delete req.headers['content-length'];
                 logger.debug(`Making request to https://${host}${req.url}`);
-                let options = {
+                const options = {
                     uri: `https://${host}${req.url}`,
                     method: req.method,
                     body: buffer,
@@ -65,7 +65,7 @@ class AlternateEndpoint {
                     strictSSL: false,
                     simple: false,
                 };
-                let response = yield request(options);
+                const response = yield request(options);
                 response.headers['content-length'] = response.body ? response.body.length : 0;
                 yield this.saveToFile(req.url, req.headers, response);
                 res.writeHead(response.statusCode, response.headers);
@@ -80,12 +80,12 @@ class AlternateEndpoint {
     }
     saveToFile(url, headers, response) {
         return __awaiter(this, void 0, void 0, function* () {
-            let when = +moment();
-            let data = {
-                when: when,
+            const when = +moment();
+            const data = {
+                when,
                 request: {
                     endpoint: url,
-                    headers: headers,
+                    headers,
                 },
                 response: {
                     statusCode: response.statusCode,

@@ -12,7 +12,7 @@ const logger = require("winston");
 const fs = require("mz/fs");
 const _ = require("lodash");
 const Bluebird = require("bluebird");
-let json2csv = require('json2csv');
+const json2csv = require('json2csv');
 const geolib = require('geolib');
 const utils_1 = require("./../lib/utils");
 const config_1 = require("./../lib/config");
@@ -29,8 +29,8 @@ class Csv {
     exportRequestsSignature(filename) {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.utils.cleanDataFolders();
-            let folders = yield this.utils.getSessionFolders();
-            let sessionsArOfAr = yield Bluebird.map(folders, (folder) => __awaiter(this, void 0, void 0, function* () {
+            const folders = yield this.utils.getSessionFolders();
+            const sessionsArOfAr = yield Bluebird.map(folders, (folder) => __awaiter(this, void 0, void 0, function* () {
                 let files = yield fs.readdir(`data/${folder}`);
                 files = _.filter(files, file => _.endsWith(file, '.req.bin'));
                 return _.map(files, file => {
@@ -42,16 +42,16 @@ class Csv {
                     };
                 });
             }));
-            let requests = _.flatten(sessionsArOfAr);
+            const requests = _.flatten(sessionsArOfAr);
             yield Bluebird.each(requests, (request) => __awaiter(this, void 0, void 0, function* () {
-                let exists = yield fs.exists(`data/${request.session}/.info`);
+                const exists = yield fs.exists(`data/${request.session}/.info`);
                 if (exists) {
                     request.info = yield fs.readFile(`data/${request.session}/.info`, 'utf8');
                 }
             }));
             // we now have an array of files with requests dump, let's decrypt
             let signatures = yield Bluebird.map(requests, (file) => __awaiter(this, void 0, void 0, function* () {
-                let request = yield this.decoder.decodeRequest(file.session, file.request);
+                const request = yield this.decoder.decodeRequest(file.session, file.request);
                 let signature = _.find(request.decoded.platform_requests, r => r.request_name === 'SEND_ENCRYPTED_SIGNATURE');
                 signature = (!signature || typeof signature.message === 'string') ? null : signature.message;
                 let apiCall = 'NONE';
@@ -73,18 +73,18 @@ class Csv {
                 }
                 return {
                     request_id: '="' + request.decoded.request_id + '"',
-                    loginType: loginType,
-                    uk2: uk2,
+                    loginType,
+                    uk2,
                     session: file.session,
                     info: file.info,
                     request: file.request,
-                    apiCall: apiCall,
-                    ptr8: ptr8,
+                    apiCall,
+                    ptr8,
                     version_hash: versionHash,
                     latitude: request.decoded.latitude,
                     longitude: request.decoded.longitude,
                     accuracy: request.decoded.accuracy,
-                    signature: signature,
+                    signature,
                     lastLocFix: signature != null ? signature.location_fix[signature.location_fix.length - 1] : '',
                     fullRequest: request.decoded,
                 };
@@ -106,7 +106,7 @@ class Csv {
     dumpAllSignatures(signatures, file = 'requests.signatures.csv') {
         return __awaiter(this, void 0, void 0, function* () {
             logger.info('Dumping signature info...');
-            let csv = json2csv({
+            const csv = json2csv({
                 data: signatures,
                 fields: [
                     'request_id',

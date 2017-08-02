@@ -24,7 +24,7 @@ class Preload {
     preload() {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.utils.cleanDataFolders();
-            let folders = yield this.utils.getSessionFolders();
+            const folders = yield this.utils.getSessionFolders();
             yield Bluebird.map(folders, folder => this.preloadSession(folder));
         });
     }
@@ -33,8 +33,8 @@ class Preload {
             if (fs.existsSync(`data/${folder}/.preload`))
                 return;
             logger.info('Preload session %s', folder);
-            let files = yield fs.readdir(`data/${folder}`);
-            let data = yield this.processRequests(folder, files);
+            const files = yield fs.readdir(`data/${folder}`);
+            const data = yield this.processRequests(folder, files);
             yield this.validateData(folder, data);
             // save coords to display a nice map
             let coords = _.map(data, d => {
@@ -57,7 +57,7 @@ class Preload {
     processRequests(session, files) {
         return __awaiter(this, void 0, void 0, function* () {
             files = _.filter(files, f => _.endsWith(f, '.req.bin'));
-            let data = yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () {
+            const data = yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () {
                 return yield this.decoder.decodeRequest(session, _.trimEnd(file, '.req.bin'), true);
             }));
             return _.map(data, d => {
@@ -78,7 +78,7 @@ class Preload {
         });
     }
 }
-let preload = new Preload();
+const preload = new Preload();
 preload.preload()
     .then(() => logger.info('Done.'))
     .then(() => process.exit())

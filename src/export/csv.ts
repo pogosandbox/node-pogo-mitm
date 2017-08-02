@@ -2,7 +2,7 @@ import * as logger from 'winston';
 import Csv from './libcsv';
 
 async function exportCsv() {
-    let csv = new Csv();
+    const csv = new Csv();
     await csv.exportRequestsSignature();
     logger.info('Done.');
     process.exit();

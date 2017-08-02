@@ -3,7 +3,7 @@ import * as fs from 'mz/fs';
 import * as _ from 'lodash';
 import * as Bluebird from 'bluebird';
 
-let json2csv = require('json2csv');
+const json2csv = require('json2csv');
 const geolib = require('geolib');
 
 import Utils from './../lib/utils';
@@ -27,9 +27,9 @@ export default class Csv {
 
     async exportRequestsSignature(filename?: string): Promise<string> {
         await this.utils.cleanDataFolders();
-        let folders = await this.utils.getSessionFolders();
+        const folders = await this.utils.getSessionFolders();
 
-        let sessionsArOfAr = await Bluebird.map(folders, async folder => {
+        const sessionsArOfAr = await Bluebird.map(folders, async folder => {
             let files = await fs.readdir(`data/${folder}`) as string[];
             files = _.filter(files, file => _.endsWith(file, '.req.bin'));
             return _.map(files, file => {
@@ -42,10 +42,10 @@ export default class Csv {
                                         });
         });
 
-        let requests = _.flatten(sessionsArOfAr);
+        const requests = _.flatten(sessionsArOfAr);
 
         await Bluebird.each(requests, async request => {
-            let exists = await fs.exists(`data/${request.session}/.info`);
+            const exists = await fs.exists(`data/${request.session}/.info`);
             if (exists) {
                 request.info = await fs.readFile(`data/${request.session}/.info`, 'utf8');
             }
@@ -53,7 +53,7 @@ export default class Csv {
 
         // we now have an array of files with requests dump, let's decrypt
         let signatures = await Bluebird.map(requests, async file => {
-            let request = await this.decoder.decodeRequest(file.session, file.request);
+            const request = await this.decoder.decodeRequest(file.session, file.request);
             let signature = _.find(<any[]>request.decoded.platform_requests, r => r.request_name === 'SEND_ENCRYPTED_SIGNATURE');
             signature = (!signature || typeof signature.message === 'string') ? null : signature.message;
 
@@ -79,18 +79,18 @@ export default class Csv {
 
             return {
                 request_id: '="' + request.decoded.request_id + '"',
-                loginType: loginType,
-                uk2: uk2,
+                loginType,
+                uk2,
                 session: file.session,
                 info: file.info,
                 request: file.request,
-                apiCall: apiCall,
-                ptr8: ptr8,
+                apiCall,
+                ptr8,
                 version_hash: versionHash,
                 latitude: request.decoded.latitude,
                 longitude: request.decoded.longitude,
                 accuracy: request.decoded.accuracy,
-                signature: signature,
+                signature,
                 lastLocFix: signature != null ? signature.location_fix[signature.location_fix.length - 1] : '',
                 fullRequest: request.decoded,
             };
@@ -114,7 +114,7 @@ export default class Csv {
 
     async dumpAllSignatures(signatures: any[], file = 'requests.signatures.csv'): Promise<string> {
         logger.info('Dumping signature info...');
-        let csv = json2csv({
+        const csv = json2csv({
             data: signatures,
             fields: [
                 'request_id',

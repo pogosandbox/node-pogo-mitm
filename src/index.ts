@@ -9,18 +9,18 @@ import WebUI from './lib/webui';
 import AlternateEndpoint from './lib/alternate.endpoint';
 
 async function Main() {
-    let config = new Config().load();
-    let utils = new Utils(config);
+    const config = new Config().load();
+    const utils = new Utils(config);
 
     await utils.initFolders();
 
-    let proxy = new Proxy(config);
+    const proxy = new Proxy(config);
     await proxy.launch();
 
-    let endpoint = new AlternateEndpoint(config);
+    const endpoint = new AlternateEndpoint(config);
     await endpoint.launch();
 
-    let webui = new WebUI(config);
+    const webui = new WebUI(config);
     await webui.launch();
 
     logger.info('App ready.');

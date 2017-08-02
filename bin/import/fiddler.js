@@ -15,19 +15,19 @@ const moment = require("moment");
 const _ = require("lodash");
 const JSZip = require("jszip");
 const config_1 = require("./../lib/config");
-let config = new config_1.default().load();
+const config = new config_1.default().load();
 class FiddlerImport {
     importSession(archive) {
         return __awaiter(this, void 0, void 0, function* () {
             logger.info(`Importing ${archive}...`);
             // load info from archive
-            let raw = yield fs.readFile(archive);
-            let zip = new JSZip();
+            const raw = yield fs.readFile(archive);
+            const zip = new JSZip();
             yield zip.loadAsync(raw);
             // filter request only
-            let requests = [];
-            for (let elt in zip.files) {
-                let info = zip.files[elt];
+            const requests = [];
+            for (const elt in zip.files) {
+                const info = zip.files[elt];
                 if (!info.dir) {
                     if (elt.endsWith('_c.txt')) {
                         requests.push(elt);
@@ -35,8 +35,8 @@ class FiddlerImport {
                 }
             }
             // get date, create dest folder
-            let when = moment(zip.files[requests[0]].date);
-            let folder = when.format('YYYYMMDD.HHmmss');
+            const when = moment(zip.files[requests[0]].date);
+            const folder = when.format('YYYYMMDD.HHmmss');
             logger.info('  info folder: data/%s', folder);
             try {
                 fs.mkdirSync('data');
@@ -49,20 +49,20 @@ class FiddlerImport {
             yield fs.writeFile(`data/${folder}/.info`, '(from fiddler)', 'utf8');
             // convert files
             let reqId = 1;
-            for (let file of requests) {
-                let content = yield zip.files[file].async('nodebuffer');
+            for (const file of requests) {
+                const content = yield zip.files[file].async('nodebuffer');
                 if (content.slice(0, 100).indexOf('POST https://pgorelease.nianticlabs.com') >= 0) {
                     // request
                     let raw = yield this.getBody(content);
-                    let data = {
+                    const data = {
                         id: reqId,
                         when: zip.files[file].date.getTime(),
                         data: raw.toString('base64'),
                     };
-                    let id = _.padStart(reqId.toString(), 5, '0');
+                    const id = _.padStart(reqId.toString(), 5, '0');
                     yield fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(data, null, 2), 'utf8');
                     // response
-                    let resp = file.replace('_c.txt', '_s.txt');
+                    const resp = file.replace('_c.txt', '_s.txt');
                     raw = yield zip.files[resp].async('nodebuffer');
                     raw = yield this.getBody(raw);
                     yield fs.writeFile(`data/${folder}/${id}.res.bin`, raw.toString('base64'), 'utf8');
@@ -75,8 +75,8 @@ class FiddlerImport {
     }
     getBody(content) {
         return __awaiter(this, void 0, void 0, function* () {
-            let compressed = content.indexOf('Content-Encoding: gzip') > 0;
-            let chunked = content.indexOf('Transfer-Encoding: chunked') > 0;
+            const compressed = content.indexOf('Content-Encoding: gzip') > 0;
+            const chunked = content.indexOf('Transfer-Encoding: chunked') > 0;
             let idx = content.indexOf(Buffer.from([0x0D, 0x0A, 0x0D, 0x0A]));
             if (idx) {
                 content = content.slice(idx + 4);
@@ -86,7 +86,7 @@ class FiddlerImport {
                 idx = 0;
                 let nextLine = content.indexOf(Buffer.from([0x0D, 0x0A]), idx);
                 while (true) {
-                    let size = parseInt(content.slice(idx, nextLine).toString('utf8'), 16);
+                    const size = parseInt(content.slice(idx, nextLine).toString('utf8'), 16);
                     if (size === 0)
                         break;
                     buffer = Buffer.concat([buffer, content.slice(nextLine + 2, nextLine + 2 + size)]);
@@ -108,14 +108,14 @@ class FiddlerImport {
             files = _.filter(files, file => file.match(/.saz$/) != null);
             if (files.length === 0)
                 throw new Error('no file to import');
-            for (let file of files) {
+            for (const file of files) {
                 yield this.importSession(`fiddler/${file}`);
             }
             return files.length;
         });
     }
 }
-let importer = new FiddlerImport();
+const importer = new FiddlerImport();
 importer.convert()
     .then(num => {
     logger.info('%s file(s) converted.', num);

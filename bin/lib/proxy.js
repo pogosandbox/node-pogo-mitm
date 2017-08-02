@@ -13,10 +13,10 @@ const fs = require("mz/fs");
 const _ = require("lodash");
 const moment = require("moment");
 const Bluebird = require("bluebird");
-let mitmproxy = require('http-mitm-proxy');
+const mitmproxy = require('http-mitm-proxy');
 const utils_1 = require("./utils");
 const decoder_1 = require("./decoder");
-let endpoints = {
+const endpoints = {
     api: 'pgorelease.nianticlabs.com',
     ptc: 'sso.pokemon.com',
     googleauth: 'accounts.google.com',
@@ -30,9 +30,9 @@ class MitmProxy {
     }
     launch() {
         return __awaiter(this, void 0, void 0, function* () {
-            let config = this.config;
+            const config = this.config;
             if (config.proxy.active) {
-                let ip = config.ip = this.utils.getIp();
+                const ip = config.ip = this.utils.getIp();
                 logger.info('Proxy listening at %s:%s', ip, config.proxy.port);
                 logger.info('Proxy config url available at http://%s:%s/proxy.pac', ip, config.proxy.port);
                 this.config.proxy.plugins = yield this.loadPlugins();
@@ -49,10 +49,10 @@ class MitmProxy {
     }
     loadPlugins() {
         return __awaiter(this, void 0, void 0, function* () {
-            let plugins = this.config.proxy.plugins;
-            let loaded = yield Bluebird.map(plugins, (name) => __awaiter(this, void 0, void 0, function* () {
+            const plugins = this.config.proxy.plugins;
+            const loaded = yield Bluebird.map(plugins, (name) => __awaiter(this, void 0, void 0, function* () {
                 try {
-                    let plugin = require(`../plugins/${name}`);
+                    const plugin = require(`../plugins/${name}`);
                     plugin.name = name;
                     if (_.hasIn(plugin, 'init')) {
                         logger.debug('Load plugin %s', name);
@@ -70,11 +70,11 @@ class MitmProxy {
     }
     onRequest(context, callback) {
         return __awaiter(this, void 0, void 0, function* () {
-            let config = this.config;
-            let host = context.clientToProxyRequest.headers.host;
-            let endpoint = _.findKey(endpoints, endpoint => endpoint === host);
+            const config = this.config;
+            const host = context.clientToProxyRequest.headers.host;
+            const endpoint = _.findKey(endpoints, endpoint => endpoint === host);
             if (host === `${config.ip}:${config.proxy.port}` || (config.proxy.hostname && _.startsWith(host, config.proxy.hostname))) {
-                let res = context.proxyToClientResponse;
+                const res = context.proxyToClientResponse;
                 if (_.startsWith(context.clientToProxyRequest.url, '/proxy.pac')) {
                     // get proxy.pac
                     logger.info('Get proxy.pac');
@@ -98,8 +98,8 @@ class MitmProxy {
                 else if (_.startsWith(context.clientToProxyRequest.url, '/cert')) {
                     // get cert
                     logger.info('Get certificate');
-                    let path = this.proxy.sslCaDir + '/certs/ca.pem';
-                    let data = yield fs.readFile(path);
+                    const path = this.proxy.sslCaDir + '/certs/ca.pem';
+                    const data = yield fs.readFile(path);
                     res.writeHead(200, { 'Content-Type': 'application/x-x509-ca-cert', 'Content-Length': data.length });
                     res.end(data, 'binary');
                 }
@@ -109,8 +109,8 @@ class MitmProxy {
                 }
             }
             else if (endpoint) {
-                let requestChunks = [];
-                let responseChunks = [];
+                const requestChunks = [];
+                const responseChunks = [];
                 let request = null;
                 let id = 0, requestId = '';
                 if (endpoint === 'api') {
@@ -123,7 +123,7 @@ class MitmProxy {
                 });
                 context.onRequestEnd((ctx, callback) => __awaiter(this, void 0, void 0, function* () {
                     let buffer = Buffer.concat(requestChunks);
-                    let url = ctx.clientToProxyRequest.url;
+                    const url = ctx.clientToProxyRequest.url;
                     try {
                         if (endpoint === 'api') {
                             ({ buffer, request } = yield this.handleApiRequest(requestId, ctx, buffer, url));
@@ -169,10 +169,10 @@ class MitmProxy {
     simpleDumpRequest(name, ctx, buffer, url) {
         return __awaiter(this, void 0, void 0, function* () {
             logger.debug('Dumping request to %s %s', name, url);
-            let id = +moment();
-            let data = {
+            const id = +moment();
+            const data = {
                 when: id,
-                url: url,
+                url,
                 headers: ctx.clientToProxyRequest.headers,
             };
             yield fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.req.info`, JSON.stringify(data, null, 4), 'utf8');
@@ -181,8 +181,8 @@ class MitmProxy {
     }
     simpleDumpResponse(name, ctx, buffer) {
         return __awaiter(this, void 0, void 0, function* () {
-            let id = +moment();
-            let data = {
+            const id = +moment();
+            const data = {
                 when: id,
                 headers: ctx.serverToProxyResponse.headers,
             };
@@ -193,8 +193,8 @@ class MitmProxy {
     handleApiRequest(id, ctx, buffer, url) {
         return __awaiter(this, void 0, void 0, function* () {
             logger.info('Pogo request: %s', url);
-            let data = {
-                id: id,
+            const data = {
+                id,
                 when: +moment(),
                 endpoint: url,
                 headers: ctx.proxyToServerRequest._headers,
@@ -204,7 +204,7 @@ class MitmProxy {
             let decoded = null;
             if (this.config.proxy.plugins.length > 0) {
                 try {
-                    let plugins = this.config.proxy.plugins;
+                    const plugins = this.config.proxy.plugins;
                     decoded = this.decoder.decodeRequestBuffer(buffer);
                     let modified = false;
                     yield Bluebird.each(plugins, (plugin) => __awaiter(this, void 0, void 0, function* () {
@@ -227,7 +227,7 @@ class MitmProxy {
                 }
             }
             return {
-                buffer: buffer,
+                buffer,
                 request: decoded,
             };
         });
@@ -236,8 +236,8 @@ class MitmProxy {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.config.proxy.plugins.length > 0 && ctx.clientToProxyRequest !== '/plfe/version') {
                 try {
-                    let plugins = this.config.proxy.plugins;
-                    let response = this.decoder.decodeResponseBuffer(request, buffer);
+                    const plugins = this.config.proxy.plugins;
+                    const response = this.decoder.decodeResponseBuffer(request, buffer);
                     let modified = false;
                     yield Bluebird.each(plugins, (plugin) => __awaiter(this, void 0, void 0, function* () {
                         try {
@@ -258,7 +258,7 @@ class MitmProxy {
                     // logger.error('Error during plugins execution', e);
                 }
             }
-            let data = {
+            const data = {
                 when: +moment(),
                 data: buffer.toString('base64'),
             };

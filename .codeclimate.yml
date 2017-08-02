@@ -3,8 +3,9 @@ engines:
         enabled: false
     fixme:
         enabled: true
-    eslint:
+    tslint:
         enabled: true
+        channel: beta
 
 exclude_paths:
     - "bin/"

@@ -17,14 +17,14 @@ const webui_1 = require("./lib/webui");
 const alternate_endpoint_1 = require("./lib/alternate.endpoint");
 function Main() {
     return __awaiter(this, void 0, void 0, function* () {
-        let config = new config_1.default().load();
-        let utils = new utils_1.default(config);
+        const config = new config_1.default().load();
+        const utils = new utils_1.default(config);
         yield utils.initFolders();
-        let proxy = new proxy_1.default(config);
+        const proxy = new proxy_1.default(config);
         yield proxy.launch();
-        let endpoint = new alternate_endpoint_1.default(config);
+        const endpoint = new alternate_endpoint_1.default(config);
         yield endpoint.launch();
-        let webui = new webui_1.default(config);
+        const webui = new webui_1.default(config);
         yield webui.launch();
         logger.info('App ready.');
     });

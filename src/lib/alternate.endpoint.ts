@@ -21,7 +21,7 @@ export default class AlternateEndpoint {
     }
 
     async launch() {
-        let config = this.config.alternateEndpoint;
+        const config = this.config.alternateEndpoint;
         if (config.active) {
             let server = null;
             if (config.https) {
@@ -35,7 +35,7 @@ export default class AlternateEndpoint {
             }
 
             server.listen(config.port, () => {
-                let ip = this.utils.getIp();
+                const ip = this.utils.getIp();
                 logger.info('Alternate endpoint listening at %s:%s', ip, config.https ? 443 : 80);
             });
         }
@@ -47,13 +47,13 @@ export default class AlternateEndpoint {
             let buffer = await getRawBody(req);
             if (buffer.length === 0) buffer = null;
 
-            let host = req.headers.host;
+            const host = req.headers.host;
             delete req.headers.host;
             delete req.headers['content-length'];
 
             logger.debug(`Making request to https://${host}${req.url}`);
 
-            let options = {
+            const options = {
                 uri: `https://${host}${req.url}`,
                 method: req.method,
                 body: buffer,
@@ -63,7 +63,7 @@ export default class AlternateEndpoint {
                 strictSSL: false,
                 simple: false,
             };
-            let response = await request(options);
+            const response = await request(options);
             response.headers['content-length'] = response.body ? response.body.length : 0;
 
             await this.saveToFile(req.url, req.headers, response);
@@ -78,12 +78,12 @@ export default class AlternateEndpoint {
     }
 
     async saveToFile(url, headers, response) {
-        let when = +moment();
-        let data = {
-            when: when,
+        const when = +moment();
+        const data = {
+            when,
             request: {
                 endpoint: url,
-                headers: headers,
+                headers,
             },
             response: {
                 statusCode: response.statusCode,

@@ -25,9 +25,9 @@ class WebUI {
         this.utils = new utils_js_1.default(config);
     }
     launch() {
-        let config = this.config.ui;
+        const config = this.config.ui;
         if (config.active) {
-            let app = this.app = express();
+            const app = this.app = express();
             app.set('etag', false);
             if (config.auth.active)
                 this.activateAuth();
@@ -58,8 +58,8 @@ class WebUI {
     }
     activateAuth() {
         logger.info('Activate GitHub authentication.');
-        let config = this.config.ui;
-        let GitHubStrategy = require('passport-github2').Strategy;
+        const config = this.config.ui;
+        const GitHubStrategy = require('passport-github2').Strategy;
         passport.use(new GitHubStrategy({
             clientID: config.auth.githubClientId,
             clientSecret: config.auth.githubClientSecret,
@@ -84,7 +84,7 @@ class WebUI {
                 done(null, user);
             }
         });
-        let cookieSession = require('cookie-session');
+        const cookieSession = require('cookie-session');
         this.app.use(cookieSession({
             name: 'mitm.session',
             secret: config.auth.secret,
@@ -121,14 +121,14 @@ class WebUI {
         return __awaiter(this, void 0, void 0, function* () {
             logger.info('Getting sessions.');
             try {
-                let folders = yield this.utils.getSessionFolders();
-                let data = yield Bluebird.map(folders, (folder) => __awaiter(this, void 0, void 0, function* () {
-                    let info = {
+                const folders = yield this.utils.getSessionFolders();
+                const data = yield Bluebird.map(folders, (folder) => __awaiter(this, void 0, void 0, function* () {
+                    const info = {
                         id: folder,
                         title: moment(folder, 'YYYYMMDD.HHmmss').format('DD MMM YY - HH:mm:ss'),
                     };
                     if (fs.existsSync(`data/${folder}/.info`)) {
-                        let content = yield fs.readFile(`data/${folder}/.info`, 'utf8');
+                        const content = yield fs.readFile(`data/${folder}/.info`, 'utf8');
                         info.title += ' ' + content;
                     }
                     return info;
@@ -145,30 +145,30 @@ class WebUI {
         return __awaiter(this, void 0, void 0, function* () {
             logger.info('Getting requests for session %s', req.params.session);
             try {
-                let result = {
+                const result = {
                     title: '',
                     steps: [],
                     files: [],
                 };
                 if (fs.existsSync(`data/${req.params.session}/.info`)) {
-                    let info = yield fs.readFile(`data/${req.params.session}/.info`, 'utf8');
+                    const info = yield fs.readFile(`data/${req.params.session}/.info`, 'utf8');
                     result.title = info;
                 }
                 if (fs.existsSync(`data/${req.params.session}/.preload`)) {
-                    let preload = yield fs.readFile(`data/${req.params.session}/.preload`, 'utf8');
+                    const preload = yield fs.readFile(`data/${req.params.session}/.preload`, 'utf8');
                     result.steps = JSON.parse(preload);
                 }
                 let files = yield fs.readdir(`data/${req.params.session}`);
                 files = _.filter(files, d => _.endsWith(d, '.req.bin'));
-                let force = !this.config.protos.cachejson;
+                const force = !this.config.protos.cachejson;
                 result.files = yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () {
-                    let content = yield fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
-                    let request = JSON.parse(content);
+                    const content = yield fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
+                    const request = JSON.parse(content);
                     request.title = '';
                     try {
-                        let decoded = yield this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
+                        const decoded = yield this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
                         if (decoded && decoded.decoded) {
-                            let main = _.first(decoded.decoded.requests);
+                            const main = _.first(decoded.decoded.requests);
                             if (main) {
                                 request.title = main.request_name;
                             }
@@ -192,8 +192,8 @@ class WebUI {
         return __awaiter(this, void 0, void 0, function* () {
             logger.info('Decrypting session %d, request %s', req.params.session, req.params.request);
             try {
-                let force = !this.config.protos.cachejson;
-                let data = yield this.decoder.decodeRequest(req.params.session, req.params.request, force);
+                const force = !this.config.protos.cachejson;
+                const data = yield this.decoder.decodeRequest(req.params.session, req.params.request, force);
                 return res.json(data);
             }
             catch (e) {
@@ -206,8 +206,8 @@ class WebUI {
         return __awaiter(this, void 0, void 0, function* () {
             logger.info('Decrypting session %d, response %s', req.params.session, req.params.request);
             try {
-                let force = !this.config.protos.cachejson;
-                let data = yield this.decoder.decodeResponse(req.params.session, req.params.request, force);
+                const force = !this.config.protos.cachejson;
+                const data = yield this.decoder.decodeResponse(req.params.session, req.params.request, force);
                 return res.json(data);
             }
             catch (e) {
@@ -219,8 +219,8 @@ class WebUI {
     exportCsv(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                let stats = yield fs.stat('data/requests.signatures.csv');
-                let mtime = moment(stats.mtime);
+                const stats = yield fs.stat('data/requests.signatures.csv');
+                const mtime = moment(stats.mtime);
                 if (mtime.add(15, 'm').isAfter(moment())) {
                     return res.sendFile('requests.signatures.csv', { root: 'data' });
                 }
@@ -230,8 +230,8 @@ class WebUI {
             }
             catch (e) {
                 logger.info('Export signatures to CSV.');
-                let csv = new libcsv_1.default(this.config);
-                let file = yield csv.exportRequestsSignature('requests.signatures.csv');
+                const csv = new libcsv_1.default(this.config);
+                const file = yield csv.exportRequestsSignature('requests.signatures.csv');
                 res.sendFile(file, { root: 'data' });
             }
         });

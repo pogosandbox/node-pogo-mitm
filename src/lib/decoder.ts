@@ -4,9 +4,9 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 import * as POGOProtos from 'node-pogo-protos-vnext/fs';
 
-let pcrypt = require('pcrypt');
-let protobuf = require('protobufjs');
-let long = require('long');
+const pcrypt = require('pcrypt');
+const protobuf = require('protobufjs');
+const long = require('long');
 
 import Config from './config';
 
@@ -21,23 +21,23 @@ export default class Decoder {
 
     async loadProtos(): Promise<any> {
         // alt protos for Android
-        let load = await protobuf.load('protos/Alternate.Signature.proto');
+        const load = await protobuf.load('protos/Alternate.Signature.proto');
         this.altProtos = load.POGOProtos;
     }
 
     async decodeRequest(session: string, requestId: string, force = false): Promise<any> {
         if (!force && fs.existsSync(`data/${session}/${requestId}.req.json`)) {
-            let data = await fs.readFile(`data/${session}/${requestId}.req.json`, 'utf8');
+            const data = await fs.readFile(`data/${session}/${requestId}.req.json`, 'utf8');
             return JSON.parse(data);
         }
 
-        let content = await fs.readFile(`data/${session}/${requestId}.req.bin`, 'utf8');
+        const content = await fs.readFile(`data/${session}/${requestId}.req.bin`, 'utf8');
         let data = JSON.parse(content);
         if (data.endpoint === '/plfe/version') {
             data.decoded = {request: 'check version', checkVersion: true};
 
         } else {
-            let raw = Buffer.from(data.data, 'base64');
+            const raw = Buffer.from(data.data, 'base64');
             delete data.data;
 
             data.decoded = this.decodeRequestBuffer(raw);
@@ -48,13 +48,13 @@ export default class Decoder {
                 if (reqname) {
                     req.request_name = reqname;
                     reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
-                    let requestType = POGOProtos.Networking.Platform.Requests[reqname];
+                    const requestType = POGOProtos.Networking.Platform.Requests[reqname];
                     if (requestType) {
                         req.message = requestType.toObject(requestType.decode(req.request_message), { defaults: true });
                         if (req.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
                             // decrypt signature
                             try {
-                                let decrypted = pcrypt.decrypt(req.message.encrypted_signature);
+                                const decrypted = pcrypt.decrypt(req.message.encrypted_signature);
                                 try {
                                     req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
                                     req.message = POGOProtos.Networking.Envelopes.Signature.toObject(req.message, { defaults: true });
@@ -108,8 +108,8 @@ export default class Decoder {
     }
 
     decodeRequestBuffer(buffer: Buffer) {
-        let RequestEnvelope = POGOProtos.Networking.Envelopes.RequestEnvelope;
-        let request = RequestEnvelope.toObject(RequestEnvelope.decode(buffer), { defaults: true });
+        const RequestEnvelope = POGOProtos.Networking.Envelopes.RequestEnvelope;
+        const request = RequestEnvelope.toObject(RequestEnvelope.decode(buffer), { defaults: true });
 
         // decode requests
         _.each(request.requests, req => {
@@ -117,7 +117,7 @@ export default class Decoder {
             if (reqname) {
                 req.request_name = reqname;
                 reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
-                let requestType = POGOProtos.Networking.Requests.Messages[reqname];
+                const requestType = POGOProtos.Networking.Requests.Messages[reqname];
                 if (requestType) {
                     req.message = requestType.toObject(requestType.decode(req.request_message), { defaults: true });
                 } else {
@@ -138,14 +138,14 @@ export default class Decoder {
     async decodeResponse(session: string, requestId: string, force = false): Promise<any> {
         try {
             if (!force && fs.existsSync(`data/${session}/${requestId}.res.json`)) {
-                let data = await fs.readFile(`data/${session}/${requestId}.res.json`, 'utf8');
+                const data = await fs.readFile(`data/${session}/${requestId}.res.json`, 'utf8');
                 return JSON.parse(data);
             }
 
-            let requestJson = await fs.readFile(`data/${session}/${requestId}.req.json`, 'utf8');
-            let responseJson = await fs.readFile(`data/${session}/${requestId}.res.bin`, 'utf8');
+            const requestJson = await fs.readFile(`data/${session}/${requestId}.req.json`, 'utf8');
+            const responseJson = await fs.readFile(`data/${session}/${requestId}.res.bin`, 'utf8');
 
-            let request = JSON.parse(requestJson).decoded;
+            const request = JSON.parse(requestJson).decoded;
 
             let raw: any = '';
             let data: any  = {};
@@ -164,16 +164,16 @@ export default class Decoder {
                 };
             }
 
-            let decoded = this.decodeResponseBuffer(request, raw) as any;
+            const decoded = this.decodeResponseBuffer(request, raw) as any;
 
             // decode plateform response
-            let allPtfmRequests = _.map(<any[]>request.platform_requests, r => r.request_name);
+            const allPtfmRequests = _.map(<any[]>request.platform_requests, r => r.request_name);
             if (allPtfmRequests.length > 0) {
                 decoded.platform_responses = _.map(<any[]>decoded.platform_returns, (buffer, i) => {
-                    let request = allPtfmRequests[i];
-                    let responseType = POGOProtos.Networking.Platform.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
+                    const request = allPtfmRequests[i];
+                    const responseType = POGOProtos.Networking.Platform.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
                     if (responseType) {
-                        let message = responseType.toObject(responseType.decode(buffer.response), { defaults: true });
+                        const message = responseType.toObject(responseType.decode(buffer.response), { defaults: true });
                         message.request_name = request;
                         return message;
                     } else {
@@ -223,17 +223,17 @@ export default class Decoder {
     }
 
     decodeResponseBuffer(request: POGOProtos.Networking.Envelopes.RequestEnvelope, buffer: Buffer) {
-        let ResponseEnvelope = POGOProtos.Networking.Envelopes.ResponseEnvelope;
-        let decoded = ResponseEnvelope.toObject(ResponseEnvelope.decode(buffer), { defaults: true });
+        const ResponseEnvelope = POGOProtos.Networking.Envelopes.ResponseEnvelope;
+        const decoded = ResponseEnvelope.toObject(ResponseEnvelope.decode(buffer), { defaults: true });
 
         // decode response messages
-        let allRequests = _.map(<any[]>request.requests, r => r.request_name);
+        const allRequests = _.map(<any[]>request.requests, r => r.request_name);
         if (allRequests.length > 0) {
             decoded.responses = _.map(decoded.returns, (buffer: Buffer, i) => {
-                let request = allRequests[i];
-                let responseType = POGOProtos.Networking.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
+                const request = allRequests[i];
+                const responseType = POGOProtos.Networking.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
                 if (responseType) {
-                    let message = responseType.toObject(responseType.decode(buffer), { defaults: true });
+                    const message = responseType.toObject(responseType.decode(buffer), { defaults: true });
                     message.request_name = request;
                     return message;
                 } else {
@@ -263,7 +263,7 @@ export default class Decoder {
 
     encodeResponseToBuffer(response: POGOProtos.Networking.Envelopes.ResponseEnvelope): Buffer {
         response.returns = _.map(<any[]>(<any>response).responses, response => {
-            let responseType = POGOProtos.Networking.Responses[_.upperFirst(_.camelCase(response.request_name)) + 'Response'];
+            const responseType = POGOProtos.Networking.Responses[_.upperFirst(_.camelCase(response.request_name)) + 'Response'];
             delete response.request_name;
             return responseType.encode(response);
         });
