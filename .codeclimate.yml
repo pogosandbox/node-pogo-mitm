@@ -7,4 +7,5 @@ engines:
         enabled: true
 
 exclude_paths:
+    - "bin/"
     - debug.js
