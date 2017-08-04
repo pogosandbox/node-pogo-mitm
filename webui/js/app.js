@@ -36,18 +36,34 @@ $(function () {
         return false;
     });
 
+    $('#filter').on('input', function () {
+        let filter = $('#filter').val().toLowerCase();
+        $('#requests .item').each(function () {
+            let api = $(this).find('.title').text().toLowerCase();
+            if (api.indexOf(filter) >= 0) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
     function prevNext(next) {
         let session = $('#requests').data('session');
-        let request = $('#requests .success').attr('id');
-        let pad = '0000000000'.substring(0, request.length);
-        request = +request + next + '';
-        request = pad.substring(request.length) + request;
-        if (request <= window.global.requests && $('.' + request).length > 0) {
-            $('#requests .success').removeClass('success');
-            let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
-            window.location.hash = `#session=${session}&request=${request}`;
-            viewRequestDetail(which, session, request);
+        let item = $('#requests .success');
+        if (next > 0) {
+            let match = item.nextAll('.item:visible');
+            if (match.length > 0) item = match.first();
+        } else {
+            let match = item.prevAll('.item:visible');
+            if (match.length > 0) item = match.first();
         }
+
+        let request = item.attr('id');
+        $('#requests .success').removeClass('success');
+        let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
+        window.location.hash = `#session=${session}&request=${request}`;
+        viewRequestDetail(which, session, request);
     }
 
     // view a session
