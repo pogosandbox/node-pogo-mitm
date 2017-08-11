@@ -5,6 +5,7 @@ import * as moment from 'moment';
 import * as _ from 'lodash';
 import * as Long from 'long';
 import * as POGOProtos from 'node-pogo-protos-vnext';
+import * as mustachio from 'mustachio';
 
 import Config from './../lib/config';
 import Utils from './../lib/utils';
@@ -49,7 +50,7 @@ class Analysis {
             await this.handleRequest(folder, request);
         }
 
-        await this.buildReport();
+        await this.buildReport(folder);
 
         return requests.length;
     }
@@ -135,6 +136,16 @@ class Analysis {
         }
     }
 
+    checkSignatureValue(file: string, obj: any, name: string, value: any) {
+        if (!_.isEqual(obj[name], value)) {
+            this.issues.push({
+                file,
+                issue: `invalid value for '${name}' in signature`,
+                more: `got ${obj[name]}, ${value} was expected.`,
+            });
+        }
+    }
+
     checkSignature(file: string, request) {
         let signature = _.find(<any[]>request.platform_requests, ptfm => ptfm.request_name === 'SEND_ENCRYPTED_SIGNATURE');
         if (!signature) {
@@ -144,14 +155,24 @@ class Analysis {
             });
         } else {
             signature = signature.message;
-            // check uk25
-            if (signature.unknown25 !== '5395925083854747393') {
-                this.issues.push({
-                    file,
-                    issue: `invalid uk25: ${signature.unknown25}`,
-                    more: '5395925083854747393 was expected',
-                });
-            }
+
+            // check signature value
+            this.checkSignatureValue(file, signature, 'unknown25', '5395925083854747393');
+            this.checkSignatureValue(file, signature, 'gps_info', []);
+            this.checkSignatureValue(file, signature, 'field1', []);
+            this.checkSignatureValue(file, signature, 'field3', '');
+            this.checkSignatureValue(file, signature, 'field6', []);
+            this.checkSignatureValue(file, signature, 'field11', false);
+            this.checkSignatureValue(file, signature, 'field12', false);
+            this.checkSignatureValue(file, signature, 'field13', 0);
+            this.checkSignatureValue(file, signature, 'field14', 0);
+            this.checkSignatureValue(file, signature, 'field15', '');
+            this.checkSignatureValue(file, signature, 'field16', 0);
+            this.checkSignatureValue(file, signature, 'field17', '');
+            this.checkSignatureValue(file, signature, 'field18', '');
+            this.checkSignatureValue(file, signature, 'field19', false);
+            this.checkSignatureValue(file, signature, 'field21', false);
+
             // check activity status
             const pActivity = POGOProtos.Networking.Envelopes.Signature.ActivityStatus.fromObject({ stationary: true });
             let activity = POGOProtos.Networking.Envelopes.Signature.ActivityStatus.toObject(pActivity, { defaults: true });
@@ -267,12 +288,12 @@ class Analysis {
                 const strCommon = _.trimEnd(common.join(', '), ', ');
                 this.issues.push({
                     file,
-                    issue: `common requests are not as expected during login flow: ${strCommon}`,
-                    more: `expected was ${strExpected}`,
+                    issue: `common requests are not as expected during login flow for request ${request.requests[0].request_name}`,
+                    more: `got ${strCommon},\nexpected was ${strExpected}`,
                 });
             }
 
-            if (request.requests[0].request_name === 'LEVEL_UP_REWARDS') {
+            if (request.requests[0].request_name === 'GET_PLAYER_PROFILE') {
                 state.login = false;
             }
         } else {
@@ -291,18 +312,30 @@ class Analysis {
                 const strCommon = _.trimEnd(common.join(', '), ', ');
                 this.issues.push({
                     file,
-                    issue: `common requests are not as expected: ${strCommon}`,
-                    more: `expected was ${strExpected}`,
+                    issue: `common requests are not as expected for request ${request.requests[0].request_name}`,
+                    more: `got ${strCommon},\nexpected was ${strExpected}`,
                 });
             }
         }
     }
 
-    async buildReport() {
+    async buildReport(session: string) {
+        const output = `data/${session}/analysis.html`;
         if (this.issues.length === 0) {
             logger.info('No issue found.');
+            if (await fs.exists(output)) {
+                await fs.unlink(output);
+            }
         } else {
-            logger.info(JSON.stringify(this.issues, null, 2));
+            logger.info(`${this.issues.length} issues found.`);
+            const template = mustachio.string(await fs.readFile('./templates/analysis.mu.html', 'utf8'));
+            const rendering = template.render({
+                session,
+                issues: this.issues,
+            });
+            const html = await rendering.string();
+            await fs.writeFile(output, html, 'utf8');
+            logger.info('Report generated in %s', output);
         }
     }
 }
