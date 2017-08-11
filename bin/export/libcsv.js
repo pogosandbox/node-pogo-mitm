@@ -142,6 +142,7 @@ class Csv {
                     'lastLocFix.provider_status',
                     'lastLocFix.floor',
                     'lastLocFix.location_type',
+                    'signature.sensor_info.length',
                     'signature.sensor_info[0].linear_acceleration_x',
                     'signature.sensor_info[0].linear_acceleration_y',
                     'signature.sensor_info[0].linear_acceleration_z',

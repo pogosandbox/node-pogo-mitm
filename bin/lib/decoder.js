@@ -16,8 +16,9 @@ const pcrypt = require('pcrypt');
 const protobuf = require('protobufjs');
 const long = require('long');
 class Decoder {
-    constructor(config) {
+    constructor(config, doNotHide = false) {
         this.config = config;
+        this.doNotHide = doNotHide;
         this.loadProtos();
     }
     loadProtos() {
@@ -64,10 +65,10 @@ class Decoder {
                                         req.message = this.altProtos.Networking.Envelopes.Signature.toObject(req.message, { defaults: true });
                                         logger.debug('Decrypted with alternate protos');
                                     }
-                                    if (req.message.device_info) {
+                                    if (!this.doNotHide && req.message.device_info) {
                                         req.message.device_info.device_id = '(hidden)';
                                     }
-                                    if (req.message.session_hash) {
+                                    if (!this.doNotHide && req.message.session_hash) {
                                         req.message.session_hash = '(hidden)';
                                     }
                                 }
@@ -93,11 +94,11 @@ class Decoder {
                     data.decoded.request_id = '0x' + data.decoded.request_id.toString(16);
                 }
                 // hide sensitive info
-                if (data.decoded.auth_info) {
+                if (!this.doNotHide && data.decoded.auth_info) {
                     if (data.decoded.auth_info.token)
                         data.decoded.auth_info.token.contents = '(hidden)';
                 }
-                if (data.decoded.auth_ticket) {
+                if (!this.doNotHide && data.decoded.auth_ticket) {
                     if (data.decoded.auth_ticket.start)
                         data.decoded.auth_ticket.start = '(hidden)';
                     if (data.decoded.auth_ticket.end)
@@ -194,7 +195,7 @@ class Decoder {
                 // prettify
                 decoded.request_id = '0x' + decoded.request_id.toString(16);
                 // hide auth info
-                if (decoded.auth_ticket) {
+                if (!this.doNotHide && decoded.auth_ticket) {
                     if (decoded.auth_ticket.start)
                         decoded.auth_ticket.start = '(hidden)';
                     if (decoded.auth_ticket.end)

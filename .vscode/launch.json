@@ -26,6 +26,19 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Analyse",
+            "program": "${workspaceRoot}/src/utils/analysis.ts",
+            "args": [
+                "20170811.084316"                
+            ],
+            "cwd": "${workspaceRoot}",
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true,
+            "stopOnEntry": false
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Import from iOS dump",
             "program": "${workspaceRoot}/src/import/ios.dump.ts",
             "cwd": "${workspaceRoot}",
