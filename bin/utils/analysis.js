@@ -14,6 +14,7 @@ const _ = require("lodash");
 const Long = require("long");
 const POGOProtos = require("node-pogo-protos-vnext");
 const mustachio = require("mustachio");
+const pcrypt = require('pcrypt');
 const config_1 = require("./../lib/config");
 const utils_1 = require("./../lib/utils");
 const decoder_js_1 = require("./../lib/decoder.js");
@@ -37,18 +38,19 @@ class Analysis {
                 logger.error(`Folder data/${folder} does not exists.`);
                 return;
             }
-            this.init();
+            this.init(folder);
             let requests = yield fs.readdir(`data/${folder}`);
             requests = _.filter(requests, request => _.endsWith(request, '.req.bin'));
             for (const request of requests) {
-                yield this.handleRequest(folder, request);
+                yield this.handleRequest(request);
             }
-            yield this.buildReport(folder);
+            yield this.buildReport();
             return requests.length;
         });
     }
-    init() {
+    init(folder) {
         this.state = {
+            session: folder,
             reqId: {
                 generation: { rpcId: 2, rpcIdHigh: 1 },
                 ids: [],
@@ -72,13 +74,14 @@ class Analysis {
         self.rpcIdHigh = (Math.pow(7, 5) * self.rpcIdHigh) % (Math.pow(2, 31) - 1);
         return new Long(self.rpcId++, self.rpcIdHigh, true);
     }
-    handleRequest(session, file) {
+    handleRequest(file) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const info = yield this.decoder.decodeRequest(session, _.trimEnd(file, '.req.bin'), true);
+                const info = yield this.decoder.decodeRequest(this.state.session, _.trimEnd(file, '.req.bin'), true);
                 const request = info.decoded;
                 yield this.checkRequestId(file, request);
                 yield this.checkSignature(file, request);
+                yield this.checkSignatureMissingFields(file, request);
                 yield this.checkApiCommon(file, request);
             }
             catch (e) {
@@ -139,15 +142,16 @@ class Analysis {
         }
     }
     checkSignature(file, request) {
-        let signature = _.find(request.platform_requests, ptfm => ptfm.request_name === 'SEND_ENCRYPTED_SIGNATURE');
-        if (!signature) {
+        const signatures = _.filter(request.platform_requests, ptfm => ptfm.request_name === 'SEND_ENCRYPTED_SIGNATURE');
+        if (!signatures || signatures.length !== 1) {
+            const count = !signatures ? 0 : signatures.length;
             this.issues.push({
                 file,
-                issue: 'request as no signature',
+                issue: `request should have exactly one signature (we have ${count})`,
             });
         }
         else {
-            signature = signature.message;
+            const signature = _.first(signatures).message;
             // check signature value
             this.checkSignatureValue(file, signature, 'unknown25', '5395925083854747393');
             this.checkSignatureValue(file, signature, 'gps_info', []);
@@ -236,6 +240,44 @@ class Analysis {
             }
         }
     }
+    checkSignatureMissingFields(file, request) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const content = yield fs.readFile(`data/${this.state.session}/${file}`, 'utf8');
+            const data = JSON.parse(content);
+            if (data.endpoint !== '/plfe/version') {
+                const RequestEnvelope = POGOProtos.Networking.Envelopes.RequestEnvelope;
+                const request = RequestEnvelope.decode(Buffer.from(data.data, 'base64'));
+                // check signature
+                let signature = _.find(request.platform_requests, r => r.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE);
+                if (signature) {
+                    const message = POGOProtos.Networking.Platform.Requests.SendEncryptedSignatureRequest.decode(signature.request_message);
+                    const decrypted = pcrypt.decrypt(message.encrypted_signature);
+                    signature = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
+                    if (signature.__unknownFields) {
+                        const num = signature.__unknownFields.length;
+                        this.issues.push({
+                            file,
+                            issue: `${num} unknown field(s) found in signature`,
+                        });
+                    }
+                }
+                // check other platform request
+                const known = [
+                    POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE,
+                    POGOProtos.Networking.Platform.PlatformRequestType.UNKNOWN_PTR_8,
+                    POGOProtos.Networking.Platform.PlatformRequestType.GET_STORE_ITEMS,
+                ];
+                const unknown = _.filter(request.platform_requests, r => !_.includes(known, r.type));
+                if (unknown.length > 0) {
+                    this.issues.push({
+                        file,
+                        issue: 'unknown platform request has been found',
+                        more: _.trimEnd(unknown.map(ptfm => ptfm.type).join(', '), ', '),
+                    });
+                }
+            }
+        });
+    }
     checkApiCommon(file, request) {
         const state = this.state.common;
         const reqId = Long.fromString(request.request_id, true, 16).low;
@@ -314,9 +356,9 @@ class Analysis {
             }
         }
     }
-    buildReport(session) {
+    buildReport() {
         return __awaiter(this, void 0, void 0, function* () {
-            const output = `data/${session}/analysis.html`;
+            const output = `data/${this.state.session}/analysis.html`;
             if (this.issues.length === 0) {
                 logger.info('No issue found.');
                 if (yield fs.exists(output)) {
@@ -327,7 +369,7 @@ class Analysis {
                 logger.info(`${this.issues.length} issues found.`);
                 const template = mustachio.string(yield fs.readFile('./templates/analysis.mu.html', 'utf8'));
                 const rendering = template.render({
-                    session,
+                    session: this.state.session,
                     issues: this.issues,
                 });
                 const html = yield rendering.string();

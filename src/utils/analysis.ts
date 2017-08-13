@@ -7,6 +7,8 @@ import * as Long from 'long';
 import * as POGOProtos from 'node-pogo-protos-vnext';
 import * as mustachio from 'mustachio';
 
+const pcrypt = require('pcrypt');
+
 import Config from './../lib/config';
 import Utils from './../lib/utils';
 import Decoder from './../lib/decoder.js';
@@ -23,6 +25,7 @@ class Analysis {
     decoder: Decoder;
     issues: Issue[] = [];
     state: any = {};
+    session: string;
 
     constructor(config?) {
         this.config = config || new Config().load();
@@ -42,21 +45,22 @@ class Analysis {
             return;
         }
 
-        this.init();
+        this.init(folder);
 
         let requests = await fs.readdir(`data/${folder}`);
         requests = _.filter(requests, request => _.endsWith(request, '.req.bin'));
         for (const request of requests) {
-            await this.handleRequest(folder, request);
+            await this.handleRequest(request);
         }
 
-        await this.buildReport(folder);
+        await this.buildReport();
 
         return requests.length;
     }
 
-    init() {
+    init(folder: string) {
         this.state = {
+            session: folder,
             reqId: {
                 generation: { rpcId: 2, rpcIdHigh: 1 },
                 ids: [],
@@ -83,12 +87,13 @@ class Analysis {
         return new Long(self.rpcId++, self.rpcIdHigh, true);
     }
 
-    async handleRequest(session: string, file: string) {
+    async handleRequest(file: string) {
         try {
-            const info = await this.decoder.decodeRequest(session, _.trimEnd(file, '.req.bin'), true);
+            const info = await this.decoder.decodeRequest(this.state.session, _.trimEnd(file, '.req.bin'), true);
             const request = info.decoded;
             await this.checkRequestId(file, request);
             await this.checkSignature(file, request);
+            await this.checkSignatureMissingFields(file, request);
             await this.checkApiCommon(file, request);
         } catch (e) {
             this.issues.push({
@@ -147,14 +152,15 @@ class Analysis {
     }
 
     checkSignature(file: string, request) {
-        let signature = _.find(<any[]>request.platform_requests, ptfm => ptfm.request_name === 'SEND_ENCRYPTED_SIGNATURE');
-        if (!signature) {
+        const signatures = _.filter(<any[]>request.platform_requests, ptfm => ptfm.request_name === 'SEND_ENCRYPTED_SIGNATURE');
+        if (!signatures || signatures.length !== 1) {
+            const count = !signatures ? 0 : signatures.length;
             this.issues.push({
                 file,
-                issue: 'request as no signature',
+                issue: `request should have exactly one signature (we have ${count})`,
             });
         } else {
-            signature = signature.message;
+            const signature = _.first(signatures).message;
 
             // check signature value
             this.checkSignatureValue(file, signature, 'unknown25', '5395925083854747393');
@@ -243,6 +249,43 @@ class Analysis {
         }
     }
 
+    async checkSignatureMissingFields(file: string, request) {
+        const content = await fs.readFile(`data/${this.state.session}/${file}`, 'utf8');
+        const data = JSON.parse(content);
+        if (data.endpoint !== '/plfe/version') {
+            const RequestEnvelope = POGOProtos.Networking.Envelopes.RequestEnvelope;
+            const request = RequestEnvelope.decode(Buffer.from(data.data, 'base64'));
+            // check signature
+            let signature = _.find(<any[]>request.platform_requests, r => r.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE);
+            if (signature) {
+                const message = POGOProtos.Networking.Platform.Requests.SendEncryptedSignatureRequest.decode(signature.request_message);
+                const decrypted = pcrypt.decrypt(message.encrypted_signature);
+                signature = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
+                if (signature.__unknownFields) {
+                    const num = signature.__unknownFields.length;
+                    this.issues.push({
+                        file,
+                        issue: `${num} unknown field(s) found in signature`,
+                    });
+                }
+            }
+            // check other platform request
+            const known = [
+                POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE,
+                POGOProtos.Networking.Platform.PlatformRequestType.UNKNOWN_PTR_8,
+                POGOProtos.Networking.Platform.PlatformRequestType.GET_STORE_ITEMS,
+            ];
+            const unknown = _.filter(<any[]>request.platform_requests, r => !_.includes(known, r.type));
+            if (unknown.length > 0) {
+                this.issues.push({
+                    file,
+                    issue: 'unknown platform request has been found',
+                    more: _.trimEnd(unknown.map(ptfm => ptfm.type).join(', '), ', '),
+                });
+            }
+        }
+    }
+
     checkApiCommon(file: string, request) {
         const state = this.state.common;
         const reqId = Long.fromString(request.request_id, true, 16).low;
@@ -319,8 +362,8 @@ class Analysis {
         }
     }
 
-    async buildReport(session: string) {
-        const output = `data/${session}/analysis.html`;
+    async buildReport() {
+        const output = `data/${this.state.session}/analysis.html`;
         if (this.issues.length === 0) {
             logger.info('No issue found.');
             if (await fs.exists(output)) {
@@ -330,7 +373,7 @@ class Analysis {
             logger.info(`${this.issues.length} issues found.`);
             const template = mustachio.string(await fs.readFile('./templates/analysis.mu.html', 'utf8'));
             const rendering = template.render({
-                session,
+                session: this.state.session,
                 issues: this.issues,
             });
             const html = await rendering.string();
