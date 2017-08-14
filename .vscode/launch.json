@@ -29,7 +29,7 @@
             "name": "Analyse",
             "program": "${workspaceRoot}/src/utils/analysis.ts",
             "args": [
-                "20170811.104020"                
+                "20170813.193136"                
             ],
             "cwd": "${workspaceRoot}",
             "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],

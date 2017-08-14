@@ -9,7 +9,7 @@ import * as Bluebird from 'bluebird';
 
 import Decoder from './decoder.js';
 import Utils from './utils.js';
-
+import Analysis from '../utils/analysis';
 import Csv from './../export/libcsv';
 
 export default class WebUI {
@@ -45,6 +45,8 @@ export default class WebUI {
             app.get('/api/request/:session/:request', <express.RequestHandler>_.bind(this.decodeRequest, this));
             app.get('/api/response/:session/:request', <express.RequestHandler>_.bind(this.decodeResponse, this));
             app.get('/api/export/csv', <express.RequestHandler>_.bind(this.exportCsv, this));
+            app.post('/api/analyse/:session', <express.RequestHandler>_.bind(this.analyse, this));
+            app.get('/api/analyse/:session', <express.RequestHandler>_.bind(this.analyseResult, this));
 
             this.app.get('/logout', function(req, res) {
                                     req.logout();
@@ -232,7 +234,7 @@ export default class WebUI {
         }
     }
 
-    async exportCsv(req: express.Request, res: express.Response, next: Function): Promise<void> {
+    async exportCsv(req: express.Request, res: express.Response, next: Function) {
         try {
             const stats = await fs.stat('data/requests.signatures.csv');
             const mtime = moment(stats.mtime);
@@ -246,6 +248,29 @@ export default class WebUI {
             const csv = new Csv(this.config);
             const file = await csv.exportRequestsSignature('requests.signatures.csv');
             res.sendFile(file, {root: 'data'});
+        }
+    }
+
+    async analyse(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
+        const report = `data/${req.params.session}/analysis.html`;
+        const redirect = '/api/analyse/' + req.params.session;
+        if (!await fs.exists(report)) {
+            const analyser = new Analysis(this.config, this.utils, this.decoder);
+            await analyser.run(req.params.session);
+        }
+        return res.json({
+            redirect
+        });
+    }
+
+    async analyseResult(req: express.Request, res: express.Response, next: Function) {
+        const report = `data/${req.params.session}/analysis.html`;
+        if (req.params.session && fs.existsSync(report)) {
+            res.sendFile(report, {
+                root: '.',
+            });
+        } else {
+            res.status(404).send('Nope.');
         }
     }
 }

@@ -16,9 +16,8 @@
                 padding: 10px;
             }
 
-            .issue .timestamp {
-                color: hsla(0,0%,100%,.2);
-                font-size: 0.9rem;
+            a.togglemore, a.togglemore:visited {
+                text-decoration: none;
             }
         </style>
         <script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
@@ -30,14 +29,23 @@
                     console.log($(this).parent());
                     $(this).parent().parent().find('.more').toggle();
                 });
+
+                $('.filtercategory').change(function(){
+                    $(`.${$(this).val()}`).toggle();
+                });
             });
         </script>
     </head>
     <body>
         <h1>{{session}} analysis</h1>
         <h2>{{issues.length}} issues found.</h2>
+        <div class="categories">
+            {{#categories}}
+                <input class="filtercategory" type="checkbox" value="{{name}}" checked>{{name}} ({{count}})</input>
+            {{/categories}}
+        </div>
         {{#issues}}
-        <div class="issue">
+        <div class="issue {{type}}">
             <h2>
                 <span>{{file}}</span>
             </h2>
@@ -45,7 +53,7 @@
                 <div class="detail">
                     {{issue}}
                     {{#more}}
-                        <a href='#' class="togglemore">more</a>
+                        <a href='#' class="togglemore">(more)</a>
                     {{/more}}
                 </div>
                 <div class="more" style="display:none"><pre>{{more}}</pre></div>

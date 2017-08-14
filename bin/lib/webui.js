@@ -17,6 +17,7 @@ const passport = require("passport");
 const Bluebird = require("bluebird");
 const decoder_js_1 = require("./decoder.js");
 const utils_js_1 = require("./utils.js");
+const analysis_1 = require("../utils/analysis");
 const libcsv_1 = require("./../export/libcsv");
 class WebUI {
     constructor(config) {
@@ -43,6 +44,8 @@ class WebUI {
             app.get('/api/request/:session/:request', _.bind(this.decodeRequest, this));
             app.get('/api/response/:session/:request', _.bind(this.decodeResponse, this));
             app.get('/api/export/csv', _.bind(this.exportCsv, this));
+            app.post('/api/analyse/:session', _.bind(this.analyse, this));
+            app.get('/api/analyse/:session', _.bind(this.analyseResult, this));
             this.app.get('/logout', function (req, res) {
                 req.logout();
                 res.redirect('/');
@@ -233,6 +236,32 @@ class WebUI {
                 const csv = new libcsv_1.default(this.config);
                 const file = yield csv.exportRequestsSignature('requests.signatures.csv');
                 res.sendFile(file, { root: 'data' });
+            }
+        });
+    }
+    analyse(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const report = `data/${req.params.session}/analysis.html`;
+            const redirect = '/api/analyse/' + req.params.session;
+            if (!(yield fs.exists(report))) {
+                const analyser = new analysis_1.default(this.config, this.utils, this.decoder);
+                yield analyser.run(req.params.session);
+            }
+            return res.json({
+                redirect
+            });
+        });
+    }
+    analyseResult(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const report = `data/${req.params.session}/analysis.html`;
+            if (req.params.session && fs.existsSync(report)) {
+                res.sendFile(report, {
+                    root: '.',
+                });
+            }
+            else {
+                res.status(404).send('Nope.');
             }
         });
     }
