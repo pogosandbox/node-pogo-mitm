@@ -14,7 +14,7 @@ const Bluebird = require("bluebird");
 const moment = require("moment");
 const _ = require("lodash");
 const config_1 = require("./../lib/config");
-let config = new config_1.default().load();
+const config = new config_1.default().load();
 class IOSDump {
     convert() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26,13 +26,13 @@ class IOSDump {
             // remove non api call
             files = _.filter(files, f => f.indexOf('undefined') < 0);
             // split requests and responses
-            let requests = _.filter(files, f => _.endsWith(f, '.request'));
-            let responses = _.filter(files, f => _.endsWith(f, '.response'));
+            const requests = _.filter(files, f => _.endsWith(f, '.request'));
+            const responses = _.filter(files, f => _.endsWith(f, '.response'));
             if (requests.length === 0)
                 throw new Error('No file to import');
-            let date = this.getTimestamp(requests[0]);
-            let when = moment(+date);
-            let folder = when.format('YYYYMMDD.HHmmss');
+            const date = this.getTimestamp(requests[0]);
+            const when = moment(+date);
+            const folder = when.format('YYYYMMDD.HHmmss');
             logger.info('Dest folder: data/%s', folder);
             try {
                 yield fs.mkdir('data/' + folder);
@@ -54,9 +54,9 @@ class IOSDump {
     handleReqFile(reqId, file, folder, responses) {
         return __awaiter(this, void 0, void 0, function* () {
             logger.info('Convert file %s in folder %s', file, folder);
-            let raw = yield fs.readFile(`ios.dump.noctem/${file}`);
-            let id = _.padStart(reqId.toString(), 5, '0');
-            let content = {
+            const raw = yield fs.readFile(`ios.dump.noctem/${file}`);
+            const id = _.padStart(reqId.toString(), 5, '0');
+            const content = {
                 id: reqId,
                 when: this.getTimestamp(file),
                 data: Buffer.from(raw).toString('base64'),
@@ -67,12 +67,12 @@ class IOSDump {
     }
     handleResFile(reqId, file, folder, responses) {
         return __awaiter(this, void 0, void 0, function* () {
-            let requestId = this.getRequestId(file);
-            let resfile = _.find(responses, f => f.endsWith(requestId + '.response'));
+            const requestId = this.getRequestId(file);
+            const resfile = _.find(responses, f => f.endsWith(requestId + '.response'));
             if (fs.existsSync(`ios.dump.noctem/${resfile}`)) {
-                let raw = yield fs.readFile(`ios.dump.noctem/${resfile}`);
-                let base64 = Buffer.from(raw).toString('base64');
-                let id = _.padStart(reqId.toString(), 5, '0');
+                const raw = yield fs.readFile(`ios.dump.noctem/${resfile}`);
+                const base64 = Buffer.from(raw).toString('base64');
+                const id = _.padStart(reqId.toString(), 5, '0');
                 yield fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');
             }
             else {
@@ -81,7 +81,7 @@ class IOSDump {
         });
     }
 }
-let iOSDump = new IOSDump();
+const iOSDump = new IOSDump();
 iOSDump.convert()
     .then(num => {
     logger.info('%s file(s) converted.', num);
