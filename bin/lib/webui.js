@@ -261,7 +261,7 @@ class WebUI {
                 });
             }
             else {
-                res.status(404).send('Nope.');
+                res.status(404).send('Nope. Maybe because there is no issue found?');
             }
         });
     }
