@@ -13,9 +13,12 @@ import Config from './config';
 export default class Decoder {
     config: any;
     altProtos: any;
+    doNotHide: boolean;
 
-    constructor(config) {
+    constructor(config, doNotHide = false) {
         this.config = config;
+        if (!doNotHide) doNotHide = config.ui.doNotHide;
+        this.doNotHide = doNotHide;
         this.loadProtos();
     }
 
@@ -42,7 +45,7 @@ export default class Decoder {
 
             data.decoded = this.decodeRequestBuffer(raw);
 
-            // decode plateform requests
+            // decode platform requests
             _.each(data.decoded.platform_requests, req => {
                 let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r === req.type);
                 if (reqname) {
@@ -50,11 +53,12 @@ export default class Decoder {
                     reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
                     const requestType = POGOProtos.Networking.Platform.Requests[reqname];
                     if (requestType) {
-                        req.message = requestType.toObject(requestType.decode(req.request_message), { defaults: true });
+                        const proto = requestType.decode(req.request_message);
+                        // req.message = requestType.toObject(proto, { defaults: true });
                         if (req.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
                             // decrypt signature
                             try {
-                                const decrypted = pcrypt.decrypt(req.message.encrypted_signature);
+                                const decrypted = pcrypt.decrypt(proto.encrypted_signature);
                                 try {
                                     req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
                                     req.message = POGOProtos.Networking.Envelopes.Signature.toObject(req.message, { defaults: true });
@@ -63,10 +67,10 @@ export default class Decoder {
                                     req.message = this.altProtos.Networking.Envelopes.Signature.toObject(req.message, { defaults: true });
                                     logger.debug('Decrypted with alternate protos');
                                 }
-                                if (req.message.device_info) {
+                                if (!this.doNotHide && req.message.device_info) {
                                     req.message.device_info.device_id = '(hidden)';
                                 }
-                                if (req.message.session_hash) {
+                                if (!this.doNotHide && req.message.session_hash) {
                                     req.message.session_hash = '(hidden)';
                                 }
                             } catch (e) {
@@ -91,10 +95,10 @@ export default class Decoder {
             }
 
             // hide sensitive info
-            if (data.decoded.auth_info) {
+            if (!this.doNotHide && data.decoded.auth_info) {
                 if (data.decoded.auth_info.token) data.decoded.auth_info.token.contents = '(hidden)';
             }
-            if (data.decoded.auth_ticket) {
+            if (!this.doNotHide && data.decoded.auth_ticket) {
                 if (data.decoded.auth_ticket.start) data.decoded.auth_ticket.start = '(hidden)';
                 if (data.decoded.auth_ticket.end) data.decoded.auth_ticket.end = '(hidden)';
             }
@@ -198,7 +202,7 @@ export default class Decoder {
             decoded.request_id = '0x' + decoded.request_id.toString(16);
 
             // hide auth info
-            if (decoded.auth_ticket) {
+            if (!this.doNotHide && decoded.auth_ticket) {
                 if (decoded.auth_ticket.start) decoded.auth_ticket.start = '(hidden)';
                 if (decoded.auth_ticket.end) decoded.auth_ticket.end = '(hidden)';
             }

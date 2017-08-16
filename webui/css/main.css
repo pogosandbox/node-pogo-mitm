@@ -19,3 +19,114 @@
     overflow-y: scroll;
     max-height: calc(100vh - 52px);
 }
+
+/* loading */
+
+.cssload-loading {
+	height: 276px;
+	left: 50%;
+	margin-left: -138.5px;
+	margin-top: -138.5px;
+	position: absolute;
+	width: 276px;
+	transform: translateZ(0);
+}
+.cssload-loading-circle {
+	background-color: rgb(0,0,0);
+	border-radius: 50%;
+	height: 46px;
+	position: absolute;
+	width: 46px;
+	animation: 2634.65ms cssload-loading infinite;
+	transform: scale(0);
+}
+.cssload-loading-circle:nth-child(1) {
+	animation-delay: 48.3ms;
+}
+.cssload-loading-circle:nth-child(2) {
+	animation-delay: 96.6ms;
+}
+.cssload-loading-circle:nth-child(3) {
+	animation-delay: 144.9ms;
+}
+.cssload-loading-circle:nth-child(4) {
+	animation-delay: 193.2ms;
+}
+.cssload-loading-circle:nth-child(5) {
+	animation-delay: 241.5ms;
+}
+.cssload-loading-circle:nth-child(6) {
+	animation-delay: 289.8ms;
+}
+.cssload-loading-circle:nth-child(7) {
+	animation-delay: 338.1ms;
+}
+.cssload-loading-circle:nth-child(8) {
+	animation-delay: 386.4ms;
+}
+.cssload-loading-circle:nth-child(9) {
+	animation-delay: 434.7ms;
+}
+.cssload-loading-circle:nth-child(10) {
+	animation-delay: 483ms;
+}
+.cssload-loading-circle:nth-child(11) {
+	animation-delay: 531.3ms;
+}
+.cssload-loading-circle:nth-child(12) {
+	animation-delay: 579.6ms;
+}
+.cssload-loading-circle:nth-child(13) {
+	animation-delay: 627.9ms;
+}
+.cssload-loading-row1 {
+	top: 4.3px;
+}
+.cssload-loading-row2 {
+	top: 61.95px;
+}
+.cssload-loading-row3 {
+	top: 118.55px;
+}
+.cssload-loading-row4 {
+	top: 176.2px;
+}
+.cssload-loading-row5 {
+	top: 233.85px;
+}
+.cssload-loading-col1 {
+	left: 4.25px;
+}
+.cssload-loading-col2 {
+	left: 60.85px;
+}
+.cssload-loading-col3 {
+	left: 118.5px;
+}
+.cssload-loading-col4 {
+	left: 176.15px;
+}
+.cssload-loading-col5 {
+	left: 233.8px;
+}
+
+@keyframes cssload-loading {
+	0% {
+		transform: scale(0);
+	}
+	27.28% {
+		transform: scale(1);
+	}
+	36.36% {
+		transform: scale(0.857);
+	}
+	54.55% {
+		transform: scale(0.857);
+	}
+	63.64% {
+		transform: scale(0);
+	}
+	100% {
+		transform: scale(0);
+	}
+}

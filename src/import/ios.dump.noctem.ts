@@ -5,7 +5,7 @@ import * as moment from 'moment';
 import * as _ from 'lodash';
 
 import Config from './../lib/config';
-let config = new Config().load();
+const config = new Config().load();
 
 class IOSDump {
     async convert(): Promise<number> {
@@ -19,14 +19,14 @@ class IOSDump {
         files = _.filter(files, f => f.indexOf('undefined') < 0);
 
         // split requests and responses
-        let requests = _.filter(files, f =>  _.endsWith(f, '.request'));
-        let responses = _.filter(files, f =>  _.endsWith(f, '.response'));
+        const requests = _.filter(files, f =>  _.endsWith(f, '.request'));
+        const responses = _.filter(files, f =>  _.endsWith(f, '.response'));
 
         if (requests.length === 0) throw new Error('No file to import');
 
-        let date = this.getTimestamp(requests[0]);
-        let when = moment(+date);
-        let folder = when.format('YYYYMMDD.HHmmss');
+        const date = this.getTimestamp(requests[0]);
+        const when = moment(+date);
+        const folder = when.format('YYYYMMDD.HHmmss');
 
         logger.info('Dest folder: data/%s', folder);
         try {
@@ -52,9 +52,9 @@ class IOSDump {
 
     async handleReqFile(reqId: number, file: string, folder: string, responses: string[]) {
         logger.info('Convert file %s in folder %s', file, folder);
-        let raw = await fs.readFile(`ios.dump.noctem/${file}`);
-        let id = _.padStart(reqId.toString(), 5, '0');
-        let content = {
+        const raw = await fs.readFile(`ios.dump.noctem/${file}`);
+        const id = _.padStart(reqId.toString(), 5, '0');
+        const content = {
             id: reqId,
             when: this.getTimestamp(file),
             data: Buffer.from(raw).toString('base64'),
@@ -64,12 +64,12 @@ class IOSDump {
     }
 
     async handleResFile(reqId: number, file: string, folder: string, responses: string[]) {
-        let requestId = this.getRequestId(file);
-        let resfile = _.find(<string[]>responses, f => f.endsWith(requestId + '.response'));
+        const requestId = this.getRequestId(file);
+        const resfile = _.find(<string[]>responses, f => f.endsWith(requestId + '.response'));
         if (fs.existsSync(`ios.dump.noctem/${resfile}`)) {
-            let raw = await fs.readFile(`ios.dump.noctem/${resfile}`);
-            let base64 = Buffer.from(raw).toString('base64');
-            let id = _.padStart(reqId.toString(), 5, '0');
+            const raw = await fs.readFile(`ios.dump.noctem/${resfile}`);
+            const base64 = Buffer.from(raw).toString('base64');
+            const id = _.padStart(reqId.toString(), 5, '0');
             await fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');
         } else {
             logger.warn('Response file does not exist: ', resfile);
@@ -77,7 +77,7 @@ class IOSDump {
     }
 }
 
-let iOSDump = new IOSDump();
+const iOSDump = new IOSDump();
 iOSDump.convert()
 .then(num => {
     logger.info('%s file(s) converted.', num);

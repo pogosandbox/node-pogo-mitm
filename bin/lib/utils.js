@@ -13,6 +13,9 @@ const fs = require("mz/fs");
 const moment = require("moment");
 const _ = require("lodash");
 const Bluebird = require("bluebird");
+const long = require("long");
+const util = require('util');
+const setTimeoutPromise = util.promisify(setTimeout);
 class Utils {
     constructor(config) {
         this.config = config;
@@ -62,6 +65,16 @@ class Utils {
             yield Bluebird.map(folders, (dir) => __awaiter(this, void 0, void 0, function* () {
                 yield fs.rmdir(`data/${dir}`);
             }));
+        });
+    }
+    doubleToLong(value) {
+        const view = new DataView(new ArrayBuffer(8));
+        view.setFloat64(0, value);
+        return new long(view.getInt32(4), view.getInt32(0), false).toString();
+    }
+    wait(ms) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield setTimeoutPromise(ms);
         });
     }
 }

@@ -5,7 +5,7 @@ import * as moment from 'moment';
 import * as _ from 'lodash';
 
 import Config from './../lib/config';
-let config = new Config().load();
+const config = new Config().load();
 
 class IOSDump {
     async convert(): Promise<number> {
@@ -16,7 +16,7 @@ class IOSDump {
 
         let sessions = await fs.readdir('ios.dump');
         sessions = _.filter(sessions, session => _.startsWith(session, 'mitm.'));
-        let converted = await Bluebird.map(sessions, async session => this.handleSession(session));
+        const converted = await Bluebird.map(sessions, async session => this.handleSession(session));
         return _.sum(converted);
     }
 
@@ -25,9 +25,9 @@ class IOSDump {
         files = _.filter(files, f => _.endsWith(f, 'req.raw.bin'));
         if (files.length === 0) return 0;
 
-        let date = _.trimEnd(files[0], '.req.raw.bin');
-        let when = moment(+date);
-        let folder = when.format('YYYYMMDD.HHmmss');
+        const date = _.trimEnd(files[0], '.req.raw.bin');
+        const when = moment(+date);
+        const folder = when.format('YYYYMMDD.HHmmss');
 
         logger.info('Dest folder: data/%s', folder);
         try {
@@ -47,14 +47,14 @@ class IOSDump {
     async handleReqFile(reqId: number, session: string, file: string, folder: string): Promise<void> {
         logger.info('Convert file %s in folder %s', file, folder);
         try {
-            let raw = await fs.readFile(`ios.dump/${session}/${file}`);
-            let content = {
+            const raw = await fs.readFile(`ios.dump/${session}/${file}`);
+            const content = {
                 id: reqId,
                 when: + _.trimEnd(file, '.req.raw.bin'),
                 data: Buffer.from(raw).toString('base64'),
             };
 
-            let id = _.padStart(reqId.toString(), 5, '0');
+            const id = _.padStart(reqId.toString(), 5, '0');
             await fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(content, null, 4), 'utf8');
             await this.handleResFile(reqId, session, file, folder);
         } catch (e) {
@@ -68,9 +68,9 @@ class IOSDump {
         resfile += '.res.raw.bin';
         if (fs.existsSync(`ios.dump/${session}/${resfile}`)) {
             try {
-                let raw = await fs.readFile(`ios.dump/${session}/${resfile}`);
-                let base64 = Buffer.from(raw).toString('base64');
-                let id = _.padStart(reqId.toString(), 5, '0');
+                const raw = await fs.readFile(`ios.dump/${session}/${resfile}`);
+                const base64 = Buffer.from(raw).toString('base64');
+                const id = _.padStart(reqId.toString(), 5, '0');
                 await fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');
             } catch (e) {
                 logger.error('Error importing file %s', resfile);
@@ -80,7 +80,7 @@ class IOSDump {
     }
 }
 
-let iOSDump = new IOSDump();
+const iOSDump = new IOSDump();
 iOSDump.convert()
 .then(num => {
     logger.info('%s file(s) converted.', num);

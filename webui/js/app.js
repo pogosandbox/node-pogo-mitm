@@ -214,10 +214,20 @@ $(function () {
         });
     }
 
-    // window.onhashchange = function() {
-    //     console.log('onhashchange');
-    //     showSessionFromUrl();
-    // }
+    $('.doanalyse').click(function(event) {
+        event.preventDefault();
+        let session = $('#requests').data('session');
+        console.log('Analyse ' + session);
+        loading();
+        $.post({ url: '/api/analyse/' + session, json: true })
+        .done(data => {
+            $('.loadingoverlay').remove();
+            window.location = data.redirect;
+        }).fail(err => {
+            $('.loadingoverlay').remove();
+            console.log(err);
+        });
+    })
 
     function getConfig() {
         return $.getJSON('/api/config').done(data => {
@@ -239,3 +249,38 @@ $(function () {
 
     getConfig().done(() => initSessions());
 });
+
+function loading() {
+    let overlay = $('<div>', {
+        class: 'loadingoverlay',
+        css: {
+            'background-color'  : 'rgba(255, 255, 255, 0.8)',
+            'position'          : 'fixed',
+            'top'               : 0,
+            'left'              : 0,
+            'width'             : '100%',
+            'height'            : '100%',
+            'display'           : 'flex',
+            'flex-direction'    : 'column',
+            'align-items'       : 'center',
+            'justify-content'   : 'center',
+            'z-index'           : 500,
+        },
+    });
+    $(`<div class="cssload-loading">
+        <div class="cssload-loading-circle cssload-loading-row1 cssload-loading-col3"></div>
+        <div class="cssload-loading-circle cssload-loading-row2 cssload-loading-col2"></div>
+        <div class="cssload-loading-circle cssload-loading-row2 cssload-loading-col3"></div>
+        <div class="cssload-loading-circle cssload-loading-row2 cssload-loading-col4"></div>
+        <div class="cssload-loading-circle cssload-loading-row3 cssload-loading-col1"></div>
+        <div class="cssload-loading-circle cssload-loading-row3 cssload-loading-col2"></div>
+        <div class="cssload-loading-circle cssload-loading-row3 cssload-loading-col3"></div>
+        <div class="cssload-loading-circle cssload-loading-row3 cssload-loading-col4"></div>
+        <div class="cssload-loading-circle cssload-loading-row3 cssload-loading-col5"></div>
+        <div class="cssload-loading-circle cssload-loading-row4 cssload-loading-col2"></div>
+        <div class="cssload-loading-circle cssload-loading-row4 cssload-loading-col3"></div>
+        <div class="cssload-loading-circle cssload-loading-row4 cssload-loading-col4"></div>
+        <div class="cssload-loading-circle cssload-loading-row5 cssload-loading-col3"></div>
+    </div>`).appendTo(overlay);
+    overlay.hide().appendTo('body').fadeIn();
+}

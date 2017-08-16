@@ -32,8 +32,6 @@ class Preload {
 
         const data = await this.processRequests(folder, files);
 
-        await this.validateData(folder, data);
-
         // save coords to display a nice map
         let coords = _.map(data, d => {
             return {lat: d.lat, lng: d.lng};
@@ -42,14 +40,6 @@ class Preload {
         await fs.writeFile(`data/${folder}/.preload`, JSON.stringify(coords), 'utf8');
 
         await this.processResponses(folder, files);
-    }
-
-    async validateData(folder: string, data: any[]) {
-        try {
-
-        } catch (e) {
-            logger.warn(e);
-        }
     }
 
     async processRequests(session: string, files: string[]): Promise<any[]> {

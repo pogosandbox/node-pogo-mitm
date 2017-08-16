@@ -3,8 +3,12 @@ import * as fs from 'mz/fs';
 import * as moment from 'moment';
 import * as _ from 'lodash';
 import * as Bluebird from 'bluebird';
+import * as long from 'long';
 
 import Config from './config';
+
+const util = require('util');
+const setTimeoutPromise = util.promisify(setTimeout);
 
 export default class Utils {
     config: any;
@@ -56,5 +60,15 @@ export default class Utils {
         await Bluebird.map(folders, async dir => {
             await fs.rmdir(`data/${dir}`);
         });
+    }
+
+    doubleToLong(value) {
+        const view = new DataView(new ArrayBuffer(8));
+        view.setFloat64(0, value);
+        return new long(view.getInt32(4), view.getInt32(0), false).toString();
+    }
+
+    async wait(ms: number) {
+        await setTimeoutPromise(ms);
     }
 }

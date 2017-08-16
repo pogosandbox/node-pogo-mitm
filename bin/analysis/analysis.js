@@ -15,17 +15,22 @@ const moment = require("moment");
 const _ = require("lodash");
 const config_1 = require("./../lib/config");
 const config = new config_1.default().load();
-class IOSDump {
-    convert() {
+class Analysis {
+    run() {
         return __awaiter(this, void 0, void 0, function* () {
-            logger.info('Import from ios.dump...');
-            try {
-                yield fs.mkdir('data');
+            if (process.argv.length < 3) {
+                logger.error('usage: node ./bin/analys.js <session name>');
+                return;
             }
-            catch (e) { }
-            let sessions = yield fs.readdir('ios.dump');
+            const folder = process.argv[2];
+            logger.info(`Start analysis session ${folder}...`);
+            if (!(yield fs.exists(`data/${folder}`))) {
+                logger.error(`Folder data/${folder} does not exists.`);
+                return;
+            }
+            let sessions = yield fs.readdir(`data/${folder}`);
             sessions = _.filter(sessions, session => _.startsWith(session, 'mitm.'));
-            const converted = yield Bluebird.map(sessions, (session) => __awaiter(this, void 0, void 0, function* () { return this.handleSession(session); }));
+            let converted = yield Bluebird.map(sessions, (session) => __awaiter(this, void 0, void 0, function* () { return this.handleSession(session); }));
             return _.sum(converted);
         });
     }
@@ -35,9 +40,9 @@ class IOSDump {
             files = _.filter(files, f => _.endsWith(f, 'req.raw.bin'));
             if (files.length === 0)
                 return 0;
-            const date = _.trimEnd(files[0], '.req.raw.bin');
-            const when = moment(+date);
-            const folder = when.format('YYYYMMDD.HHmmss');
+            let date = _.trimEnd(files[0], '.req.raw.bin');
+            let when = moment(+date);
+            let folder = when.format('YYYYMMDD.HHmmss');
             logger.info('Dest folder: data/%s', folder);
             try {
                 yield fs.mkdir('data/' + folder);
@@ -55,13 +60,13 @@ class IOSDump {
         return __awaiter(this, void 0, void 0, function* () {
             logger.info('Convert file %s in folder %s', file, folder);
             try {
-                const raw = yield fs.readFile(`ios.dump/${session}/${file}`);
-                const content = {
+                let raw = yield fs.readFile(`ios.dump/${session}/${file}`);
+                let content = {
                     id: reqId,
                     when: +_.trimEnd(file, '.req.raw.bin'),
                     data: Buffer.from(raw).toString('base64'),
                 };
-                const id = _.padStart(reqId.toString(), 5, '0');
+                let id = _.padStart(reqId.toString(), 5, '0');
                 yield fs.writeFile(`data/${folder}/${id}.req.bin`, JSON.stringify(content, null, 4), 'utf8');
                 yield this.handleResFile(reqId, session, file, folder);
             }
@@ -77,9 +82,9 @@ class IOSDump {
             resfile += '.res.raw.bin';
             if (fs.existsSync(`ios.dump/${session}/${resfile}`)) {
                 try {
-                    const raw = yield fs.readFile(`ios.dump/${session}/${resfile}`);
-                    const base64 = Buffer.from(raw).toString('base64');
-                    const id = _.padStart(reqId.toString(), 5, '0');
+                    let raw = yield fs.readFile(`ios.dump/${session}/${resfile}`);
+                    let base64 = Buffer.from(raw).toString('base64');
+                    let id = _.padStart(reqId.toString(), 5, '0');
                     yield fs.writeFile(`data/${folder}/${id}.res.bin`, base64, 'utf8');
                 }
                 catch (e) {
@@ -90,11 +95,11 @@ class IOSDump {
         });
     }
 }
-const iOSDump = new IOSDump();
+let iOSDump = new IOSDump();
 iOSDump.convert()
     .then(num => {
     logger.info('%s file(s) converted.', num);
     process.exit();
 })
     .catch(e => logger.error(e));
-//# sourceMappingURL=ios.dump.js.map
+//# sourceMappingURL=analysis.js.map

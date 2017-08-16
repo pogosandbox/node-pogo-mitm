@@ -35,7 +35,6 @@ class Preload {
             logger.info('Preload session %s', folder);
             const files = yield fs.readdir(`data/${folder}`);
             const data = yield this.processRequests(folder, files);
-            yield this.validateData(folder, data);
             // save coords to display a nice map
             let coords = _.map(data, d => {
                 return { lat: d.lat, lng: d.lng };
@@ -43,15 +42,6 @@ class Preload {
             coords = _.filter(coords, d => d.lat && d.lng);
             yield fs.writeFile(`data/${folder}/.preload`, JSON.stringify(coords), 'utf8');
             yield this.processResponses(folder, files);
-        });
-    }
-    validateData(folder, data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-            }
-            catch (e) {
-                logger.warn(e);
-            }
         });
     }
     processRequests(session, files) {

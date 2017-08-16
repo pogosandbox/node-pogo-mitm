@@ -1,0 +1,64 @@
+<html>
+    <head>
+        <title>{{session}} analysis</title>
+        <style>
+            body {
+                background-color: #1e2124;
+                color: hsla(0,0%,100%,.7);
+                font-family: Whitney,Helvetica Neue,Helvetica,Arial,sans-serif;
+                padding: 1em;
+                font-size: 0.9em;
+            }
+
+            .issue {
+                border-bottom: 1px solid #eceeef;
+                border-bottom-color: hsla(0,0%,100%,.2);
+                padding: 10px;
+            }
+
+            a.togglemore, a.togglemore:visited {
+                text-decoration: none;
+            }
+        </style>
+        <script src='https://code.jquery.com/jquery-3.2.1.slim.min.js'></script>
+        <script>
+            $(function(){
+                $('.togglemore').click(function(event){
+                    event.preventDefault();
+                    console.log($(this));
+                    console.log($(this).parent());
+                    $(this).parent().parent().find('.more').toggle();
+                });
+
+                $('.filtercategory').change(function(){
+                    $(`.${$(this).val()}`).toggle();
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <h1>{{session}} analysis</h1>
+        <h2>{{issues.length}} issues found.</h2>
+        <div class="categories">
+            {{#categories}}
+                <input class="filtercategory" type="checkbox" value="{{name}}" checked>{{name}} ({{count}})</input>
+            {{/categories}}
+        </div>
+        {{#issues}}
+        <div class="issue {{type}}">
+            <h2>
+                <span>{{file}}</span>
+            </h2>
+            <div class="issue-text">
+                <div class="detail">
+                    {{issue}}
+                    {{#more}}
+                        <a href='#' class="togglemore">(more)</a>
+                    {{/more}}
+                </div>
+                <div class="more" style="display:none"><pre>{{more}}</pre></div>
+            </div>
+        </div>
+        {{/issues}}
+    </body>
+</html>
