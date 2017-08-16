@@ -316,7 +316,7 @@ export default class Analysis {
                     type: 'envelop',
                     file,
                     issue: 'unknown platform request has been found',
-                    more: _.trimEnd(unknown.map(ptfm => ptfm.type).join(', '), ', '),
+                    more: unknown.map(ptfm => ptfm.type).join(', '),
                 });
             }
         }
@@ -350,7 +350,7 @@ export default class Analysis {
                 type: 'api',
                 file,
                 issue: `number of requests too short (${request.requests.length})`,
-                more: _.trimEnd(request.requests.map(r => r.request_name).join(', '), ', '),
+                more: request.requests.map(r => r.request_name).join(', '),
             });
         } else if (state.login) {
             // in login flow
@@ -373,8 +373,8 @@ export default class Analysis {
             }
             const common = _.drop(request.requests.map(r => r.request_name));
             if (!_.isEqual(expected, common)) {
-                const strExpected = _.trimEnd(expected.join(', '), ', ');
-                const strCommon = _.trimEnd(common.join(', '), ', ');
+                const strExpected = expected.join(', ');
+                const strCommon = common.join(', ');
                 this.issues.push({
                     type: 'api',
                     file,
@@ -395,8 +395,8 @@ export default class Analysis {
             ];
             const common = _.drop(request.requests.map(r => r.request_name));
             if (!_.isEqual(expected, common)) {
-                const strExpected = _.trimEnd(expected.join(', '), ', ');
-                const strCommon = _.trimEnd(common.join(', '), ', ');
+                const strExpected = expected.join(', ');
+                const strCommon = common.join(', ');
                 this.issues.push({
                     type: 'api',
                     file,
@@ -468,8 +468,8 @@ export default class Analysis {
         const hashes = signature.request_hash.map(val => Long.fromString(val, true, 10).toString());
         const replay = result.requestHashes.map(val => Long.fromString(val, true, 10).toString());
         if (!_.isEqual(hashes, replay)) {
-            const got = _.trimEnd(replay.join(', '), ', ');
-            const expected = _.trimEnd(hashes.join(', '), ', ');
+            const got = replay.join(', ');
+            const expected = hashes.join(', ');
             this.issues.push({
                 type: 'hashing',
                 file,
