@@ -7,9 +7,6 @@ import * as long from 'long';
 
 import Config from './config';
 
-const util = require('util');
-const setTimeoutPromise = util.promisify(setTimeout);
-
 export default class Utils {
     config: any;
 
@@ -69,6 +66,8 @@ export default class Utils {
     }
 
     async wait(ms: number) {
-        await setTimeoutPromise(ms);
+        return new Promise(function(resolve) {
+            setTimeout(resolve, ms);
+        });
     }
 }
