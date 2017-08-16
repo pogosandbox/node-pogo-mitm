@@ -17,9 +17,11 @@ proxy:
 
 # Web UI config.
 # - port=8080 is the port the ui will listen to
+# - if upload=true, publish an upload enpoint to allow live upload of requests
 ui:
     active: true
     port: 8080
+    upload: false
 
 # Logging config
 # - level=info, log level (debug, info, warn, error)

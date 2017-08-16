@@ -6,6 +6,7 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 import * as passport from 'passport';
 import * as Bluebird from 'bluebird';
+import * as bodyparser from 'body-parser';
 
 import Decoder from './decoder.js';
 import Utils from './utils.js';
@@ -47,6 +48,11 @@ export default class WebUI {
             app.get('/api/export/csv', <express.RequestHandler>_.bind(this.exportCsv, this));
             app.post('/api/analyse/:session', <express.RequestHandler>_.bind(this.analyse, this));
             app.get('/api/analyse/:session', <express.RequestHandler>_.bind(this.analyseResult, this));
+
+            if (config.upload) {
+                app.use('/upload/*', bodyparser.raw({ type: '*/*' }));
+                app.post('/upload/:session/:req', <express.RequestHandler>_.bind(this.upload, this));
+            }
 
             this.app.get('/logout', function(req, res) {
                                     req.logout();
@@ -122,7 +128,7 @@ export default class WebUI {
                             });
 
         this.app.use(function(req, res, next) {
-            if (!req.isAuthenticated() && !_.startsWith(req.path, '/auth') && !_.startsWith(req.path, '/public')) {
+            if (!req.isAuthenticated() && !_.startsWith(req.path, '/auth') && !_.startsWith(req.path, '/public')  && !_.startsWith(req.path, '/upload')) {
                 res.redirect('/auth/github');
             } else {
                 next();
@@ -271,6 +277,26 @@ export default class WebUI {
             });
         } else {
             res.status(404).send('Nope. Maybe because there is no issue found?');
+        }
+    }
+
+    async upload(req: express.Request, res: express.Response, next: Function) {
+        const session = req.params.session;
+        const request = req.params.req;
+        try {
+            if (!session || !request || !moment(session, 'YYYYMMDD.HHmmss').isValid()) {
+                logger.error('Invalid params in upload: %s - %s', session, request);
+                res.status(500).send('Invalid.');
+            } else {
+                if (!await fs.exists(`data/${session}`)) {
+                    await fs.mkdir(`data/${session}`);
+                }
+                await fs.writeFile(`data/${session}/${request}.req.bin`, req.body);
+                res.send('ok');
+            }
+        } catch (e) {
+            logger.error('Error in upload', e);
+            res.status(500).send('Oups.');
         }
     }
 }

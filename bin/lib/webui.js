@@ -15,6 +15,7 @@ const _ = require("lodash");
 const moment = require("moment");
 const passport = require("passport");
 const Bluebird = require("bluebird");
+const bodyparser = require("body-parser");
 const decoder_js_1 = require("./decoder.js");
 const utils_js_1 = require("./utils.js");
 const analysis_1 = require("../utils/analysis");
@@ -46,6 +47,10 @@ class WebUI {
             app.get('/api/export/csv', _.bind(this.exportCsv, this));
             app.post('/api/analyse/:session', _.bind(this.analyse, this));
             app.get('/api/analyse/:session', _.bind(this.analyseResult, this));
+            if (config.upload) {
+                app.use('/upload/*', bodyparser.raw({ type: '*/*' }));
+                app.post('/upload/:session/:req', _.bind(this.upload, this));
+            }
             this.app.get('/logout', function (req, res) {
                 req.logout();
                 res.redirect('/');
@@ -104,7 +109,7 @@ class WebUI {
             res.redirect('/');
         });
         this.app.use(function (req, res, next) {
-            if (!req.isAuthenticated() && !_.startsWith(req.path, '/auth') && !_.startsWith(req.path, '/public')) {
+            if (!req.isAuthenticated() && !_.startsWith(req.path, '/auth') && !_.startsWith(req.path, '/public') && !_.startsWith(req.path, '/upload')) {
                 res.redirect('/auth/github');
             }
             else {
@@ -262,6 +267,29 @@ class WebUI {
             }
             else {
                 res.status(404).send('Nope. Maybe because there is no issue found?');
+            }
+        });
+    }
+    upload(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const session = req.params.session;
+            const request = req.params.req;
+            try {
+                if (!session || !request || !moment(session, 'YYYYMMDD.HHmmss').isValid()) {
+                    logger.error('Invalid params in upload: %s - %s', session, request);
+                    res.status(500).send('Invalid.');
+                }
+                else {
+                    if (!(yield fs.exists(`data/${session}`))) {
+                        yield fs.mkdir(`data/${session}`);
+                    }
+                    yield fs.writeFile(`data/${session}/${request}.req.bin`, req.body);
+                    res.send('ok');
+                }
+            }
+            catch (e) {
+                logger.error('Error in upload', e);
+                res.status(500).send('Oups.');
             }
         });
     }
