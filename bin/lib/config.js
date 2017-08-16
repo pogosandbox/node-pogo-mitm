@@ -25,6 +25,7 @@ const config = {
             key: 'UA-92205812-1',
         }
     },
+    analysis: {},
     alternateEndpoint: {
         active: false,
         https: false,

@@ -45,7 +45,7 @@ export default class Decoder {
 
             data.decoded = this.decodeRequestBuffer(raw);
 
-            // decode plateform requests
+            // decode platform requests
             _.each(data.decoded.platform_requests, req => {
                 let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r === req.type);
                 if (reqname) {
@@ -53,11 +53,12 @@ export default class Decoder {
                     reqname = _.upperFirst(_.camelCase(reqname)) + 'Request';
                     const requestType = POGOProtos.Networking.Platform.Requests[reqname];
                     if (requestType) {
-                        req.message = requestType.toObject(requestType.decode(req.request_message), { defaults: true });
+                        const proto = requestType.decode(req.request_message);
+                        // req.message = requestType.toObject(proto, { defaults: true });
                         if (req.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE) {
                             // decrypt signature
                             try {
-                                const decrypted = pcrypt.decrypt(req.message.encrypted_signature);
+                                const decrypted = pcrypt.decrypt(proto.encrypted_signature);
                                 try {
                                     req.message = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
                                     req.message = POGOProtos.Networking.Envelopes.Signature.toObject(req.message, { defaults: true });

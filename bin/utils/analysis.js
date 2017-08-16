@@ -10,10 +10,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const logger = require("winston");
 const fs = require("mz/fs");
+const moment = require("moment");
 const _ = require("lodash");
 const Long = require("long");
 const POGOProtos = require("node-pogo-protos-vnext/fs");
 const mustachio = require("mustachio");
+const httprequest = require("request-promise");
 const pcrypt = require('pcrypt');
 const config_1 = require("./../lib/config");
 const utils_1 = require("./../lib/utils");
@@ -51,6 +53,10 @@ class Analysis {
                 ids: [],
                 current: 0,
             },
+            hashing: {
+                last: moment().subtract(1, 'minute'),
+                interval: 60 * 1000 / (+this.config.analysis.hashkeyrpm),
+            },
             common: {
                 first: true,
                 login: true,
@@ -78,6 +84,19 @@ class Analysis {
                 yield this.checkSignature(file, request);
                 yield this.checkSignatureMissingFields(file, request);
                 yield this.checkApiCommon(file, request);
+                if (this.config.analysis.replayhashing) {
+                    try {
+                        yield this.checkHashing(file, request);
+                    }
+                    catch (e) {
+                        this.issues.push({
+                            type: 'hashing',
+                            file,
+                            issue: 'Unable to verify hashing',
+                            more: e.toString(),
+                        });
+                    }
+                }
             }
             catch (e) {
                 this.issues.push({
@@ -382,6 +401,74 @@ class Analysis {
                 });
             }
         }
+    }
+    checkHashing(file, request) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const signatures = _.filter(request.platform_requests, ptfm => ptfm.request_name === 'SEND_ENCRYPTED_SIGNATURE');
+            if (signatures.length === 0)
+                return;
+            const signature = _.first(signatures).message;
+            const loc1 = signature.location_hash1 >>> 0;
+            const loc2 = signature.location_hash2 >>> 0;
+            const content = yield fs.readFile(`data/${this.state.session}/${file}`, 'utf8');
+            const envelope = POGOProtos.Networking.Envelopes.RequestEnvelope.decode(Buffer.from(JSON.parse(content).data, 'base64'));
+            const interval = moment().diff(this.state.hashing.last);
+            if (interval < this.state.hashing.interval) {
+                yield this.utils.wait(interval);
+            }
+            let auth = envelope.auth_ticket;
+            if (!auth)
+                auth = envelope.auth_info;
+            auth = auth.constructor.encode(auth).finish().toString('base64');
+            let requestData = JSON.stringify({
+                Timestamp: +signature.timestamp,
+                Latitude64: 'LatValue',
+                Longitude64: 'LngValue',
+                Accuracy64: 'AccuracyValue',
+                AuthTicket: auth,
+                SessionData: signature.session_hash,
+                Requests: envelope.requests.map(r => r.constructor.encode(r).finish().toString('base64')),
+            });
+            // dirty hack to be able to send int64 as number in JSON
+            requestData = requestData.replace('"LatValue"', this.utils.doubleToLong(envelope.latitude));
+            requestData = requestData.replace('"LngValue"', this.utils.doubleToLong(envelope.longitude));
+            requestData = requestData.replace('"AccuracyValue"', this.utils.doubleToLong(envelope.accuracy));
+            const response = yield httprequest(this.config.analysis.hashendpoint, {
+                headers: {
+                    'X-AuthToken': this.config.analysis.hashkey,
+                    'content-type': 'application/json',
+                    'User-Agent': 'node-pogo-mitm',
+                },
+                body: requestData,
+                followAllRedirects: true,
+                gzip: true,
+                method: 'POST',
+                timeout: 5000,
+            });
+            const body = response.replace(/(-?\d{16,})/g, '"$1"');
+            const result = JSON.parse(body);
+            if (loc1 !== result.locationAuthHash || loc2 !== result.locationHash) {
+                this.issues.push({
+                    type: 'hashing',
+                    file,
+                    issue: 'location hash don\'t match when replaying hashing',
+                    more: `got [${result.locationAuthHash}, ${result.locationHash}], expected [${loc1}, ${loc2}]`,
+                });
+            }
+            const hashes = signature.request_hash.map(val => Long.fromString(val, true, 10).toString());
+            const replay = result.requestHashes.map(val => Long.fromString(val, true, 10).toString());
+            if (!_.isEqual(hashes, replay)) {
+                const got = _.trimEnd(replay.join(', '), ', ');
+                const expected = _.trimEnd(hashes.join(', '), ', ');
+                this.issues.push({
+                    type: 'hashing',
+                    file,
+                    issue: 'requests hashes don\'t match when replaying hashing',
+                    more: `got [${got}] from hash servers, [${expected}] in signature`,
+                });
+            }
+            this.state.hashing.last = moment();
+        });
     }
     buildReport() {
         return __awaiter(this, void 0, void 0, function* () {

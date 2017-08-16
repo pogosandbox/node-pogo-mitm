@@ -6,6 +6,7 @@ import * as _ from 'lodash';
 import * as Long from 'long';
 import * as POGOProtos from 'node-pogo-protos-vnext/fs';
 import * as mustachio from 'mustachio';
+import * as httprequest from 'request-promise';
 
 const pcrypt = require('pcrypt');
 
@@ -62,6 +63,10 @@ export default class Analysis {
                 ids: [],
                 current: 0,
             },
+            hashing: {
+                last: moment().subtract(1, 'minute'),
+                interval: 60 * 1000 / (+this.config.analysis.hashkeyrpm),
+            },
             common: {
                 first: true,
                 login: true,
@@ -91,6 +96,18 @@ export default class Analysis {
             await this.checkSignature(file, request);
             await this.checkSignatureMissingFields(file, request);
             await this.checkApiCommon(file, request);
+            if (this.config.analysis.replayhashing) {
+                try {
+                    await this.checkHashing(file, request);
+                } catch (e) {
+                    this.issues.push({
+                        type: 'hashing',
+                        file,
+                        issue: 'Unable to verify hashing',
+                        more: e.toString(),
+                    });
+                }
+            }
         } catch (e) {
             this.issues.push({
                 type: 'proto',
@@ -388,6 +405,80 @@ export default class Analysis {
                 });
             }
         }
+    }
+
+    async checkHashing(file: string, request) {
+        const signatures = _.filter(<any[]>request.platform_requests, ptfm => ptfm.request_name === 'SEND_ENCRYPTED_SIGNATURE');
+        if (signatures.length === 0) return;
+        const signature = _.first(signatures).message;
+        const loc1 = signature.location_hash1 >>> 0;
+        const loc2 = signature.location_hash2 >>> 0;
+
+        const content = await fs.readFile(`data/${this.state.session}/${file}`, 'utf8');
+        const envelope = POGOProtos.Networking.Envelopes.RequestEnvelope.decode(Buffer.from(JSON.parse(content).data, 'base64'));
+
+        const interval = moment().diff(this.state.hashing.last);
+        if (interval < this.state.hashing.interval) {
+            await this.utils.wait(interval);
+        }
+
+        let auth = envelope.auth_ticket;
+        if (!auth) auth = envelope.auth_info;
+        auth = auth.constructor.encode(auth).finish().toString('base64');
+
+        let requestData = JSON.stringify({
+            Timestamp: +signature.timestamp,
+            Latitude64: 'LatValue',
+            Longitude64: 'LngValue',
+            Accuracy64: 'AccuracyValue',
+            AuthTicket: auth,
+            SessionData: signature.session_hash,
+            Requests: envelope.requests.map(r => r.constructor.encode(r).finish().toString('base64')),
+        });
+
+        // dirty hack to be able to send int64 as number in JSON
+        requestData = requestData.replace('"LatValue"', this.utils.doubleToLong(envelope.latitude));
+        requestData = requestData.replace('"LngValue"', this.utils.doubleToLong(envelope.longitude));
+        requestData = requestData.replace('"AccuracyValue"', this.utils.doubleToLong(envelope.accuracy));
+
+        const response = await httprequest(this.config.analysis.hashendpoint, {
+            headers: {
+                'X-AuthToken': this.config.analysis.hashkey,
+                'content-type': 'application/json',
+                'User-Agent': 'node-pogo-mitm',
+            },
+            body: requestData,
+            followAllRedirects: true,
+            gzip: true,
+            method: 'POST',
+            timeout: 5000,
+        });
+
+        const body = response.replace(/(-?\d{16,})/g, '"$1"');
+        const result = JSON.parse(body);
+        if (loc1 !== result.locationAuthHash || loc2 !== result.locationHash) {
+            this.issues.push({
+                type: 'hashing',
+                file,
+                issue: 'location hash don\'t match when replaying hashing',
+                more: `got [${result.locationAuthHash}, ${result.locationHash}], expected [${loc1}, ${loc2}]`,
+            });
+        }
+
+        const hashes = signature.request_hash.map(val => Long.fromString(val, true, 10).toString());
+        const replay = result.requestHashes.map(val => Long.fromString(val, true, 10).toString());
+        if (!_.isEqual(hashes, replay)) {
+            const got = _.trimEnd(replay.join(', '), ', ');
+            const expected = _.trimEnd(hashes.join(', '), ', ');
+            this.issues.push({
+                type: 'hashing',
+                file,
+                issue: 'requests hashes don\'t match when replaying hashing',
+                more: `got [${got}] from hash servers, [${expected}] in signature`,
+            });
+        }
+
+        this.state.hashing.last = moment();
     }
 
     async buildReport(): Promise<string> {
