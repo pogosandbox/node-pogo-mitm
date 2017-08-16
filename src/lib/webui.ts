@@ -290,6 +290,7 @@ export default class WebUI {
             } else {
                 if (!await fs.exists(`data/${session}`)) {
                     await fs.mkdir(`data/${session}`);
+                    await fs.writeFile(`data/${session}/.info`, '(upload)', 'utf8');
                 }
                 await fs.writeFile(`data/${session}/${request}.req.bin`, req.body);
                 res.send('ok');
