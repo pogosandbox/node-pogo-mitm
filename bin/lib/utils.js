@@ -14,8 +14,6 @@ const moment = require("moment");
 const _ = require("lodash");
 const Bluebird = require("bluebird");
 const long = require("long");
-const util = require('util');
-const setTimeoutPromise = util.promisify(setTimeout);
 class Utils {
     constructor(config) {
         this.config = config;
@@ -74,7 +72,9 @@ class Utils {
     }
     wait(ms) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield setTimeoutPromise(ms);
+            return new Promise(function (resolve) {
+                setTimeout(resolve, ms);
+            });
         });
     }
 }
