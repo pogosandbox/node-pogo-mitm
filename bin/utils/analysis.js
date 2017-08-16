@@ -281,6 +281,14 @@ class Analysis {
             if (data.endpoint !== '/plfe/version') {
                 const RequestEnvelope = POGOProtos.Networking.Envelopes.RequestEnvelope;
                 const request = RequestEnvelope.decode(Buffer.from(data.data, 'base64'));
+                if (request.__unknownFields) {
+                    const num = request.__unknownFields.length;
+                    this.issues.push({
+                        type: 'envelop',
+                        file,
+                        issue: `${num} unknown field(s) found in envelop`,
+                    });
+                }
                 // check signature
                 let signature = _.find(request.platform_requests, r => r.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE);
                 if (signature) {
@@ -456,7 +464,7 @@ class Analysis {
                 });
             }
             const hashes = signature.request_hash.map(val => Long.fromString(val, true, 10).toString());
-            const replay = result.requestHashes.map(val => Long.fromString(val, true, 10).toString());
+            const replay = result.requestHashes.map(val => Long.fromString(val.toString(), true, 10).toString());
             if (!_.isEqual(hashes, replay)) {
                 const got = replay.join(', ');
                 const expected = hashes.join(', ');
