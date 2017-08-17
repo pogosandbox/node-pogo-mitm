@@ -82,7 +82,7 @@ class Analysis {
                 const request = info.decoded;
                 yield this.checkRequestId(file, request);
                 yield this.checkSignature(file, request);
-                yield this.checkSignatureMissingFields(file, request);
+                yield this.checkProtoMissingFields(file, request);
                 yield this.checkApiCommon(file, request);
                 if (this.config.analysis.replayhashing) {
                     try {
@@ -274,35 +274,54 @@ class Analysis {
             }
         }
     }
-    checkSignatureMissingFields(file, request) {
+    checkProtoMissingFields(file, request) {
         return __awaiter(this, void 0, void 0, function* () {
             const content = yield fs.readFile(`data/${this.state.session}/${file}`, 'utf8');
             const data = JSON.parse(content);
             if (data.endpoint !== '/plfe/version') {
+                const subCheck = function (name, obj) {
+                    if (!obj || !obj.constructor.encode)
+                        return;
+                    if (obj.__unknownFields) {
+                        const num = obj.__unknownFields.length;
+                        this.issues.push({
+                            type: 'proto',
+                            file,
+                            issue: `${num} unknown field(s) found in ${name}`,
+                        });
+                    }
+                    _.forIn(obj, (value, key) => {
+                        if (Array.isArray(value)) {
+                            for (let i = 0; i < value.length; i++) {
+                                subCheck(``, value[i]);
+                            }
+                        }
+                        if (typeof value === 'object' && !(value instanceof Buffer)) {
+                            subCheck(key, value);
+                        }
+                    });
+                };
                 const RequestEnvelope = POGOProtos.Networking.Envelopes.RequestEnvelope;
                 const request = RequestEnvelope.decode(Buffer.from(data.data, 'base64'));
-                if (request.__unknownFields) {
-                    const num = request.__unknownFields.length;
-                    this.issues.push({
-                        type: 'envelop',
-                        file,
-                        issue: `${num} unknown field(s) found in envelop`,
-                    });
-                }
+                // check missing fields in envelop
+                subCheck('envelop', request);
                 // check signature
                 let signature = _.find(request.platform_requests, r => r.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE);
                 if (signature) {
                     const message = POGOProtos.Networking.Platform.Requests.SendEncryptedSignatureRequest.decode(signature.request_message);
                     const decrypted = pcrypt.decrypt(message.encrypted_signature);
-                    signature = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
-                    if (signature.__unknownFields) {
-                        const num = signature.__unknownFields.length;
+                    // check that our encryption is still correct
+                    const reencrypted = pcrypt.encrypt(decrypted);
+                    if (message.encrypted_signature.toString('base64') !== reencrypted.toString('base64')) {
                         this.issues.push({
-                            type: 'signature',
+                            type: 'encryption',
                             file,
-                            issue: `${num} unknown field(s) found in signature`,
+                            issue: 'encryption does not match',
                         });
                     }
+                    // check for missing fields in signature
+                    signature = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
+                    subCheck('signature', signature);
                 }
                 // check other platform request
                 const known = [
@@ -492,11 +511,15 @@ class Analysis {
                 logger.info(`${this.issues.length} issues found.`);
                 const template = mustachio.string(yield fs.readFile('./templates/analysis.mu.html', 'utf8'));
                 const categories = _.values(_.mapValues(_.countBy(this.issues, 'type'), (value, key) => ({ name: key, count: value })));
-                const rendering = template.render({
+                const data = {
                     session: this.state.session,
                     categories,
                     issues: this.issues,
-                });
+                };
+                for (const category of data.categories) {
+                    logger.info('  %d issue(s) on %s', category.count, category.name);
+                }
+                const rendering = template.render(data);
                 const html = yield rendering.string();
                 yield fs.writeFile(output, html, 'utf8');
                 logger.info('Report generated in %s', output);
