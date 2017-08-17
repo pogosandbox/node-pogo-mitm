@@ -311,8 +311,9 @@ class Analysis {
                     const message = POGOProtos.Networking.Platform.Requests.SendEncryptedSignatureRequest.decode(signature.request_message);
                     const encrypted64 = message.encrypted_signature.toString('base64');
                     const decrypted = pcrypt.decrypt(message.encrypted_signature);
+                    signature = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
                     // check that our encryption is still correct
-                    const reencrypted = pcrypt.encrypt(decrypted);
+                    const reencrypted = pcrypt.encrypt(decrypted, signature.timestamp_since_start.toNumber());
                     if (encrypted64 !== reencrypted.toString('base64')) {
                         this.issues.push({
                             type: 'encryption',
@@ -321,7 +322,6 @@ class Analysis {
                         });
                     }
                     // check for missing fields in signature
-                    signature = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
                     subCheck('signature', signature);
                 }
                 // check other platform request
