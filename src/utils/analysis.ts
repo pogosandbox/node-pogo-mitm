@@ -364,7 +364,7 @@ export default class Analysis {
         }
         state.first = false;
         const requestName = request.requests.length > 0 ? request.requests[0].request_name : undefined;
-        if (state.login && requestName === 'GET_MAP_OBJECTS') {
+        if (state.login && (requestName === 'GET_MAP_OBJECTS' || requestName === 'GET_PLAYER_PROFILE')) {
             state.login = false;
         }
 
@@ -377,7 +377,7 @@ export default class Analysis {
                 // ok
                 return;
             }
-        } else if (request.requests.length < 6) {
+        } else if (request.requests.length < 5) {
             this.issues.push({
                 type: 'api',
                 file,
@@ -400,7 +400,9 @@ export default class Analysis {
                 expected.push('GET_INBOX');
             } else if (requestName === 'MARK_TUTORIAL_COMPLETE' ||
                        requestName === 'SET_AVATAR' ||
-                       requestName === 'LIST_AVATAR_CUSTOMIZATIONS') {
+                       requestName === 'LIST_AVATAR_CUSTOMIZATIONS' ||
+                       requestName === 'GET_PLAYER' ||
+                       requestName === 'ENCOUNTER_TUTORIAL_COMPLETE') {
                 expected.pop();
             }
             const common = _.drop(request.requests.map(r => r.request_name));
