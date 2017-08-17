@@ -317,11 +317,12 @@ export default class Analysis {
             let signature = _.find(<any[]>request.platform_requests, r => r.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE);
             if (signature) {
                 const message = POGOProtos.Networking.Platform.Requests.SendEncryptedSignatureRequest.decode(signature.request_message);
+                const encrypted64 = message.encrypted_signature.toString('base64');
                 const decrypted = pcrypt.decrypt(message.encrypted_signature);
 
                 // check that our encryption is still correct
                 const reencrypted = pcrypt.encrypt(decrypted);
-                if (message.encrypted_signature.toString('base64') !== reencrypted.toString('base64')) {
+                if (encrypted64 !== reencrypted.toString('base64')) {
                     this.issues.push({
                         type: 'encryption',
                         file,
