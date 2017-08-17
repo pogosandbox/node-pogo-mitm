@@ -80,6 +80,9 @@ class Decoder {
                                     logger.error(e);
                                 }
                             }
+                            else {
+                                req.message = proto.constructor.toObject(proto, { default: true });
+                            }
                         }
                         else {
                             req.message = `unable to decode ${reqname}, type=${req.type}`;
