@@ -21,7 +21,7 @@ $(function () {
         $(this).find('.request').toggleClass('btn-primary');
         $(this).find('.response').toggleClass('btn-primary');
         let session = $('#requests').data('session');
-        let request = $('#requests .success').attr('id');
+        let request = $('#requests .table-success').attr('id');
         let which = $(this).find('.request').hasClass('btn-primary') ? 'request' : 'response';
         if (session && request) viewRequestDetail(which, session, request);
     });
@@ -50,7 +50,7 @@ $(function () {
 
     function prevNext(next) {
         let session = $('#requests').data('session');
-        let item = $('#requests .success');
+        let item = $('#requests .table-success');
         if (next > 0) {
             let match = item.nextAll('.item:visible');
             if (match.length > 0) item = match.first();
@@ -60,7 +60,7 @@ $(function () {
         }
 
         let request = item.attr('id');
-        $('#requests .success').removeClass('success');
+        $('#requests .table-success').removeClass('table-success');
         let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
         window.location.hash = `#session=${session}&request=${request}`;
         viewRequestDetail(which, session, request);
@@ -130,10 +130,11 @@ $(function () {
 
     function viewRequestDetail(which, session, request) {
         console.log('View request ' + request);
-        $('#view-request').show();
+        $('#view-request').css('display', 'inline-block');
         $('#view-session-info').hide();
         $('#jsonViewer').html('<h3>loading...</h3>');
-        $('.' + request).addClass('success');
+        console.log($('#' + request));
+        $('#' + request).addClass('table-success');
         $.getJSON(`/api/${which}/${session}/${request}`, function (data) {
             $('#jsonViewer').jsonViewer(data.decoded, { collapsed: true });
             displayNicely();
@@ -165,7 +166,7 @@ $(function () {
     $('#requests').on('click', '.id', function () {
         let session = $('#requests').data('session');
         let request = $(this).data('id');
-        $('#requests .success').removeClass('success');
+        $('#requests .table-success').removeClass('table-success');
         $('.viewRequestResponse .request').addClass('btn-primary');
         $('.viewRequestResponse .response').removeClass('btn-primary');
         viewRequestDetail('request', session, request);
@@ -195,7 +196,7 @@ $(function () {
             // all sessions modal
             data.forEach(d => {
                 $('#all-sessions').prepend(`
-                    <a href="#session=${d.id}" class="viewSession list-group-item" data-session='${d.id}'>${d.title}</a>
+                    <a href="#session=${d.id}" class="viewSession list-group-item list-group-item-action" data-session='${d.id}'>${d.title}</a>
                 `);
             });
 
@@ -203,10 +204,10 @@ $(function () {
             let last = data[data.length - 1];
             $('#last-session').data('session', last.id);
 
-            // previous sessions drop down
+            // previous 15 sessions as dropdown
             data.slice(-15).forEach(d => {
                 $('#session-dropdown').prepend(`
-                    <li><a href="#session=${d.id}" class='viewSession' data-session='${d.id}'>${d.title}</a></li>
+                    <a href="#session=${d.id}" class='viewSession dropdown-item' data-session='${d.id}'>${d.title}</a>
                 `);
             });
 
@@ -246,6 +247,17 @@ $(function () {
             }
         });
     }
+
+    // $(window).scroll(function() {
+    //     let parentTop = $('#view-request-parent').offset().top;
+    //     let top = $(this).scrollTop();
+    //     console.log('top: ' + top + ' parentop: ' + parentTop);
+    //     if (parentTop < top) {
+    //         $('#view-request-parent').css('top', top);
+    //     } else {
+    //         $('#view-request-parent').css('top', 0);            
+    //     }
+    // });
 
     getConfig().done(() => initSessions());
 });
