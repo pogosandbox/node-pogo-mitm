@@ -2,22 +2,28 @@
     padding-left: 0.3em;
 }
 
+#panel-all-sessions, #panel-sesion {
+	margin: 1em 0;
+}
+
 #map {
     z-index: 1;
     height: 450px;
 }
 
 .search {
-    margin: 20px 0 0 0;
+    margin: 1em 0;
 }
 
 #view-request {
     position: fixed;
-    width: inherit;
-    padding: 0 25px 25px 0;
-    margin-left: 15px;
-    overflow-y: scroll;
+	overflow-y: scroll;
+	width: 100%;
     max-height: calc(100vh - 52px);
+}
+
+#req-table td.title {
+	word-break: break-all;
 }
 
 /* loading */

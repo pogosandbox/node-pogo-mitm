@@ -82,7 +82,7 @@ class Analysis {
                 const request = info.decoded;
                 yield this.checkRequestId(file, request);
                 yield this.checkSignature(file, request);
-                yield this.checkSignatureMissingFields(file, request);
+                yield this.checkProtoMissingFields(file, request);
                 yield this.checkApiCommon(file, request);
                 if (this.config.analysis.replayhashing) {
                     try {
@@ -274,27 +274,55 @@ class Analysis {
             }
         }
     }
-    checkSignatureMissingFields(file, request) {
+    checkProtoMissingFields(file, request) {
         return __awaiter(this, void 0, void 0, function* () {
             const content = yield fs.readFile(`data/${this.state.session}/${file}`, 'utf8');
             const data = JSON.parse(content);
             if (data.endpoint !== '/plfe/version') {
+                const subCheck = function (name, obj) {
+                    if (!obj || !obj.constructor.encode)
+                        return;
+                    if (obj.__unknownFields) {
+                        const num = obj.__unknownFields.length;
+                        this.issues.push({
+                            type: 'proto',
+                            file,
+                            issue: `${num} unknown field(s) found in ${name}`,
+                        });
+                    }
+                    _.forIn(obj, (value, key) => {
+                        if (Array.isArray(value)) {
+                            for (let i = 0; i < value.length; i++) {
+                                subCheck(``, value[i]);
+                            }
+                        }
+                        if (typeof value === 'object' && !(value instanceof Buffer)) {
+                            subCheck(key, value);
+                        }
+                    });
+                };
                 const RequestEnvelope = POGOProtos.Networking.Envelopes.RequestEnvelope;
                 const request = RequestEnvelope.decode(Buffer.from(data.data, 'base64'));
+                // check missing fields in envelop
+                subCheck('envelop', request);
                 // check signature
                 let signature = _.find(request.platform_requests, r => r.type === POGOProtos.Networking.Platform.PlatformRequestType.SEND_ENCRYPTED_SIGNATURE);
                 if (signature) {
                     const message = POGOProtos.Networking.Platform.Requests.SendEncryptedSignatureRequest.decode(signature.request_message);
+                    const encrypted64 = message.encrypted_signature.toString('base64');
                     const decrypted = pcrypt.decrypt(message.encrypted_signature);
                     signature = POGOProtos.Networking.Envelopes.Signature.decode(decrypted);
-                    if (signature.__unknownFields) {
-                        const num = signature.__unknownFields.length;
+                    // check that our encryption is still correct
+                    const reencrypted = pcrypt.encrypt(decrypted, signature.timestamp_since_start.toNumber());
+                    if (encrypted64 !== reencrypted.toString('base64')) {
                         this.issues.push({
-                            type: 'signature',
+                            type: 'encryption',
                             file,
-                            issue: `${num} unknown field(s) found in signature`,
+                            issue: 'encryption does not match',
                         });
                     }
+                    // check for missing fields in signature
+                    subCheck('signature', signature);
                 }
                 // check other platform request
                 const known = [
@@ -309,7 +337,7 @@ class Analysis {
                         type: 'envelop',
                         file,
                         issue: 'unknown platform request has been found',
-                        more: _.trimEnd(unknown.map(ptfm => ptfm.type).join(', '), ', '),
+                        more: unknown.map(ptfm => ptfm.type).join(', '),
                     });
                 }
             }
@@ -325,7 +353,7 @@ class Analysis {
         }
         state.first = false;
         const requestName = request.requests.length > 0 ? request.requests[0].request_name : undefined;
-        if (state.login && requestName === 'GET_MAP_OBJECTS') {
+        if (state.login && (requestName === 'GET_MAP_OBJECTS' || requestName === 'GET_PLAYER_PROFILE')) {
             state.login = false;
         }
         if (state.login && request.requests.length === 1 && requestName === 'GET_PLAYER') {
@@ -338,12 +366,12 @@ class Analysis {
                 return;
             }
         }
-        else if (request.requests.length < 6) {
+        else if (request.requests.length < 5) {
             this.issues.push({
                 type: 'api',
                 file,
                 issue: `number of requests too short (${request.requests.length})`,
-                more: _.trimEnd(request.requests.map(r => r.request_name).join(', '), ', '),
+                more: request.requests.map(r => r.request_name).join(', '),
             });
         }
         else if (state.login) {
@@ -364,13 +392,15 @@ class Analysis {
             }
             else if (requestName === 'MARK_TUTORIAL_COMPLETE' ||
                 requestName === 'SET_AVATAR' ||
-                requestName === 'LIST_AVATAR_CUSTOMIZATIONS') {
+                requestName === 'LIST_AVATAR_CUSTOMIZATIONS' ||
+                requestName === 'GET_PLAYER' ||
+                requestName === 'ENCOUNTER_TUTORIAL_COMPLETE') {
                 expected.pop();
             }
             const common = _.drop(request.requests.map(r => r.request_name));
             if (!_.isEqual(expected, common)) {
-                const strExpected = _.trimEnd(expected.join(', '), ', ');
-                const strCommon = _.trimEnd(common.join(', '), ', ');
+                const strExpected = expected.join(', ');
+                const strCommon = common.join(', ');
                 this.issues.push({
                     type: 'api',
                     file,
@@ -391,8 +421,8 @@ class Analysis {
             ];
             const common = _.drop(request.requests.map(r => r.request_name));
             if (!_.isEqual(expected, common)) {
-                const strExpected = _.trimEnd(expected.join(', '), ', ');
-                const strCommon = _.trimEnd(common.join(', '), ', ');
+                const strExpected = expected.join(', ');
+                const strCommon = common.join(', ');
                 this.issues.push({
                     type: 'api',
                     file,
@@ -456,10 +486,10 @@ class Analysis {
                 });
             }
             const hashes = signature.request_hash.map(val => Long.fromString(val, true, 10).toString());
-            const replay = result.requestHashes.map(val => Long.fromString(val, true, 10).toString());
+            const replay = result.requestHashes.map(val => Long.fromString(val.toString(), true, 10).toString());
             if (!_.isEqual(hashes, replay)) {
-                const got = _.trimEnd(replay.join(', '), ', ');
-                const expected = _.trimEnd(hashes.join(', '), ', ');
+                const got = replay.join(', ');
+                const expected = hashes.join(', ');
                 this.issues.push({
                     type: 'hashing',
                     file,
@@ -484,11 +514,15 @@ class Analysis {
                 logger.info(`${this.issues.length} issues found.`);
                 const template = mustachio.string(yield fs.readFile('./templates/analysis.mu.html', 'utf8'));
                 const categories = _.values(_.mapValues(_.countBy(this.issues, 'type'), (value, key) => ({ name: key, count: value })));
-                const rendering = template.render({
+                const data = {
                     session: this.state.session,
                     categories,
                     issues: this.issues,
-                });
+                };
+                for (const category of data.categories) {
+                    logger.info('  %d issue(s) on %s', category.count, category.name);
+                }
+                const rendering = template.render(data);
                 const html = yield rendering.string();
                 yield fs.writeFile(output, html, 'utf8');
                 logger.info('Report generated in %s', output);

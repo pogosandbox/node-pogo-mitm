@@ -282,6 +282,7 @@ class WebUI {
                 else {
                     if (!(yield fs.exists(`data/${session}`))) {
                         yield fs.mkdir(`data/${session}`);
+                        yield fs.writeFile(`data/${session}/.info`, '(upload)', 'utf8');
                     }
                     yield fs.writeFile(`data/${session}/${request}.req.bin`, req.body);
                     res.send('ok');
