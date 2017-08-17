@@ -60,7 +60,7 @@ class Csv {
                 }
                 let ptr8 = _.find(request.decoded.platform_requests, r => r.type === 8);
                 if (ptr8) {
-                    ptr8 = ptr8.message.message || 'true';
+                    ptr8 = ptr8.message ? ptr8.message.message || 'true' : 'true';
                 }
                 let versionHash = '';
                 if (signature)
@@ -71,6 +71,7 @@ class Csv {
                     loginType = request.decoded.auth_info.provider;
                     uk2 = request.decoded.auth_info.token.unknown2;
                 }
+                const lastLocFix = signature != null && signature.location_fix ? signature.location_fix[signature.location_fix.length - 1] : '';
                 return {
                     request_id: '="' + request.decoded.request_id + '"',
                     loginType,
@@ -85,7 +86,7 @@ class Csv {
                     longitude: request.decoded.longitude,
                     accuracy: request.decoded.accuracy,
                     signature,
-                    lastLocFix: signature != null ? signature.location_fix[signature.location_fix.length - 1] : '',
+                    lastLocFix,
                     fullRequest: request.decoded,
                 };
             }));
