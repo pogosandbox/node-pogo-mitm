@@ -261,7 +261,7 @@ export default class WebUI {
         const report = `data/${req.params.session}/analysis.html`;
         const redirect = '/api/analyse/' + req.params.session;
         if (!await fs.exists(report)) {
-            const analyser = new Analysis(this.config, this.utils, this.decoder);
+            const analyser = new Analysis(this.config, this.utils);
             await analyser.run(req.params.session);
         }
         return res.json({

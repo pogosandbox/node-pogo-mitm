@@ -249,7 +249,7 @@ class WebUI {
             const report = `data/${req.params.session}/analysis.html`;
             const redirect = '/api/analyse/' + req.params.session;
             if (!(yield fs.exists(report))) {
-                const analyser = new analysis_1.default(this.config, this.utils, this.decoder);
+                const analyser = new analysis_1.default(this.config, this.utils);
                 yield analyser.run(req.params.session);
             }
             return res.json({

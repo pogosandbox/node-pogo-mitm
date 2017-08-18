@@ -17,8 +17,7 @@ export default class Decoder {
 
     constructor(config, doNotHide = false) {
         this.config = config;
-        if (!doNotHide) doNotHide = config.ui.doNotHide;
-        this.doNotHide = doNotHide;
+        this.doNotHide = doNotHide || config.ui.doNotHide;
         this.loadProtos();
     }
 
