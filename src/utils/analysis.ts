@@ -29,10 +29,10 @@ export default class Analysis {
     state: any = {};
     session: string;
 
-    constructor(config?, utils?: Utils, decoder?: Decoder) {
+    constructor(config?, utils?: Utils) {
         this.config = config || new Config().load();
         this.utils = utils || new Utils(this.config);
-        this.decoder = decoder || new Decoder(this.config, true);
+        this.decoder = new Decoder(this.config, true);
     }
 
     async run(folder) {
@@ -204,6 +204,15 @@ export default class Analysis {
             this.checkSignatureValue(file, signature, 'field19', false);
             this.checkSignatureValue(file, signature, 'field21', false);
 
+            const sessionHash = Buffer.from(signature.session_hash, 'base64');
+            if (sessionHash.length !== 16) {
+                this.issues.push({
+                    type: 'signature',
+                    file,
+                    issue: `session hash length should be 16, got ${sessionHash.length}`,
+                });
+            }
+
             // check activity status
             const pActivity = POGOProtos.Networking.Envelopes.Signature.ActivityStatus.fromObject({ stationary: true });
             let activity = POGOProtos.Networking.Envelopes.Signature.ActivityStatus.toObject(pActivity, { defaults: true });
@@ -216,6 +225,7 @@ export default class Analysis {
                     more: JSON.stringify(signature.activity_status, null, 2),
                 });
             }
+
             // check device info
             if (signature.device_info) {
                 const di = signature.device_info;
@@ -245,6 +255,7 @@ export default class Analysis {
                     issue: 'no device_info found',
                 });
             }
+
             // location fix
             if (signature.location_fix && signature.location_fix.length > 0) {
                 const wrong = _.filter(<any[]>signature.location_fix, lc => lc.provider !== 'fused' ||
@@ -264,6 +275,7 @@ export default class Analysis {
                     issue: 'no location_fix found',
                 });
             }
+
             // sensor info
             if (!signature.sensor_info || signature.sensor_info.length !== 1) {
                 const found = !signature.sensor_info ? 0 : signature.sensor_info.length;
