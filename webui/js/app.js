@@ -98,7 +98,7 @@ $(function () {
                     item.find('.when').text('+' + fromStart + 's');
 
                     let fromPrev = moment.duration(d.when - previous.when).asSeconds().toFixed(1);
-                    item.find('.prev').text('+' + fromPrev + 's');
+                    item.find('.prev').text('+' + fromPrev + 's').attr('title', 'from start: ' + moment.duration(d.when - first.when).humanize())
 
                     item.appendTo('#requests');
                     previous = d;
@@ -247,17 +247,6 @@ $(function () {
             }
         });
     }
-
-    // $(window).scroll(function() {
-    //     let parentTop = $('#view-request-parent').offset().top;
-    //     let top = $(this).scrollTop();
-    //     console.log('top: ' + top + ' parentop: ' + parentTop);
-    //     if (parentTop < top) {
-    //         $('#view-request-parent').css('top', top);
-    //     } else {
-    //         $('#view-request-parent').css('top', 0);            
-    //     }
-    // });
 
     getConfig().done(() => initSessions());
 });
