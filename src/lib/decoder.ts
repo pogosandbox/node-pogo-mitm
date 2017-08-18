@@ -195,6 +195,7 @@ export default class Decoder {
             _(decoded.platform_returns).takeRight(decoded.platform_returns.length - allPtfmRequests.length).each(response => {
                 decoded.platform_responses.push({
                     error: '(unknown response)',
+                    base64: (<Buffer>response).toString('base64'),
                 });
             });
             delete decoded.platform_returns;
@@ -255,6 +256,7 @@ export default class Decoder {
         _(decoded.returns).takeRight(decoded.returns.length - allRequests.length).each(response => {
             decoded.responses.push({
                 error: '(unknown response)',
+                base64: (<Buffer>response).toString('base64'),
             });
         });
         delete decoded.returns;
