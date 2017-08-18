@@ -37,10 +37,10 @@ export default class Decoder {
         let data = JSON.parse(content);
         if (data.endpoint === '/plfe/version') {
             data.decoded = {request: 'check version', checkVersion: true};
-
         } else {
             const raw = Buffer.from(data.data, 'base64');
             delete data.data;
+            if (!data.when) data.when = +requestId;
 
             data.decoded = this.decodeRequestBuffer(raw);
 

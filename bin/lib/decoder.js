@@ -42,6 +42,8 @@ class Decoder {
             else {
                 const raw = Buffer.from(data.data, 'base64');
                 delete data.data;
+                if (!data.when)
+                    data.when = +requestId;
                 data.decoded = this.decodeRequestBuffer(raw);
                 // decode platform requests
                 _.each(data.decoded.platform_requests, req => {
