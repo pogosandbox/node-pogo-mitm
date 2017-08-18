@@ -18,9 +18,7 @@ const long = require('long');
 class Decoder {
     constructor(config, doNotHide = false) {
         this.config = config;
-        if (!doNotHide)
-            doNotHide = config.ui.doNotHide;
-        this.doNotHide = doNotHide;
+        this.doNotHide = doNotHide || config.ui.doNotHide;
         this.loadProtos();
     }
     loadProtos() {
@@ -44,6 +42,8 @@ class Decoder {
             else {
                 const raw = Buffer.from(data.data, 'base64');
                 delete data.data;
+                if (!data.when)
+                    data.when = +requestId;
                 data.decoded = this.decodeRequestBuffer(raw);
                 // decode platform requests
                 _.each(data.decoded.platform_requests, req => {
@@ -79,6 +79,9 @@ class Decoder {
                                     req.message = 'Error while decrypting: ' + e.message;
                                     logger.error(e);
                                 }
+                            }
+                            else {
+                                req.message = proto.constructor.toObject(proto, { default: true });
                             }
                         }
                         else {

@@ -17,8 +17,7 @@ export default class Decoder {
 
     constructor(config, doNotHide = false) {
         this.config = config;
-        if (!doNotHide) doNotHide = config.ui.doNotHide;
-        this.doNotHide = doNotHide;
+        this.doNotHide = doNotHide || config.ui.doNotHide;
         this.loadProtos();
     }
 
@@ -38,10 +37,10 @@ export default class Decoder {
         let data = JSON.parse(content);
         if (data.endpoint === '/plfe/version') {
             data.decoded = {request: 'check version', checkVersion: true};
-
         } else {
             const raw = Buffer.from(data.data, 'base64');
             delete data.data;
+            if (!data.when) data.when = +requestId;
 
             data.decoded = this.decodeRequestBuffer(raw);
 
@@ -77,6 +76,8 @@ export default class Decoder {
                                 req.message = 'Error while decrypting: ' + e.message;
                                 logger.error(e);
                             }
+                        } else {
+                            req.message = proto.constructor.toObject(proto, { default: true });
                         }
                     } else {
                         req.message = `unable to decode ${reqname}, type=${req.type}`;

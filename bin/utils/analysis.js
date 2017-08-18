@@ -21,12 +21,12 @@ const config_1 = require("./../lib/config");
 const utils_1 = require("./../lib/utils");
 const decoder_js_1 = require("./../lib/decoder.js");
 class Analysis {
-    constructor(config, utils, decoder) {
+    constructor(config, utils) {
         this.issues = [];
         this.state = {};
         this.config = config || new config_1.default().load();
         this.utils = utils || new utils_1.default(this.config);
-        this.decoder = decoder || new decoder_js_1.default(this.config, true);
+        this.decoder = new decoder_js_1.default(this.config, true);
     }
     run(folder) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -194,6 +194,14 @@ class Analysis {
             this.checkSignatureValue(file, signature, 'field18', '');
             this.checkSignatureValue(file, signature, 'field19', false);
             this.checkSignatureValue(file, signature, 'field21', false);
+            const sessionHash = Buffer.from(signature.session_hash, 'base64');
+            if (sessionHash.length !== 16) {
+                this.issues.push({
+                    type: 'signature',
+                    file,
+                    issue: `session hash length should be 16, got ${sessionHash.length}`,
+                });
+            }
             // check activity status
             const pActivity = POGOProtos.Networking.Envelopes.Signature.ActivityStatus.fromObject({ stationary: true });
             let activity = POGOProtos.Networking.Envelopes.Signature.ActivityStatus.toObject(pActivity, { defaults: true });
