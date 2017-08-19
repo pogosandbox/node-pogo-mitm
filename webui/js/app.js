@@ -2,11 +2,19 @@ $(function () {
     window.global = {};
     
     window.onhashchange = function () {
-        $('#requests .table-success').removeClass('table-success');
-        let session = $('#requests').data('session');
-        let request = window.location.hash.match(/request=(\d+)/)[1];
-        let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
-        viewRequestDetail(which, session, request);
+        if(window.location.hash) {
+            $('#panel-all-sessions').hide();
+            $('#panel-sesion').show();
+            
+            $('#requests .table-success').removeClass('table-success');
+            let session = $('#requests').data('session');
+            let request = window.location.hash.match(/request=(\d+)/);
+            let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
+            viewRequestDetail(which, session, request ? request[1] : "00001");
+        } else {
+            $('#panel-all-sessions').show();
+            $('#panel-sesion').hide();
+        }
     };
 
     $('.btn-all-sessions').click(function () {
