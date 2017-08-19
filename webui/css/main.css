@@ -16,10 +16,39 @@
 }
 
 #view-request {
-    position: fixed;
 	overflow-y: scroll;
-	width: 59%;
-    max-height: calc(100vh - 52px);
+	max-height: calc(100vh - 85px);
+	width: 100%;
+}
+
+#view-session-info {
+	padding-right: 2em;
+}
+
+#view-request-wrapper {
+	position: fixed;
+	display: flex;
+	flex-direction: column-reverse;
+}
+
+#buttonContainer {
+	display: flex;
+	align-items: center;
+	margin: 10px 0px;
+}
+
+#arrowContainer {
+	margin-left: 10px;
+}
+
+@media(max-width: 767px) {
+	#view-request {
+		overflow-y: inherit;
+	}
+	
+	#view-request-wrapper {
+		position: relative;
+	}
 }
 
 #req-table td.title {

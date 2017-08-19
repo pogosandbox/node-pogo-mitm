@@ -49,7 +49,7 @@ class WebUI {
             app.get('/api/analyse/:session', _.bind(this.analyseResult, this));
             if (config.upload) {
                 app.use('/upload/*', bodyparser.raw({ type: '*/*' }));
-                app.post('/upload/:session/:req', _.bind(this.upload, this));
+                app.post('/upload/:mode/:session/:req', _.bind(this.upload, this));
             }
             this.app.get('/logout', function (req, res) {
                 req.logout();
@@ -153,41 +153,58 @@ class WebUI {
         return __awaiter(this, void 0, void 0, function* () {
             logger.info('Getting requests for session %s', req.params.session);
             try {
+                let files = yield fs.readdir(`data/${req.params.session}`);
+                files = _.filter(files, d => _.endsWith(d, '.req.bin'));
+                const force = !this.config.protos.cachejson;
+                const infos = yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () {
+                    const content = yield fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
+                    if (content.length > 0) {
+                        const request = JSON.parse(content);
+                        request.title = '';
+                        const coords = { lat: 0, lng: 0 };
+                        try {
+                            const decoded = yield this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
+                            if (decoded && decoded.decoded) {
+                                coords.lat = decoded.decoded.latitude;
+                                coords.lng = decoded.decoded.longitude;
+                                const main = _.first(decoded.decoded.requests);
+                                if (main) {
+                                    request.title = main.request_name;
+                                }
+                                request.title += ` (${decoded.decoded.requests.length})`;
+                            }
+                        }
+                        catch (e) { }
+                        delete request.data;
+                        request.id = _.trimEnd(file, '.req.bin');
+                        return {
+                            file: request,
+                            coords,
+                        };
+                    }
+                    else {
+                        // fake request when only response
+                        return {
+                            file: {
+                                title: 'UNKNOWN',
+                                decoded: {},
+                                id: _.trimEnd(file, '.req.bin'),
+                            },
+                            coords: {
+                                lat: 0, lng: 0,
+                            }
+                        };
+                    }
+                }));
                 const result = {
                     title: '',
-                    steps: [],
-                    files: [],
+                    files: infos.map(info => info.file),
+                    steps: infos.map(info => info.coords),
                 };
                 if (fs.existsSync(`data/${req.params.session}/.info`)) {
                     const info = yield fs.readFile(`data/${req.params.session}/.info`, 'utf8');
                     result.title = info;
                 }
-                if (fs.existsSync(`data/${req.params.session}/.preload`)) {
-                    const preload = yield fs.readFile(`data/${req.params.session}/.preload`, 'utf8');
-                    result.steps = JSON.parse(preload);
-                }
-                let files = yield fs.readdir(`data/${req.params.session}`);
-                files = _.filter(files, d => _.endsWith(d, '.req.bin'));
-                const force = !this.config.protos.cachejson;
-                result.files = yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () {
-                    const content = yield fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
-                    const request = JSON.parse(content);
-                    request.title = '';
-                    try {
-                        const decoded = yield this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
-                        if (decoded && decoded.decoded) {
-                            const main = _.first(decoded.decoded.requests);
-                            if (main) {
-                                request.title = main.request_name;
-                            }
-                            request.title += ` (${decoded.decoded.requests.length})`;
-                        }
-                    }
-                    catch (e) { }
-                    delete request.data;
-                    request.id = _.trimEnd(file, '.req.bin');
-                    return request;
-                }));
                 return res.json(result);
             }
             catch (e) {
@@ -248,7 +265,7 @@ class WebUI {
         return __awaiter(this, void 0, void 0, function* () {
             const report = `data/${req.params.session}/analysis.html`;
             const redirect = '/api/analyse/' + req.params.session;
-            if (!(yield fs.exists(report))) {
+            if (!this.config.analysis.cache || !(yield fs.exists(report))) {
                 const analyser = new analysis_1.default(this.config, this.utils);
                 yield analyser.run(req.params.session);
             }
@@ -274,8 +291,12 @@ class WebUI {
         return __awaiter(this, void 0, void 0, function* () {
             const session = req.params.session;
             const request = req.params.req;
+            const mode = req.params.mode;
             try {
-                if (!session || !request || !moment(session, 'YYYYMMDD.HHmmss').isValid()) {
+                if (mode !== 'request' && mode !== 'response') {
+                    res.status(500).send('Invalid.');
+                }
+                else if (!session || !request || !moment(session, 'YYYYMMDD.HHmmss').isValid()) {
                     logger.error('Invalid params in upload: %s - %s', session, request);
                     res.status(500).send('Invalid.');
                 }
@@ -284,7 +305,8 @@ class WebUI {
                         yield fs.mkdir(`data/${session}`);
                         yield fs.writeFile(`data/${session}/.info`, '(upload)', 'utf8');
                     }
-                    yield fs.writeFile(`data/${session}/${request}.req.bin`, req.body);
+                    const ext = mode === 'request' ? 'req.bin' : 'res.bin';
+                    yield fs.writeFile(`data/${session}/${request}.${ext}`, req.body);
                     res.send('ok');
                 }
             }
