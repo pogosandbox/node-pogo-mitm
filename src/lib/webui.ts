@@ -168,35 +168,21 @@ export default class WebUI {
     async getRequests(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
         logger.info('Getting requests for session %s', req.params.session);
         try {
-            const result =  {
-                title: '',
-                steps: [],
-                files: [],
-            };
-
-            if (fs.existsSync(`data/${req.params.session}/.info`)) {
-                const info = await fs.readFile(`data/${req.params.session}/.info`, 'utf8');
-                result.title = info;
-            }
-
-            if (fs.existsSync(`data/${req.params.session}/.preload`)) {
-                const preload = await fs.readFile(`data/${req.params.session}/.preload`, 'utf8');
-                result.steps = JSON.parse(preload);
-            }
-
             let files = await fs.readdir(`data/${req.params.session}`);
             files = _.filter(files, d => _.endsWith(d, '.req.bin'));
 
             const force = !this.config.protos.cachejson;
-            result.files = await Bluebird.map(files, async file => {
+            const infos = await Bluebird.map(files, async file => {
                 const content = await fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
                 if (content.length > 0) {
                     const request = JSON.parse(content);
-
                     request.title = '';
+                    const coords = { lat: 0, lng: 0};
                     try {
                         const decoded = await this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
                         if (decoded && decoded.decoded) {
+                            coords.lat = decoded.decoded.latitude;
+                            coords.lng = decoded.decoded.longitude;
                             const main = _.first(decoded.decoded.requests) as any;
                             if (main) {
                                 request.title = main.request_name;
@@ -207,16 +193,35 @@ export default class WebUI {
 
                     delete request.data;
                     request.id = _.trimEnd(file, '.req.bin');
-                    return request;
+                    return {
+                        file: request,
+                        coords,
+                    };
                 } else {
                     // fake request when only response
                     return {
-                        title: 'UNKNOWN',
-                        decoded: {},
-                        id: _.trimEnd(file, '.req.bin'),
+                        file: {
+                            title: 'UNKNOWN',
+                            decoded: {},
+                            id: _.trimEnd(file, '.req.bin'),
+                        },
+                        coords: {
+                            lat: 0, lng: 0,
+                        }
                     };
                 }
             });
+
+            const result = {
+                title: '',
+                files: infos.map(info => info.file),
+                steps: infos.map(info => info.coords),
+            };
+
+            if (fs.existsSync(`data/${req.params.session}/.info`)) {
+                const info = await fs.readFile(`data/${req.params.session}/.info`, 'utf8');
+                result.title = info;
+            }
 
             return res.json(result);
         } catch (e) {

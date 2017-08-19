@@ -2,7 +2,7 @@ $(function () {
     window.global = {};
     
     window.onhashchange = function () {
-        if(window.location.hash) {
+        if (window.location.hash) {
             $('#panel-all-sessions').hide();
             $('#panel-sesion').show();
             
@@ -10,7 +10,10 @@ $(function () {
             let session = $('#requests').data('session');
             let request = window.location.hash.match(/request=(\d+)/);
             let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
-            viewRequestDetail(which, session, request ? request[1] : "00001");
+            let first = $("#requests .item").first().attr("id");
+            if (first) {
+                viewRequestDetail(which, session, request ? request[1] : first);
+            }
         } else {
             $('#panel-all-sessions').show();
             $('#panel-sesion').hide();
@@ -84,11 +87,13 @@ $(function () {
 
     // view a session
     function viewSession(id, req) {
+        console.log('View session ' + id);
         $('#panel-all-sessions').hide();
+        $('#view-session-info').show();
         $('#panel-sesion').show();
         $('#view-request').hide();
         $('#jsonViewer').html('');
-        $('#requests tr.item').empty();
+        $('#requests tr.item').remove();
         $('#requests').data('session', id);
         $.getJSON('/api/session/' + id, function (data) {
             $('.info-session').html(`
@@ -146,8 +151,8 @@ $(function () {
     function viewRequestDetail(which, session, request) {
         console.log('View request ' + request);
         $('#view-request').css('display', '');
+        $('#view-session-info').hide();
         $('#jsonViewer').html('<h3>loading...</h3>');
-        console.log($('#' + request));
         $('#' + request).addClass('table-success');
         $.getJSON(`/api/${which}/${session}/${request}`, function (data) {
             $('#jsonViewer').jsonViewer(data.decoded, { collapsed: true });
