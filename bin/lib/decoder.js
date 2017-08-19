@@ -35,6 +35,11 @@ class Decoder {
                 return JSON.parse(data);
             }
             const content = yield fs.readFile(`data/${session}/${requestId}.req.bin`, 'utf8');
+            if (content.length === 0) {
+                return {
+                    empty: true,
+                };
+            }
             let data = JSON.parse(content);
             if (data.endpoint === '/plfe/version') {
                 data.decoded = { request: 'check version', checkVersion: true };
@@ -150,9 +155,12 @@ class Decoder {
                     const data = yield fs.readFile(`data/${session}/${requestId}.res.json`, 'utf8');
                     return JSON.parse(data);
                 }
-                const requestJson = yield fs.readFile(`data/${session}/${requestId}.req.json`, 'utf8');
+                let request = {};
+                if (yield fs.exists(`data/${session}/${requestId}.req.json`)) {
+                    const requestJson = yield fs.readFile(`data/${session}/${requestId}.req.json`, 'utf8');
+                    request = JSON.parse(requestJson).decoded;
+                }
                 const responseJson = yield fs.readFile(`data/${session}/${requestId}.res.bin`, 'utf8');
-                const request = JSON.parse(requestJson).decoded;
                 let raw = '';
                 let data = {};
                 if (responseJson[0] === '{') {
@@ -176,14 +184,22 @@ class Decoder {
                     decoded.platform_responses = _.map(decoded.platform_returns, (buffer, i) => {
                         const request = allPtfmRequests[i];
                         const responseType = POGOProtos.Networking.Platform.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
-                        if (responseType) {
-                            const message = responseType.toObject(responseType.decode(buffer.response), { defaults: true });
-                            message.request_name = request;
-                            return message;
+                        try {
+                            if (responseType) {
+                                const message = responseType.toObject(responseType.decode(buffer.response), { defaults: true });
+                                message.request_name = request;
+                                return message;
+                            }
+                            else {
+                                return {
+                                    error: 'unable to decrypt ' + request,
+                                    data: buffer.response.toString('base64'),
+                                };
+                            }
                         }
-                        else {
+                        catch (e) {
                             return {
-                                error: 'unable to decrypt ' + request,
+                                error: `exception while decoding ${request}: ${e}`,
                                 data: buffer.response.toString('base64'),
                             };
                         }
