@@ -51,7 +51,7 @@ export default class WebUI {
 
             if (config.upload) {
                 app.use('/upload/*', bodyparser.raw({ type: '*/*' }));
-                app.post('/upload/:session/:req', <express.RequestHandler>_.bind(this.upload, this));
+                app.post('/upload/:mode/:session/:req', <express.RequestHandler>_.bind(this.upload, this));
             }
 
             this.app.get('/logout', function(req, res) {
@@ -190,23 +190,32 @@ export default class WebUI {
             const force = !this.config.protos.cachejson;
             result.files = await Bluebird.map(files, async file => {
                 const content = await fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
-                const request = JSON.parse(content);
+                if (content.length > 0) {
+                    const request = JSON.parse(content);
 
-                request.title = '';
-                try {
-                    const decoded = await this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
-                    if (decoded && decoded.decoded) {
-                        const main = _.first(decoded.decoded.requests) as any;
-                        if (main) {
-                            request.title = main.request_name;
+                    request.title = '';
+                    try {
+                        const decoded = await this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
+                        if (decoded && decoded.decoded) {
+                            const main = _.first(decoded.decoded.requests) as any;
+                            if (main) {
+                                request.title = main.request_name;
+                            }
+                            request.title += ` (${decoded.decoded.requests.length})`;
                         }
-                        request.title += ` (${decoded.decoded.requests.length})`;
-                    }
-                } catch (e) {}
+                    } catch (e) {}
 
-                delete request.data;
-                request.id = _.trimEnd(file, '.req.bin');
-                return request;
+                    delete request.data;
+                    request.id = _.trimEnd(file, '.req.bin');
+                    return request;
+                } else {
+                    // fake request when only response
+                    return {
+                        title: 'UNKNOWN',
+                        decoded: {},
+                        id: _.trimEnd(file, '.req.bin'),
+                    };
+                }
             });
 
             return res.json(result);
@@ -283,8 +292,11 @@ export default class WebUI {
     async upload(req: express.Request, res: express.Response, next: Function) {
         const session = req.params.session;
         const request = req.params.req;
+        const mode = req.params.mode;
         try {
-            if (!session || !request || !moment(session, 'YYYYMMDD.HHmmss').isValid()) {
+            if (mode !== 'request' && mode !== 'response') {
+                res.status(500).send('Invalid.');
+            } else if (!session || !request || !moment(session, 'YYYYMMDD.HHmmss').isValid()) {
                 logger.error('Invalid params in upload: %s - %s', session, request);
                 res.status(500).send('Invalid.');
             } else {
@@ -292,7 +304,8 @@ export default class WebUI {
                     await fs.mkdir(`data/${session}`);
                     await fs.writeFile(`data/${session}/.info`, '(upload)', 'utf8');
                 }
-                await fs.writeFile(`data/${session}/${request}.req.bin`, req.body);
+                const ext = mode === 'request' ? 'req.bin' : 'res.bin';
+                await fs.writeFile(`data/${session}/${request}.${ext}`, req.body);
                 res.send('ok');
             }
         } catch (e) {

@@ -49,7 +49,7 @@ class WebUI {
             app.get('/api/analyse/:session', _.bind(this.analyseResult, this));
             if (config.upload) {
                 app.use('/upload/*', bodyparser.raw({ type: '*/*' }));
-                app.post('/upload/:session/:req', _.bind(this.upload, this));
+                app.post('/upload/:mode/:session/:req', _.bind(this.upload, this));
             }
             this.app.get('/logout', function (req, res) {
                 req.logout();
@@ -171,22 +171,32 @@ class WebUI {
                 const force = !this.config.protos.cachejson;
                 result.files = yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () {
                     const content = yield fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
-                    const request = JSON.parse(content);
-                    request.title = '';
-                    try {
-                        const decoded = yield this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
-                        if (decoded && decoded.decoded) {
-                            const main = _.first(decoded.decoded.requests);
-                            if (main) {
-                                request.title = main.request_name;
+                    if (content.length > 0) {
+                        const request = JSON.parse(content);
+                        request.title = '';
+                        try {
+                            const decoded = yield this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
+                            if (decoded && decoded.decoded) {
+                                const main = _.first(decoded.decoded.requests);
+                                if (main) {
+                                    request.title = main.request_name;
+                                }
+                                request.title += ` (${decoded.decoded.requests.length})`;
                             }
-                            request.title += ` (${decoded.decoded.requests.length})`;
                         }
+                        catch (e) { }
+                        delete request.data;
+                        request.id = _.trimEnd(file, '.req.bin');
+                        return request;
                     }
-                    catch (e) { }
-                    delete request.data;
-                    request.id = _.trimEnd(file, '.req.bin');
-                    return request;
+                    else {
+                        // fake request when only response
+                        return {
+                            title: 'UNKNOWN',
+                            decoded: {},
+                            id: _.trimEnd(file, '.req.bin'),
+                        };
+                    }
                 }));
                 return res.json(result);
             }
@@ -274,8 +284,12 @@ class WebUI {
         return __awaiter(this, void 0, void 0, function* () {
             const session = req.params.session;
             const request = req.params.req;
+            const mode = req.params.mode;
             try {
-                if (!session || !request || !moment(session, 'YYYYMMDD.HHmmss').isValid()) {
+                if (mode !== 'request' && mode !== 'response') {
+                    res.status(500).send('Invalid.');
+                }
+                else if (!session || !request || !moment(session, 'YYYYMMDD.HHmmss').isValid()) {
                     logger.error('Invalid params in upload: %s - %s', session, request);
                     res.status(500).send('Invalid.');
                 }
@@ -284,7 +298,8 @@ class WebUI {
                         yield fs.mkdir(`data/${session}`);
                         yield fs.writeFile(`data/${session}/.info`, '(upload)', 'utf8');
                     }
-                    yield fs.writeFile(`data/${session}/${request}.req.bin`, req.body);
+                    const ext = mode === 'request' ? 'req.bin' : 'res.bin';
+                    yield fs.writeFile(`data/${session}/${request}.${ext}`, req.body);
                     res.send('ok');
                 }
             }
