@@ -269,7 +269,7 @@ export default class WebUI {
     async analyse(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
         const report = `data/${req.params.session}/analysis.html`;
         const redirect = '/api/analyse/' + req.params.session;
-        if (!await fs.exists(report)) {
+        if (!this.config.analysis.cache || !await fs.exists(report)) {
             const analyser = new Analysis(this.config, this.utils);
             await analyser.run(req.params.session);
         }

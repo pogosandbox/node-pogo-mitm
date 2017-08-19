@@ -1,5 +1,21 @@
 $(function () {
     window.global = {};
+    
+    window.onhashchange = function () {
+        if(window.location.hash) {
+            $('#panel-all-sessions').hide();
+            $('#panel-sesion').show();
+            
+            $('#requests .table-success').removeClass('table-success');
+            let session = $('#requests').data('session');
+            let request = window.location.hash.match(/request=(\d+)/);
+            let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
+            viewRequestDetail(which, session, request ? request[1] : "00001");
+        } else {
+            $('#panel-all-sessions').show();
+            $('#panel-sesion').hide();
+        }
+    };
 
     $('.btn-all-sessions').click(function () {
         $('#panel-all-sessions').show();
@@ -71,7 +87,6 @@ $(function () {
         $('#panel-all-sessions').hide();
         $('#panel-sesion').show();
         $('#view-request').hide();
-        $('#view-session-info').show();
         $('#jsonViewer').html('');
         $('#requests tr.item').empty();
         $('#requests').data('session', id);
@@ -130,8 +145,7 @@ $(function () {
 
     function viewRequestDetail(which, session, request) {
         console.log('View request ' + request);
-        $('#view-request').css('display', 'inline-block');
-        $('#view-session-info').hide();
+        $('#view-request').css('display', '');
         $('#jsonViewer').html('<h3>loading...</h3>');
         console.log($('#' + request));
         $('#' + request).addClass('table-success');
@@ -169,7 +183,6 @@ $(function () {
         $('#requests .table-success').removeClass('table-success');
         $('.viewRequestResponse .request').addClass('btn-primary');
         $('.viewRequestResponse .response').removeClass('btn-primary');
-        viewRequestDetail('request', session, request);
     });
 
     function showSessionFromUrl() {
