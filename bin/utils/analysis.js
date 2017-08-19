@@ -227,7 +227,7 @@ class Analysis {
                 }
                 if (di.android_board_name !== '' || di.android_bootloader !== '' || di.firmware_tags !== '' ||
                     di.device_brand !== 'Apple' || di.device_model !== 'iPhone' || di.device_model_identifier !== '' ||
-                    di.hardware_manufacturer !== 'Apple' || di.firmware_brand !== 'iPhone OS' ||
+                    di.hardware_manufacturer !== 'Apple' || (di.firmware_brand !== 'iPhone OS' && di.firmware_brand !== 'iOS') ||
                     di.firmware_fingerprint !== '') {
                     this.issues.push({
                         type: 'signature',
