@@ -1,5 +1,13 @@
 $(function () {
     window.global = {};
+    
+    window.onhashchange = function () {
+        $('#requests .table-success').removeClass('table-success');
+        let session = $('#requests').data('session');
+        let request = window.location.hash.match(/request=(\d+)/)[1];
+        let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
+        viewRequestDetail(which, session, request);
+    };
 
     $('.btn-all-sessions').click(function () {
         $('#panel-all-sessions').show();
@@ -167,7 +175,6 @@ $(function () {
         $('#requests .table-success').removeClass('table-success');
         $('.viewRequestResponse .request').addClass('btn-primary');
         $('.viewRequestResponse .response').removeClass('btn-primary');
-        viewRequestDetail('request', session, request);
     });
 
     function showSessionFromUrl() {
