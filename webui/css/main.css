@@ -21,9 +21,12 @@
 	width: 100%;
 }
 
+#view-session-info {
+	padding-right: 2em;
+}
+
 #view-request-wrapper {
 	position: fixed;
-	width: 55%;
 	display: flex;
 	flex-direction: column-reverse;
 }
