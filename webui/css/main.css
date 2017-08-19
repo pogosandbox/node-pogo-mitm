@@ -22,8 +22,7 @@
 }
 
 #view-request-wrapper {
-	position: fixed;
-	width: 55%;
+    position: fixed;
 	display: flex;
 	flex-direction: column-reverse;
 }
