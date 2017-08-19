@@ -77,31 +77,32 @@
                     </table>
                 </div>
                 <div class="col-md-7 no-gutters" id="view-request-parent">
-                    <div class="row no-gutters" id="view-request" style="display:none">
-                        <div class="col-md">
-                            <div class="row no-gutters">
-                                <div class="col-md-8">
-                                    <div class="btn-group viewRequestResponse" role="group">
-                                        <button type="button" class="request btn btn-default btn-primary">Request</button>
-                                        <button type="button" class="response btn btn-default">Response</button>
+                    <div id="view-request-wrapper">
+                        <div class="row no-gutters" id="view-request" style="display:none">
+                            <div style="width: 100%">
+                                <div id="buttonContainer" class="row no-gutters">
+                                    <div>
+                                        <div class="btn-group viewRequestResponse" role="group">
+                                            <button type="button" class="request btn btn-default btn-primary">Request</button>
+                                            <button type="button" class="response btn btn-default">Response</button>
+                                        </div>
+                                    </div>
+                                    <div id="arrowContainer">
+                                        <a href="#" id="prev-request"><span class="oi oi-arrow-thick-top"></span></a>
+                                        <a href="#" id="next-request"><span class="oi oi-arrow-thick-bottom"></span></a>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <a href="#" id="prev-request"><span class="oi oi-arrow-thick-top"></span></a>
-                                    <a href="#" id="next-request"><span class="oi oi-arrow-thick-bottom"></span></a>
+                            </div>
+                            <div class="row no-gutters">
+                                <div class="col-md-12"><pre id="jsonViewer"></pre></div>
+                            </div>
+                        </div>
+                        <div class="row no-gutters" id='view-session-info'>
+                            <div class="col">
+                                <div class="row no-gutters" id="analysis">
+                                    You can also &nbsp;<span class="oi oi-task">&nbsp;</span><a class="doanalyse" href="#">analyse</a>&nbsp;this session to find obvious issues
                                 </div>
                             </div>
-                        </div>
-                        <div class="row no-gutters">
-                            <div class="col-md-12"><pre id="jsonViewer"></pre></div>
-                        </div>
-                    </div>
-                    <div class="row no-gutters" id='view-session-info'>
-                        <div class="col">
-                            <div class="row no-gutters" id="analysis">
-                                You can also &nbsp;<span class="oi oi-task">&nbsp;</span><a class="doanalyse" href="#">analyse</a>&nbsp;this session to find obvious issues
-                            </div>
-                            <div class="row no-gutters" id="map"></div>
                         </div>
                     </div>
                 </div>

@@ -71,7 +71,6 @@ $(function () {
         $('#panel-all-sessions').hide();
         $('#panel-sesion').show();
         $('#view-request').hide();
-        $('#view-session-info').show();
         $('#jsonViewer').html('');
         $('#requests tr.item').empty();
         $('#requests').data('session', id);
@@ -130,8 +129,7 @@ $(function () {
 
     function viewRequestDetail(which, session, request) {
         console.log('View request ' + request);
-        $('#view-request').css('display', 'inline-block');
-        $('#view-session-info').hide();
+        $('#view-request').css('display', '');
         $('#jsonViewer').html('<h3>loading...</h3>');
         console.log($('#' + request));
         $('#' + request).addClass('table-success');
