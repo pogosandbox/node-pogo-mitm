@@ -23,6 +23,17 @@ ui:
     port: 8080
     upload: false
 
+# For session analysing
+# replayhashing=true will try to validate hashing against current bossland api
+# hashendpoint: bossland endpoint
+# hashkey: hashkey from bossland
+# hashkeyrpm: rpm, used to calculte speed of check
+analysis:
+    replayhashing: false
+    hashendpoint: http://pokehash.buddyauth.com/api/v137_1/hash
+    hashkey: your-key
+    hashkeyrpm: 150
+
 # Logging config
 # - level=info, log level (debug, info, warn, error)
 # - file=null, if set, log to a file 
