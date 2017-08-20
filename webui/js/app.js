@@ -59,8 +59,20 @@ $(function () {
         return false;
     });
 
-    $('#filter').on('input', function () {
-        let filter = $('#filter').val().toLowerCase();
+    $('#filter-sessions').on('input', function () {
+        let filter = $('#filter-sessions').val().toLowerCase();
+        $('#all-sessions a').each(function () {
+            let info = $(this).text().toLowerCase();
+            if (info.indexOf(filter) >= 0) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    $('#filter-requests').on('input', function () {
+        let filter = $('#filter-requests').val().toLowerCase();
         $('#requests .item').each(function () {
             let api = $(this).find('.title').text().toLowerCase();
             if (api.indexOf(filter) >= 0) {
