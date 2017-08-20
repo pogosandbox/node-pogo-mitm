@@ -46,15 +46,23 @@
             </div>                       
         </nav>
         <div class="container-fluid" id="panel-all-sessions">
+            <div class="search">
+                <div class="input-group">
+                    <input type="text" id="filter-sessions" class="form-control" placeholder="filter session info">
+                </div>
+            </div>
             <div class="list-group" id="all-sessions"></div>
         </div>
         <div class="container-fluid" style="display:none" id="panel-sesion">
             <div class="row">
                 <div class="col-md-5">
-                    <div class="info-session"></div>
+                    <div class="info-session">
+                        <a href="#"><span class="oi oi-bookmark"></span></a>
+                        <span class="text"></span>
+                    </div>
                     <div class="search">
                         <div class="input-group">
-                            <input type="text" id="filter" class="form-control" placeholder="filter request name">
+                            <input type="text" id="filter-requests" class="form-control" placeholder="filter request name">
                         </div>
                     </div>
                     <table id="req-table" class="table table-striped table-hover table-sm table-responsive">

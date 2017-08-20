@@ -265,7 +265,7 @@ class WebUI {
         return __awaiter(this, void 0, void 0, function* () {
             const report = `data/${req.params.session}/analysis.html`;
             const redirect = '/api/analyse/' + req.params.session;
-            if (!this.config.analysis.cache || !(yield fs.exists(report))) {
+            if (this.config.analysis.nocache || !(yield fs.exists(report))) {
                 const analyser = new analysis_1.default(this.config, this.utils);
                 yield analyser.run(req.params.session);
             }

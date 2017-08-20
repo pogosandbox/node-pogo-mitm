@@ -11,8 +11,12 @@ $(function () {
             let request = window.location.hash.match(/request=(\d+)/);
             let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
             let first = $("#requests .item").first().attr("id");
-            if (first) {
+            if (first && request) {
                 viewRequestDetail(which, session, request ? request[1] : first);
+            } else {
+                $('#view-session-info').show();
+                $('#panel-sesion').show();
+                $('#view-request').hide();        
             }
         } else {
             $('#panel-all-sessions').show();
@@ -55,8 +59,20 @@ $(function () {
         return false;
     });
 
-    $('#filter').on('input', function () {
-        let filter = $('#filter').val().toLowerCase();
+    $('#filter-sessions').on('input', function () {
+        let filter = $('#filter-sessions').val().toLowerCase();
+        $('#all-sessions a').each(function () {
+            let info = $(this).text().toLowerCase();
+            if (info.indexOf(filter) >= 0) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    $('#filter-requests').on('input', function () {
+        let filter = $('#filter-requests').val().toLowerCase();
         $('#requests .item').each(function () {
             let api = $(this).find('.title').text().toLowerCase();
             if (api.indexOf(filter) >= 0) {
@@ -96,16 +112,15 @@ $(function () {
         $('#requests tr.item').remove();
         $('#requests').data('session', id);
         $.getJSON('/api/session/' + id, function (data) {
-            $('.info-session').html(`
-                <div>${data.title}</div>
-            `);
+            $('.info-session a').attr('href', '#session=' + id);
+            $('.info-session .text').html(data.title);
             if (data.files.length) {
                 window.global.requests = data.files.length;
                 let first = data.files[0];
                 let previous = data.files[0];
-                $('.info-session').html(`
-                    <div>Session started at ${moment(first.when).format('llll')}</div>
-                    <div>${data.title}</div>
+                $('.info-session .text').html(`
+                    Session started at ${moment(first.when).format('llll')}</br>
+                    ${data.title}
                 `);
                 data.files.forEach(d => {
                     let item = $('#request-template').clone().show().addClass('item').addClass(d.id).attr('id', d.id);

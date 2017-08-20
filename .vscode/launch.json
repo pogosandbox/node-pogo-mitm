@@ -1,7 +1,4 @@
 {
-    // Use IntelliSense to learn about possible Node.js debug attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -13,15 +10,6 @@
             "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
             "sourceMaps": true,
             "stopOnEntry": false
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Preload",
-            "program": "${workspaceRoot}/src/utils/preload.ts",
-            "cwd": "${workspaceRoot}",
-            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
-            "sourceMaps": true
         },
         {
             "type": "node",
@@ -41,15 +29,6 @@
             "request": "launch",
             "name": "Import from iOS dump",
             "program": "${workspaceRoot}/src/import/ios.dump.ts",
-            "cwd": "${workspaceRoot}",
-            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
-            "sourceMaps": true
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Import from Noctem iOS dump",
-            "program": "${workspaceRoot}/src/import/ios.dump.noctem.ts",
             "cwd": "${workspaceRoot}",
             "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
             "sourceMaps": true
