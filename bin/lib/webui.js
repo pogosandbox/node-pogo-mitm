@@ -155,6 +155,7 @@ class WebUI {
             try {
                 let files = yield fs.readdir(`data/${req.params.session}`);
                 files = _.filter(files, d => _.endsWith(d, '.req.bin'));
+                files = _.sortBy(files, o => o);
                 const force = !this.config.protos.cachejson;
                 const infos = yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () {
                     const content = yield fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
@@ -165,13 +166,18 @@ class WebUI {
                         try {
                             const decoded = yield this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
                             if (decoded && decoded.decoded) {
-                                coords.lat = decoded.decoded.latitude;
-                                coords.lng = decoded.decoded.longitude;
-                                const main = _.first(decoded.decoded.requests);
-                                if (main) {
-                                    request.title = main.request_name;
+                                if (decoded.endpoint && decoded.endpoint.indexOf('upsight-api.com') >= 0) {
+                                    request.title = 'upsight-api.com';
                                 }
-                                request.title += ` (${decoded.decoded.requests.length})`;
+                                else {
+                                    coords.lat = decoded.decoded.latitude;
+                                    coords.lng = decoded.decoded.longitude;
+                                    const main = _.first(decoded.decoded.requests);
+                                    if (main) {
+                                        request.title = main.request_name;
+                                    }
+                                    request.title += ` (${decoded.decoded.requests.length})`;
+                                }
                             }
                         }
                         catch (e) { }

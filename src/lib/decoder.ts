@@ -43,6 +43,8 @@ export default class Decoder {
         let data = JSON.parse(content);
         if (data.endpoint === '/plfe/version') {
             data.decoded = {request: 'check version', checkVersion: true};
+        } else if (data.endpoint && data.endpoint.indexOf('upsight-api.com') >= 0) {
+            data.decoded = JSON.parse(Buffer.from(data.data, 'base64').toString());
         } else {
             const raw = Buffer.from(data.data, 'base64');
             delete data.data;

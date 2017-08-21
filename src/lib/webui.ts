@@ -170,6 +170,7 @@ export default class WebUI {
         try {
             let files = await fs.readdir(`data/${req.params.session}`);
             files = _.filter(files, d => _.endsWith(d, '.req.bin'));
+            files = _.sortBy(files, o => o);
 
             const force = !this.config.protos.cachejson;
             const infos = await Bluebird.map(files, async file => {
@@ -181,13 +182,17 @@ export default class WebUI {
                     try {
                         const decoded = await this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
                         if (decoded && decoded.decoded) {
-                            coords.lat = decoded.decoded.latitude;
-                            coords.lng = decoded.decoded.longitude;
-                            const main = _.first(decoded.decoded.requests) as any;
-                            if (main) {
-                                request.title = main.request_name;
+                            if (decoded.endpoint && decoded.endpoint.indexOf('upsight-api.com') >= 0) {
+                                request.title = 'upsight-api.com';
+                            } else {
+                                coords.lat = decoded.decoded.latitude;
+                                coords.lng = decoded.decoded.longitude;
+                                const main = _.first(decoded.decoded.requests) as any;
+                                if (main) {
+                                    request.title = main.request_name;
+                                }
+                                request.title += ` (${decoded.decoded.requests.length})`;
                             }
-                            request.title += ` (${decoded.decoded.requests.length})`;
                         }
                     } catch (e) {}
 
