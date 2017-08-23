@@ -158,7 +158,12 @@ export default class Decoder {
             let request: any = {};
             if (await fs.exists(`data/${session}/${requestId}.req.json`)) {
                 const requestJson = await fs.readFile(`data/${session}/${requestId}.req.json`, 'utf8');
-                request = JSON.parse(requestJson).decoded;
+                const requestdata = JSON.parse(requestJson);
+                if (requestdata.endpoint && requestdata.endpoint.indexOf('upsight-api.com') >= 0) {
+                    request = { upsight: true };
+                } else {
+                    request = requestdata.decoded;
+                }
             }
 
             const responseJson = await fs.readFile(`data/${session}/${requestId}.res.bin`, 'utf8');
@@ -177,6 +182,10 @@ export default class Decoder {
             if (request.checkVersion) {
                 return {
                     decoded: {response: raw.toString('utf8')},
+                };
+            } else if (request.upsight) {
+                return {
+                    decoded: JSON.parse(Buffer.from(raw, 'base64').toString()),
                 };
             }
 

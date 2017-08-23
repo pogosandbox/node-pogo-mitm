@@ -161,7 +161,13 @@ class Decoder {
                 let request = {};
                 if (yield fs.exists(`data/${session}/${requestId}.req.json`)) {
                     const requestJson = yield fs.readFile(`data/${session}/${requestId}.req.json`, 'utf8');
-                    request = JSON.parse(requestJson).decoded;
+                    const requestdata = JSON.parse(requestJson);
+                    if (requestdata.endpoint && requestdata.endpoint.indexOf('upsight-api.com') >= 0) {
+                        request = { upsight: true };
+                    }
+                    else {
+                        request = requestdata.decoded;
+                    }
                 }
                 const responseJson = yield fs.readFile(`data/${session}/${requestId}.res.bin`, 'utf8');
                 let raw = '';
@@ -178,6 +184,11 @@ class Decoder {
                 if (request.checkVersion) {
                     return {
                         decoded: { response: raw.toString('utf8') },
+                    };
+                }
+                else if (request.upsight) {
+                    return {
+                        decoded: JSON.parse(Buffer.from(raw, 'base64').toString()),
                     };
                 }
                 const decoded = this.decodeResponseBuffer(request, raw);
