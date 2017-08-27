@@ -41,8 +41,18 @@ class Decoder {
                 };
             }
             let data = JSON.parse(content);
-            if (data.endpoint === '/plfe/version') {
+            if (_.endsWith(data.endpoint, '/plfe/version')) {
                 data.decoded = { request: 'check version', checkVersion: true };
+            }
+            else if (data.endpoint && data.endpoint.indexOf('pgorelease.nianticlabs.com') < 0) {
+                let display = Buffer.from(data.data, 'base64').toString();
+                if (display[0] === '{')
+                    display = JSON.parse(display);
+                data.decoded = {
+                    url: data.endpoint,
+                    more: data.more,
+                    data: display,
+                };
             }
             else {
                 const raw = Buffer.from(data.data, 'base64');
@@ -158,7 +168,13 @@ class Decoder {
                 let request = {};
                 if (yield fs.exists(`data/${session}/${requestId}.req.json`)) {
                     const requestJson = yield fs.readFile(`data/${session}/${requestId}.req.json`, 'utf8');
-                    request = JSON.parse(requestJson).decoded;
+                    const requestdata = JSON.parse(requestJson);
+                    if (requestdata.endpoint && requestdata.endpoint.indexOf('pgorelease.nianticlabs.com') < 0) {
+                        request = { other: true };
+                    }
+                    else {
+                        request = requestdata.decoded;
+                    }
                 }
                 const responseJson = yield fs.readFile(`data/${session}/${requestId}.res.bin`, 'utf8');
                 let raw = '';
@@ -175,6 +191,16 @@ class Decoder {
                 if (request.checkVersion) {
                     return {
                         decoded: { response: raw.toString('utf8') },
+                    };
+                }
+                else if (request.other) {
+                    let display = Buffer.from(raw, 'base64').toString();
+                    if (display.length > 0 && display[0] === '{')
+                        display = JSON.parse(display);
+                    else
+                        display = display.replace(/\n+/gm, '\n');
+                    return {
+                        decoded: display,
                     };
                 }
                 const decoded = this.decodeResponseBuffer(request, raw);

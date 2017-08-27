@@ -155,6 +155,7 @@ class WebUI {
             try {
                 let files = yield fs.readdir(`data/${req.params.session}`);
                 files = _.filter(files, d => _.endsWith(d, '.req.bin'));
+                files = _.sortBy(files, o => o);
                 const force = !this.config.protos.cachejson;
                 const infos = yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () {
                     const content = yield fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
@@ -165,13 +166,23 @@ class WebUI {
                         try {
                             const decoded = yield this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
                             if (decoded && decoded.decoded) {
-                                coords.lat = decoded.decoded.latitude;
-                                coords.lng = decoded.decoded.longitude;
-                                const main = _.first(decoded.decoded.requests);
-                                if (main) {
-                                    request.title = main.request_name;
+                                if (decoded.endpoint) {
+                                    if (decoded.endpoint.indexOf('upsight-api.com') >= 0)
+                                        request.title = 'upsight';
+                                    else if (decoded.endpoint.indexOf('sso.pokemon.com') >= 0)
+                                        request.title = 'ptc login';
+                                    else
+                                        request.title = 'other';
                                 }
-                                request.title += ` (${decoded.decoded.requests.length})`;
+                                else {
+                                    coords.lat = decoded.decoded.latitude;
+                                    coords.lng = decoded.decoded.longitude;
+                                    const main = _.first(decoded.decoded.requests);
+                                    if (main) {
+                                        request.title = main.request_name;
+                                    }
+                                    request.title += ` (${decoded.decoded.requests.length})`;
+                                }
                             }
                         }
                         catch (e) { }
@@ -199,7 +210,7 @@ class WebUI {
                 const result = {
                     title: '',
                     files: infos.map(info => info.file),
-                    steps: infos.map(info => info.coords),
+                    steps: _.filter(infos.map(info => info.coords), coord => coord.lat || coord.lng),
                 };
                 if (fs.existsSync(`data/${req.params.session}/.info`)) {
                     const info = yield fs.readFile(`data/${req.params.session}/.info`, 'utf8');

@@ -8,7 +8,7 @@ $(function () {
             
             $('#requests .table-success').removeClass('table-success');
             let session = $('#requests').data('session');
-            let request = window.location.hash.match(/request=(\d+)/);
+            let request = window.location.hash.match(/request=((\d|\.|\w)+)/);
             let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
             let first = $("#requests .item").first().attr("id");
             if (first && request) {
