@@ -182,8 +182,10 @@ export default class WebUI {
                     try {
                         const decoded = await this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
                         if (decoded && decoded.decoded) {
-                            if (decoded.endpoint && decoded.endpoint.indexOf('upsight-api.com') >= 0) {
-                                request.title = 'upsight-api.com';
+                            if (decoded.endpoint) {
+                                if (decoded.endpoint.indexOf('upsight-api.com') >= 0) request.title = 'upsight';
+                                else if (decoded.endpoint.indexOf('sso.pokemon.com') >= 0) request.title = 'ptc login';
+                                else request.title = 'other';
                             } else {
                                 coords.lat = decoded.decoded.latitude;
                                 coords.lng = decoded.decoded.longitude;
@@ -220,7 +222,7 @@ export default class WebUI {
             const result = {
                 title: '',
                 files: infos.map(info => info.file),
-                steps: infos.map(info => info.coords),
+                steps: _.filter(infos.map(info => info.coords), coord => coord.lat || coord.lng),
             };
 
             if (fs.existsSync(`data/${req.params.session}/.info`)) {
