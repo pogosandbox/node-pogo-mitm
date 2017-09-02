@@ -178,13 +178,14 @@ export default class WebUI {
                 if (content.length > 0) {
                     const request = JSON.parse(content);
                     request.title = '';
-                    const coords = { lat: 0, lng: 0};
+                    const coords = { lat: 0, lng: 0 };
                     try {
                         const decoded = await this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
                         if (decoded && decoded.decoded) {
                             if (decoded.endpoint) {
                                 if (decoded.endpoint.indexOf('upsight-api.com') >= 0) request.title = 'upsight';
                                 else if (decoded.endpoint.indexOf('sso.pokemon.com') >= 0) request.title = 'ptc login';
+                                else if (decoded.checkVersion || decoded.endpoint === 'https://pgorelease.nianticlabs.com/plfe/version') request.title = 'get version';
                                 else request.title = 'other';
                             } else {
                                 coords.lat = decoded.decoded.latitude;

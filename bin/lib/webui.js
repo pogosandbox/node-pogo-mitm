@@ -171,6 +171,8 @@ class WebUI {
                                         request.title = 'upsight';
                                     else if (decoded.endpoint.indexOf('sso.pokemon.com') >= 0)
                                         request.title = 'ptc login';
+                                    else if (decoded.checkVersion || decoded.endpoint === 'https://pgorelease.nianticlabs.com/plfe/version')
+                                        request.title = 'get version';
                                     else
                                         request.title = 'other';
                                 }
