@@ -61,7 +61,8 @@ class Decoder {
                     data.when = +requestId;
                 data.decoded = this.decodeRequestBuffer(raw);
                 // decode platform requests
-                _.each(data.decoded.platform_requests, req => {
+                const platform_requests = data.decoded.platform_requests;
+                _.each(platform_requests, req => {
                     let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r === req.type);
                     if (reqname) {
                         req.request_name = reqname;
