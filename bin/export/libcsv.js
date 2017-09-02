@@ -160,10 +160,7 @@ class Csv {
                     'signature.sensor_info[0].gravity_x',
                     'signature.sensor_info[0].gravity_y',
                     'signature.sensor_info[0].gravity_z',
-                    // 'signature.activity_status.unknown_status',
-                    // 'signature.activity_status.walking',
-                    // 'signature.activity_status.running',
-                    'signature.activity_status.stationary',
+                    'signature.unknown27',
                 ],
                 del: this.config.export.csv.separator,
             });
