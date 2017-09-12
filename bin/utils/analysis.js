@@ -77,9 +77,25 @@ class Analysis {
     }
     handleRequest(file) {
         return __awaiter(this, void 0, void 0, function* () {
+            logger.debug('Checking ' + _.trimEnd(file, '.req.bin'));
+            let request;
             try {
                 const info = yield this.decoder.decodeRequest(this.state.session, _.trimEnd(file, '.req.bin'), true);
-                const request = info.decoded;
+                request = info.decoded;
+                if (request.checkVersion)
+                    return;
+                if (request.url && request.url.indexOf('pgorelease.nianticlabs.com') < 0)
+                    return;
+            }
+            catch (e) {
+                this.issues.push({
+                    type: 'proto',
+                    file,
+                    issue: 'Unable to decode request',
+                    more: e.toString(),
+                });
+            }
+            try {
                 yield this.checkRequestId(file, request);
                 yield this.checkSignature(file, request);
                 yield this.checkProtoMissingFields(file, request);
@@ -102,7 +118,7 @@ class Analysis {
                 this.issues.push({
                     type: 'proto',
                     file,
-                    issue: 'Unable to decode request',
+                    issue: 'Error while performing tests',
                     more: e.toString(),
                 });
             }
@@ -179,7 +195,7 @@ class Analysis {
         else {
             const signature = _.first(signatures).message;
             // check signature value
-            this.checkSignatureValue(file, signature, 'unknown25', '5395925083854747393');
+            this.checkSignatureValue(file, signature, 'unknown25', '-960786418476827155');
             this.checkSignatureValue(file, signature, 'gps_info', []);
             this.checkSignatureValue(file, signature, 'field1', []);
             this.checkSignatureValue(file, signature, 'field3', '');
@@ -287,12 +303,13 @@ class Analysis {
             const content = yield fs.readFile(`data/${this.state.session}/${file}`, 'utf8');
             const data = JSON.parse(content);
             if (data.endpoint !== '/plfe/version') {
+                const issues = this.issues;
                 const subCheck = function (name, obj) {
                     if (!obj || !obj.constructor.encode)
                         return;
                     if (obj.__unknownFields) {
                         const num = obj.__unknownFields.length;
-                        this.issues.push({
+                        issues.push({
                             type: 'proto',
                             file,
                             issue: `${num} unknown field(s) found in ${name}`,
@@ -361,7 +378,7 @@ class Analysis {
         }
         state.first = false;
         const requestName = request.requests.length > 0 ? request.requests[0].request_name : undefined;
-        if (state.login && (requestName === 'GET_MAP_OBJECTS' || requestName === 'GET_PLAYER_PROFILE')) {
+        if (state.login && (requestName === 'GET_MAP_OBJECTS')) {
             state.login = false;
         }
         if (state.login && request.requests.length === 1 && requestName === 'GET_PLAYER') {
@@ -387,7 +404,7 @@ class Analysis {
             const expected = [
                 'CHECK_CHALLENGE',
                 'GET_HATCHED_EGGS',
-                'GET_INVENTORY',
+                'GET_HOLO_INVENTORY',
                 'CHECK_AWARDED_BADGES',
                 'DOWNLOAD_SETTINGS',
             ];
@@ -422,7 +439,7 @@ class Analysis {
             const expected = [
                 'CHECK_CHALLENGE',
                 'GET_HATCHED_EGGS',
-                'GET_INVENTORY',
+                'GET_HOLO_INVENTORY',
                 'CHECK_AWARDED_BADGES',
                 'GET_BUDDY_WALKED',
                 'GET_INBOX',
@@ -438,6 +455,9 @@ class Analysis {
                     more: `got ${strCommon},\nexpected was ${strExpected}`,
                 });
             }
+        }
+        if (state.login && (requestName === 'GET_MAP_OBJECTS' || requestName === 'GET_PLAYER_PROFILE')) {
+            state.login = false;
         }
     }
     checkHashing(file, request) {

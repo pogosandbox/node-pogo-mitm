@@ -59,7 +59,8 @@ export default class Decoder {
             data.decoded = this.decodeRequestBuffer(raw);
 
             // decode platform requests
-            _.each(data.decoded.platform_requests, req => {
+            const platform_requests: any[] = data.decoded.platform_requests;
+            _.each(platform_requests, req => {
                 let reqname = _.findKey(POGOProtos.Networking.Platform.PlatformRequestType, r => r === req.type);
                 if (reqname) {
                     req.request_name = reqname;
@@ -131,7 +132,7 @@ export default class Decoder {
         const request = RequestEnvelope.toObject(RequestEnvelope.decode(buffer), { defaults: true });
 
         // decode requests
-        _.each(request.requests, req => {
+        _.each(<any[]>request.requests, req => {
             let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r === req.request_type);
             if (reqname) {
                 req.request_name = reqname;

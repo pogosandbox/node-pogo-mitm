@@ -171,6 +171,8 @@ class WebUI {
                                         request.title = 'upsight';
                                     else if (decoded.endpoint.indexOf('sso.pokemon.com') >= 0)
                                         request.title = 'ptc login';
+                                    else if (decoded.checkVersion || decoded.endpoint === 'https://pgorelease.nianticlabs.com/plfe/version')
+                                        request.title = 'get version';
                                     else
                                         request.title = 'other';
                                 }
@@ -258,7 +260,7 @@ class WebUI {
                 const stats = yield fs.stat('data/requests.signatures.csv');
                 const mtime = moment(stats.mtime);
                 if (mtime.add(15, 'm').isAfter(moment())) {
-                    return res.sendFile('requests.signatures.csv', { root: 'data' });
+                    res.sendFile('requests.signatures.csv', { root: 'data' });
                 }
                 else {
                     throw new Error('File too old.');
