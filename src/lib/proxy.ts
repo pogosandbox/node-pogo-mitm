@@ -108,11 +108,8 @@ export default class MitmProxy {
             const responseChunks = [];
             let request = null;
 
-            let id = 0, requestId = '';
-            if (endpoint === 'api') {
-                id = ++this.config.reqId;
-                requestId = _.padStart(id.toString(), 5, '0');
-            }
+            let id = ++this.config.reqId;
+            let requestId = _.padStart(id.toString(), 5, '0');
 
             context.onRequestData((ctx, chunk, callback) => {
                 requestChunks.push(chunk);
@@ -121,13 +118,15 @@ export default class MitmProxy {
 
             context.onRequestEnd(async (ctx, callback) => {
                 let buffer = Buffer.concat(requestChunks);
-                const url = ctx.clientToProxyRequest.url;
+                let url = (context.isSSL ? 'https' : 'http') + '://';
+                url += ctx.clientToProxyRequest.headers.host;
+                url += ctx.clientToProxyRequest.url;
 
                 try {
                     if (endpoint === 'api') {
                         ({ buffer, request } = await this.handleApiRequest(requestId, ctx, buffer, url));
                     } else if (!this.config.proxy.onlyApi) {
-                        await this.simpleDumpRequest(endpoint, ctx, buffer, url);
+                        await this.simpleDumpRequest(requestId, ctx, buffer, url);
                     }
                 } catch (e) {
                     logger.error(e);
@@ -144,12 +143,11 @@ export default class MitmProxy {
 
             context.onResponseEnd(async (ctx, callback) => {
                 let buffer = Buffer.concat(responseChunks);
-
                 try {
                     if (endpoint === 'api') {
                         buffer = await this.handleApiResponse(requestId, ctx, buffer, request);
                     } else if (!this.config.proxy.onlyApi) {
-                        await this.simpleDumpResponse(endpoint, ctx, buffer);
+                        await this.simpleDumpResponse(requestId, ctx, buffer);
                     }
                 } catch (e) {
                     logger.error(e);
@@ -168,26 +166,26 @@ export default class MitmProxy {
         }
     }
 
-    async simpleDumpRequest(name, ctx, buffer: Buffer, url: string) {
-        logger.debug('Dumping request to %s %s', name, url);
-        const id = +moment();
+    async simpleDumpRequest(id, ctx, buffer: Buffer, url: string) {
+        logger.debug('Dumping request to %s', url);
         const data = {
-            when: id,
-            url,
-            headers: ctx.clientToProxyRequest.headers,
+            id,
+            when: +moment(),
+            endpoint: url,
+            more: {
+                headers: ctx.proxyToServerRequest._headers,
+            },
+            data: buffer.toString('base64'),
         };
-        await fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.req.info`, JSON.stringify(data, null, 4), 'utf8');
-        await fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.req.content`, buffer);
+        await fs.writeFile(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
     }
 
-    async simpleDumpResponse(name, ctx, buffer: Buffer) {
-        const id = +moment();
+    async simpleDumpResponse(id, ctx, buffer: Buffer) {
         const data = {
-            when: id,
-            headers: ctx.serverToProxyResponse.headers,
+            when: +moment(),
+            data: buffer.toString('base64'),
         };
-        await fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.res.info`, JSON.stringify(data, null, 4), 'utf8');
-        await fs.writeFile(`${this.config.datadir}/dump.${id}.${name}.res.content`, buffer.toString('utf8'), 'utf8');
+        await fs.writeFile(`${this.config.datadir}/${id}.res.bin`, JSON.stringify(data, null, 4), 'utf8');
     }
 
     async handleApiRequest(id, ctx, buffer: Buffer, url) {
@@ -196,7 +194,9 @@ export default class MitmProxy {
             id,
             when: +moment(),
             endpoint: url,
-            headers: ctx.proxyToServerRequest._headers,
+            more: {
+                headers: ctx.proxyToServerRequest._headers,
+            },
             data: buffer.toString('base64'),
         };
         await fs.writeFile(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
