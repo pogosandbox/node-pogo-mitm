@@ -169,8 +169,7 @@ export default class WebUI {
         logger.info('Getting requests for session %s', req.params.session);
         try {
             let files = await fs.readdir(`data/${req.params.session}`);
-            files = _.filter(files, d => _.endsWith(d, '.req.bin'));
-            files = _.sortBy(files, o => o);
+            files = _.sortBy(_.filter(files, d => _.endsWith(d, '.req.bin')));
 
             const force = !this.config.protos.cachejson;
             const infos = await Bluebird.map(files, async file => {
@@ -182,10 +181,11 @@ export default class WebUI {
                     try {
                         const decoded = await this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
                         if (decoded && decoded.decoded) {
-                            if (decoded.endpoint) {
-                                if (decoded.endpoint.indexOf('upsight-api.com') >= 0) request.title = 'upsight';
-                                else if (decoded.endpoint.indexOf('sso.pokemon.com') >= 0) request.title = 'ptc login';
-                                else if (decoded.checkVersion || decoded.endpoint === 'https://pgorelease.nianticlabs.com/plfe/version') request.title = 'get version';
+                            const endpoint = decoded.endpoint;
+                            if (endpoint && !endpoint.match(/https:..pgorelease.nianticlabs.com.plfe.\d+.rpc/)) {
+                                if (endpoint.indexOf('upsight-api.com') >= 0) request.title = 'upsight';
+                                else if (endpoint.indexOf('sso.pokemon.com') >= 0) request.title = 'ptc login';
+                                else if (decoded.checkVersion || endpoint === 'https://pgorelease.nianticlabs.com/plfe/version') request.title = 'get version';
                                 else request.title = 'other';
                             } else {
                                 coords.lat = decoded.decoded.latitude;

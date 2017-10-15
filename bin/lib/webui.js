@@ -154,8 +154,7 @@ class WebUI {
             logger.info('Getting requests for session %s', req.params.session);
             try {
                 let files = yield fs.readdir(`data/${req.params.session}`);
-                files = _.filter(files, d => _.endsWith(d, '.req.bin'));
-                files = _.sortBy(files, o => o);
+                files = _.sortBy(_.filter(files, d => _.endsWith(d, '.req.bin')));
                 const force = !this.config.protos.cachejson;
                 const infos = yield Bluebird.map(files, (file) => __awaiter(this, void 0, void 0, function* () {
                     const content = yield fs.readFile(`data/${req.params.session}/${file}`, 'utf8');
@@ -166,12 +165,13 @@ class WebUI {
                         try {
                             const decoded = yield this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
                             if (decoded && decoded.decoded) {
-                                if (decoded.endpoint) {
-                                    if (decoded.endpoint.indexOf('upsight-api.com') >= 0)
+                                const endpoint = decoded.endpoint;
+                                if (endpoint && !endpoint.match(/https:..pgorelease.nianticlabs.com.plfe.\d+.rpc/)) {
+                                    if (endpoint.indexOf('upsight-api.com') >= 0)
                                         request.title = 'upsight';
-                                    else if (decoded.endpoint.indexOf('sso.pokemon.com') >= 0)
+                                    else if (endpoint.indexOf('sso.pokemon.com') >= 0)
                                         request.title = 'ptc login';
-                                    else if (decoded.checkVersion || decoded.endpoint === 'https://pgorelease.nianticlabs.com/plfe/version')
+                                    else if (decoded.checkVersion || endpoint === 'https://pgorelease.nianticlabs.com/plfe/version')
                                         request.title = 'get version';
                                     else
                                         request.title = 'other';
