@@ -3,6 +3,7 @@ import * as fs from 'mz/fs';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 import * as Bluebird from 'bluebird';
+import * as HttpsProxyAgent from 'https-proxy-agent';
 
 const mitmproxy = require('http-mitm-proxy');
 
@@ -108,8 +109,12 @@ export default class MitmProxy {
             const responseChunks = [];
             let request = null;
 
-            let id = ++this.config.reqId;
-            let requestId = _.padStart(id.toString(), 5, '0');
+            if (config.proxy.chainproxy) {
+                context.proxyToServerRequestOptions.agent = new HttpsProxyAgent(config.proxy.chainproxy);
+            }
+
+            const id = ++this.config.reqId;
+            const requestId = _.padStart(id.toString(), 5, '0');
 
             context.onRequestData((ctx, chunk, callback) => {
                 requestChunks.push(chunk);
@@ -161,6 +166,9 @@ export default class MitmProxy {
 
         } else {
             logger.debug('unhandled: %s%s', host, context.clientToProxyRequest.url);
+            if (config.proxy.chainproxy) {
+                context.proxyToServerRequestOptions.agent = new HttpsProxyAgent(config.proxy.chainproxy);
+            }
             callback();
 
         }
