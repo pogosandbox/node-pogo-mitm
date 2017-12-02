@@ -202,7 +202,7 @@ export default class Analysis {
             const signature = _.first(signatures).message;
 
             // check signature value
-            this.checkSignatureValue(file, signature, 'unknown25', '-6553495230586135539');
+            this.checkSignatureValue(file, signature, 'unknown25', this.config.analysis.uk25);
             this.checkSignatureValue(file, signature, 'gps_info', []);
             this.checkSignatureValue(file, signature, 'field1', []);
             this.checkSignatureValue(file, signature, 'field3', '');
