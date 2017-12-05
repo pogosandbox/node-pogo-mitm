@@ -402,7 +402,7 @@ class Analysis {
         else if (state.login) {
             // in login flow
             const expected = [
-                'CHECK_CHALLENGE',
+                // 'CHECK_CHALLENGE',
                 'GET_HATCHED_EGGS',
                 'GET_HOLO_INVENTORY',
                 'CHECK_AWARDED_BADGES',
@@ -414,13 +414,6 @@ class Analysis {
             else if (requestName === 'LEVEL_UP_REWARDS') {
                 expected.push('GET_BUDDY_WALKED');
                 expected.push('GET_INBOX');
-            }
-            else if (requestName === 'MARK_TUTORIAL_COMPLETE' ||
-                requestName === 'SET_AVATAR' ||
-                requestName === 'LIST_AVATAR_CUSTOMIZATIONS' ||
-                requestName === 'GET_PLAYER' ||
-                requestName === 'ENCOUNTER_TUTORIAL_COMPLETE') {
-                expected.pop();
             }
             const common = _.drop(request.requests.map(r => r.request_name));
             if (!_.isEqual(expected, common)) {
@@ -437,10 +430,11 @@ class Analysis {
         else {
             // past login flow
             const expected = [
-                'CHECK_CHALLENGE',
+                // 'CHECK_CHALLENGE',
                 'GET_HATCHED_EGGS',
                 'GET_HOLO_INVENTORY',
                 'CHECK_AWARDED_BADGES',
+                'DOWNLOAD_SETTINGS',
                 'GET_BUDDY_WALKED',
                 'GET_INBOX',
             ];

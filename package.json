@@ -39,17 +39,17 @@
     "winston": "^2.4.0"
   },
   "devDependencies": {
-    "@types/bluebird": "^3.5.11",
+    "@types/bluebird": "^3.5.18",
     "@types/bytebuffer": "^5.0.34",
-    "@types/express": "^4.0.37",
+    "@types/express": "^4.0.39",
     "@types/fs-promise": "^1.0.3",
-    "@types/lodash": "^4.14.74",
+    "@types/lodash": "^4.14.87",
     "@types/long": "^3.0.32",
-    "@types/node": "^8.0.52",
-    "@types/passport": "^0.3.4",
-    "@types/request-promise": "^4.1.37",
-    "@types/winston": "^2.3.6",
-    "tslint": "^5.7.0",
-    "typescript": "^2.5.2"
+    "@types/node": "^8.0.54",
+    "@types/passport": "^0.4.1",
+    "@types/request-promise": "^4.1.39",
+    "@types/winston": "^2.3.7",
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.2"
   }
 }
