@@ -415,7 +415,7 @@ export default class Analysis {
         } else if (state.login) {
             // in login flow
             const expected = [
-                // 'CHECK_CHALLENGE',
+                'CHECK_CHALLENGE',
                 'GET_HATCHED_EGGS',
                 'GET_HOLO_INVENTORY',
                 'CHECK_AWARDED_BADGES',
@@ -442,7 +442,7 @@ export default class Analysis {
         } else {
             // past login flow
             const expected = [
-                // 'CHECK_CHALLENGE',
+                'CHECK_CHALLENGE',
                 'GET_HATCHED_EGGS',
                 'GET_HOLO_INVENTORY',
                 'CHECK_AWARDED_BADGES',
