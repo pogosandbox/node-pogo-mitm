@@ -63,9 +63,11 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "debug.js",
-            "program": "${workspaceRoot}/debug.js",
-            "cwd": "${workspaceRoot}"
+            "name": "quick",
+            "program": "${workspaceRoot}/src/utils/quick.ts",
+            "cwd": "${workspaceRoot}",
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true
         }
     ]
 }
