@@ -24,8 +24,8 @@
     "js-yaml": "^3.10.0",
     "json2csv": "^3.11.5",
     "jszip": "^3.1.5",
-    "lodash": "^4.17.4",
-    "long": "^3.2.0",
+    "lodash": "^4.17.5",
+    "long": "^4.0.0",
     "moment": "^2.20.1",
     "mustachio": "^1.0.1",
     "mz": "^2.7.0",
@@ -39,17 +39,17 @@
     "winston": "^2.4.0"
   },
   "devDependencies": {
-    "@types/bluebird": "^3.5.18",
-    "@types/bytebuffer": "^5.0.34",
-    "@types/express": "^4.0.39",
+    "@types/bluebird": "^3.5.20",
+    "@types/bytebuffer": "^5.0.36",
+    "@types/express": "^4.11.1",
     "@types/fs-promise": "^1.0.3",
-    "@types/lodash": "^4.14.91",
+    "@types/lodash": "^4.14.102",
     "@types/long": "^3.0.32",
-    "@types/node": "^8.5.1",
+    "@types/node": "^8.9.3",
     "@types/passport": "^0.4.2",
-    "@types/request-promise": "^4.1.39",
-    "@types/winston": "^2.3.7",
-    "tslint": "^5.8.0",
-    "typescript": "^2.6.2"
+    "@types/request-promise": "^4.1.41",
+    "@types/winston": "^2.3.8",
+    "tslint": "^5.9.1",
+    "typescript": "^2.7.1"
   }
 }

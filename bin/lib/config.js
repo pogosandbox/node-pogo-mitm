@@ -49,15 +49,17 @@ class Config {
             if (!fs.existsSync('data')) {
                 fs.mkdirSync('data');
             }
-            logger.transports.Console.prototype.log = function (level, message, meta, callback) {
-                const output = winstonCommon.log(Object.assign({}, this, {
-                    level,
-                    message,
-                    meta,
-                }));
-                console[level in console ? level : 'log'](output);
-                setImmediate(callback, null, true);
-            };
+            if (process.env.VSCODE_CWD) {
+                logger.transports.Console.prototype.log = function (level, message, meta, callback) {
+                    const output = winstonCommon.log(Object.assign({}, this, {
+                        level,
+                        message,
+                        meta,
+                    }));
+                    console[level in console ? level : 'log'](output);
+                    setImmediate(callback, null, true);
+                };
+            }
             if (!fs.existsSync('config/config.yaml')) {
                 logger.info('Config file not found in config/config.yaml, using default.');
                 loaded = config;
