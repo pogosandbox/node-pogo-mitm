@@ -198,17 +198,23 @@ class MitmProxy {
     }
     handleApiRequest(id, ctx, buffer, url) {
         return __awaiter(this, void 0, void 0, function* () {
-            logger.info('Pogo request %s: %s', id, url);
-            const data = {
-                id,
-                when: +moment(),
-                endpoint: url,
-                more: {
-                    headers: ctx.proxyToServerRequest._headers,
-                },
-                data: buffer.toString('base64'),
-            };
-            yield fs.writeFile(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
+            try {
+                logger.info('Pogo request %s: %s', id, url);
+                const data = {
+                    id,
+                    when: +moment(),
+                    endpoint: url,
+                    more: {
+                        headers: ctx.proxyToServerRequest._headers,
+                    },
+                    data: buffer.toString('base64'),
+                };
+                yield fs.writeFile(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 2), 'utf8');
+            }
+            catch (e) {
+                logger.error('Error dump request %s', id);
+                logger.error(e);
+            }
             let decoded = null;
             if (this.config.proxy.plugins.length > 0) {
                 try {
@@ -270,7 +276,7 @@ class MitmProxy {
                 when: +moment(),
                 data: buffer.toString('base64'),
             };
-            yield fs.writeFile(`${this.config.datadir}/${id}.res.bin`, JSON.stringify(data, null, 4), 'utf8');
+            yield fs.writeFile(`${this.config.datadir}/${id}.res.bin`, JSON.stringify(data, null, 2), 'utf8');
             return buffer;
         });
     }
