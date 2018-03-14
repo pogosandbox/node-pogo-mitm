@@ -182,7 +182,7 @@ export default class WebUI {
                         const decoded = await this.decoder.decodeRequest(req.params.session, _.trimEnd(file, '.req.bin'), force);
                         if (decoded && decoded.decoded) {
                             const endpoint = decoded.endpoint;
-                            if (endpoint && !endpoint.match(/https:..pgorelease.nianticlabs.com.plfe.\d+.rpc/)) {
+                            if (endpoint && !endpoint.match(/https:..pgorelease.nianticlabs.com.plfe(.\d+)?.rpc/)) {
                                 if (endpoint.indexOf('upsight-api.com') >= 0) request.title = 'upsight';
                                 else if (endpoint.indexOf('sso.pokemon.com') >= 0) request.title = 'ptc login';
                                 else if (decoded.checkVersion || endpoint === 'https://pgorelease.nianticlabs.com/plfe/version') request.title = 'get version';

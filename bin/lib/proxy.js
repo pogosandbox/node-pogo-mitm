@@ -198,7 +198,7 @@ class MitmProxy {
     }
     handleApiRequest(id, ctx, buffer, url) {
         return __awaiter(this, void 0, void 0, function* () {
-            logger.info('Pogo request: %s', url);
+            logger.info('Pogo request %s: %s', id, url);
             const data = {
                 id,
                 when: +moment(),

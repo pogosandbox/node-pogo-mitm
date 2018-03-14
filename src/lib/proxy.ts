@@ -197,7 +197,7 @@ export default class MitmProxy {
     }
 
     async handleApiRequest(id, ctx, buffer: Buffer, url) {
-        logger.info('Pogo request: %s', url);
+        logger.info('Pogo request %s: %s', id, url);
         const data = {
             id,
             when: +moment(),
