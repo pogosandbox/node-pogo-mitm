@@ -19,7 +19,7 @@ const utils_1 = require("./utils");
 const decoder_1 = require("./decoder");
 const endpoints = {
     api: 'pgorelease.nianticlabs.com',
-    ptc: 'sso.pokemon.com',
+    // ptc: 'sso.pokemon.com',
     googleauth: 'accounts.google.com',
     googleapi: 'www.googleapis.com',
 };

@@ -13,7 +13,7 @@ import Decoder from './decoder';
 
 const endpoints = {
     api: 'pgorelease.nianticlabs.com',
-    ptc: 'sso.pokemon.com',
+    // ptc: 'sso.pokemon.com',
     googleauth: 'accounts.google.com',
     googleapi: 'www.googleapis.com',
     // storage: 'storage.googleapis.com',
