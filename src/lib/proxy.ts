@@ -14,7 +14,7 @@ import Decoder from './decoder';
 
 const endpoints = {
     api: 'pgorelease.nianticlabs.com',
-    ptc: 'sso.pokemon.com',
+    // ptc: 'sso.pokemon.com',
     googleauth: 'accounts.google.com',
     googleapi: 'www.googleapis.com',
     // storage: 'storage.googleapis.com',
@@ -72,7 +72,6 @@ export default class MitmProxy {
     }
 
     async onConnect(req, socket: Socket, head, callback) {
-        console.log('onConnect');
         let host = req.headers.host as string;
         let port = 443;
         const hasPort = host.indexOf(':');
@@ -82,15 +81,11 @@ export default class MitmProxy {
         }
         const endpoint = _.findKey(endpoints, endpoint => endpoint === host);
         if (!endpoint) {
-            console.log('not an endpoint');
-            // socket.pause();
             const conn = new Socket();
             conn.connect(port, host, (...huh) => {
-                // conn.write(head);
                 socket.write('HTTP/' + req.httpVersion + ' 200 Connection established\r\n\r\n');
                 conn.pipe(socket);
                 socket.pipe(conn);
-                // socket.resume();
             });
             conn.on('error', err => {
                 logger.error('Error during CONNECT tunneling.', err);
@@ -228,17 +223,22 @@ export default class MitmProxy {
     }
 
     async handleApiRequest(id, ctx, buffer: Buffer, url) {
-        logger.info('Pogo request: %s', url);
-        const data = {
-            id,
-            when: +moment(),
-            endpoint: url,
-            more: {
-                headers: ctx.proxyToServerRequest._headers,
-            },
-            data: buffer.toString('base64'),
-        };
-        await fs.writeFile(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 4), 'utf8');
+        try {
+            logger.info('Pogo request %s: %s', id, url);
+            const data = {
+                id,
+                when: +moment(),
+                endpoint: url,
+                more: {
+                    headers: ctx.proxyToServerRequest._headers,
+                },
+                data: buffer.toString('base64'),
+            };
+            await fs.writeFile(`${this.config.datadir}/${id}.req.bin`, JSON.stringify(data, null, 2), 'utf8');
+        } catch (e) {
+            logger.error('Error dump request %s', id);
+            logger.error(e);
+        }
 
         let decoded = null;
         if (this.config.proxy.plugins.length > 0) {
@@ -304,7 +304,7 @@ export default class MitmProxy {
             when: +moment(),
             data: buffer.toString('base64'),
         };
-        await fs.writeFile(`${this.config.datadir}/${id}.res.bin`, JSON.stringify(data, null, 4), 'utf8');
+        await fs.writeFile(`${this.config.datadir}/${id}.res.bin`, JSON.stringify(data, null, 2), 'utf8');
 
         return buffer;
     }
