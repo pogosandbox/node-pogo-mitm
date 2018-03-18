@@ -1,3 +1,4 @@
+import { Socket } from 'net';
 import * as logger from 'winston';
 import * as fs from 'mz/fs';
 import * as _ from 'lodash';
@@ -44,6 +45,7 @@ export default class MitmProxy {
                 .use(mitmproxy.gunzip)
                 .onError(_.bind(this.onError, this))
                 .onRequest(_.bind(this.onRequest, this))
+                .onConnect(_.bind(this.onConnect, this))
                 .listen({port: config.proxy.port, silent: true});
         } else {
             logger.info('Proxy deactivated.');
@@ -67,6 +69,35 @@ export default class MitmProxy {
             }
         });
         return _.filter(loaded, l => l != null);
+    }
+
+    async onConnect(req, socket: Socket, head, callback) {
+        console.log('onConnect');
+        let host = req.headers.host as string;
+        let port = 443;
+        const hasPort = host.indexOf(':');
+        if (hasPort > 0) {
+            port = +host.substring(hasPort + 1);
+            host = host.substring(0, hasPort);
+        }
+        const endpoint = _.findKey(endpoints, endpoint => endpoint === host);
+        if (!endpoint) {
+            console.log('not an endpoint');
+            // socket.pause();
+            const conn = new Socket();
+            conn.connect(port, host, (...huh) => {
+                // conn.write(head);
+                socket.write('HTTP/' + req.httpVersion + ' 200 Connection established\r\n\r\n');
+                conn.pipe(socket);
+                socket.pipe(conn);
+                // socket.resume();
+            });
+            conn.on('error', err => {
+                logger.error('Error during CONNECT tunneling.', err);
+            });
+        } else {
+            return callback();
+        }
     }
 
     async onRequest(context, callback) {

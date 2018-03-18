@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const net_1 = require("net");
 const logger = require("winston");
 const fs = require("mz/fs");
 const _ = require("lodash");
@@ -41,6 +42,7 @@ class MitmProxy {
                     .use(mitmproxy.gunzip)
                     .onError(_.bind(this.onError, this))
                     .onRequest(_.bind(this.onRequest, this))
+                    .onConnect(_.bind(this.onConnect, this))
                     .listen({ port: config.proxy.port, silent: true });
             }
             else {
@@ -67,6 +69,37 @@ class MitmProxy {
                 }
             }));
             return _.filter(loaded, l => l != null);
+        });
+    }
+    onConnect(req, socket, head, callback) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log('onConnect');
+            let host = req.headers.host;
+            let port = 443;
+            const hasPort = host.indexOf(':');
+            if (hasPort > 0) {
+                port = +host.substring(hasPort + 1);
+                host = host.substring(0, hasPort);
+            }
+            const endpoint = _.findKey(endpoints, endpoint => endpoint === host);
+            if (!endpoint) {
+                console.log('not an endpoint');
+                // socket.pause();
+                const conn = new net_1.Socket();
+                conn.connect(port, host, (...huh) => {
+                    // conn.write(head);
+                    socket.write('HTTP/' + req.httpVersion + ' 200 Connection established\r\n\r\n');
+                    conn.pipe(socket);
+                    socket.pipe(conn);
+                    // socket.resume();
+                });
+                conn.on('error', err => {
+                    logger.error('Error during CONNECT tunneling.', err);
+                });
+            }
+            else {
+                return callback();
+            }
         });
     }
     onRequest(context, callback) {
