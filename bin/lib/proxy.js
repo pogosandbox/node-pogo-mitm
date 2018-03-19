@@ -18,11 +18,9 @@ const HttpsProxyAgent = require("https-proxy-agent");
 const mitmproxy = require('http-mitm-proxy');
 const utils_1 = require("./utils");
 const decoder_1 = require("./decoder");
+const certs_1 = require("./certs");
 const endpoints = {
     api: 'pgorelease.nianticlabs.com',
-    // ptc: 'sso.pokemon.com',
-    googleauth: 'accounts.google.com',
-    googleapi: 'www.googleapis.com',
 };
 class MitmProxy {
     constructor(config) {
@@ -40,10 +38,12 @@ class MitmProxy {
                 this.config.proxy.plugins = yield this.loadPlugins();
                 this.proxy = mitmproxy()
                     .use(mitmproxy.gunzip)
+                    .use(mitmproxy.wildcard)
                     .onError(_.bind(this.onError, this))
                     .onRequest(_.bind(this.onRequest, this))
                     .onConnect(_.bind(this.onConnect, this))
                     .listen({ port: config.proxy.port, silent: true });
+                this.proxy.onCertificateMissing = _.bind(this.certMissing, this);
             }
             else {
                 logger.info('Proxy deactivated.');
@@ -71,6 +71,20 @@ class MitmProxy {
             return _.filter(loaded, l => l != null);
         });
     }
+    certMissing(ctx, files, callback) {
+        const hosts = files.hosts || [ctx.hostname];
+        if (!this.mycerts) {
+            this.mycerts = new certs_1.default();
+        }
+        this.mycerts.myCertGenerator(this.proxy.ca, hosts, (certPEM, privateKeyPEM) => {
+            callback(null, {
+                certFileData: certPEM,
+                keyFileData: privateKeyPEM,
+                hosts,
+            });
+        });
+        return this.proxy;
+    }
     onConnect(req, socket, head, callback) {
         return __awaiter(this, void 0, void 0, function* () {
             let host = req.headers.host;
@@ -82,6 +96,7 @@ class MitmProxy {
             }
             const endpoint = _.findKey(endpoints, endpoint => endpoint === host);
             if (!endpoint) {
+                logger.info('Tunnel to ' + req.url);
                 const conn = new net_1.Socket();
                 conn.connect(port, host, (...huh) => {
                     socket.write('HTTP/' + req.httpVersion + ' 200 Connection established\r\n\r\n');

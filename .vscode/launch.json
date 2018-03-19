@@ -54,6 +54,16 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Import HAR Archives",
+            "program": "${workspaceRoot}/src/import/har.ts",
+            "cwd": "${workspaceRoot}",
+            "outFiles": [ "${workspaceRoot}/bin/**/*.js" ],
+            "sourceMaps": true,
+            "stopOnEntry": false
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "CSV Export",
             "program": "${workspaceRoot}/src/export/csv.ts",
             "cwd": "${workspaceRoot}",
