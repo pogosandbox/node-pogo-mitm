@@ -12,6 +12,7 @@ import Config from './config';
 import Utils from './utils';
 import Decoder from './decoder';
 import MyCerts from './certs';
+import FakeServer from './fake.server';
 
 const endpoints = {
     api: 'pgorelease.nianticlabs.com',
@@ -27,6 +28,7 @@ export default class MitmProxy {
     proxy: any;
     decoder: Decoder;
     mycerts: MyCerts;
+    fake: FakeServer;
 
     constructor(config) {
         this.config = config;
@@ -42,6 +44,11 @@ export default class MitmProxy {
             logger.info('Proxy config url available at http://%s:%s/proxy.pac', ip, config.proxy.port);
 
             this.config.proxy.plugins = await this.loadPlugins();
+
+            if (config.proxy.fakeserver) {
+                logger.info('Launch fake server.');
+                this.fake = new FakeServer(this.config);
+            }
 
             this.proxy = mitmproxy()
                 .use(mitmproxy.gunzip)
@@ -183,9 +190,14 @@ export default class MitmProxy {
                 } catch (e) {
                     logger.error(e);
                 }
-
-                ctx.proxyToServerRequest.write(buffer);
-                callback();
+                if (url.indexOf('/rpc2') > 0 && config.proxy.fakeserver) {
+                    const response = await this.fake.handleRequest(requestId, buffer);
+                    await this.handleApiResponse(requestId, ctx, buffer, request);
+                    context.proxyToClientResponse.end(response);
+                } else {
+                    ctx.proxyToServerRequest.write(buffer);
+                    callback();
+                }
             });
 
             context.onResponseData((ctx, chunk, callback) => {

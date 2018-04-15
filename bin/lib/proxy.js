@@ -19,6 +19,7 @@ const mitmproxy = require('http-mitm-proxy');
 const utils_1 = require("./utils");
 const decoder_1 = require("./decoder");
 const certs_1 = require("./certs");
+const fake_server_1 = require("./fake.server");
 const endpoints = {
     api: 'pgorelease.nianticlabs.com',
 };
@@ -36,6 +37,10 @@ class MitmProxy {
                 logger.info('Proxy listening at %s:%s', ip, config.proxy.port);
                 logger.info('Proxy config url available at http://%s:%s/proxy.pac', ip, config.proxy.port);
                 this.config.proxy.plugins = yield this.loadPlugins();
+                if (config.proxy.fakeserver) {
+                    logger.info('Launch fake server.');
+                    this.fake = new fake_server_1.default(this.config);
+                }
                 this.proxy = mitmproxy()
                     .use(mitmproxy.gunzip)
                     .use(mitmproxy.wildcard)
@@ -181,8 +186,15 @@ class MitmProxy {
                     catch (e) {
                         logger.error(e);
                     }
-                    ctx.proxyToServerRequest.write(buffer);
-                    callback();
+                    if (url.indexOf('/rpc2') > 0 && config.proxy.fakeserver) {
+                        const response = yield this.fake.handleRequest(requestId, buffer);
+                        yield this.handleApiResponse(requestId, ctx, buffer, request);
+                        context.proxyToClientResponse.end(response);
+                    }
+                    else {
+                        ctx.proxyToServerRequest.write(buffer);
+                        callback();
+                    }
                 }));
                 context.onResponseData((ctx, chunk, callback) => {
                     responseChunks.push(chunk);

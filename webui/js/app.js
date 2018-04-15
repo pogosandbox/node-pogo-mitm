@@ -49,13 +49,26 @@ $(function () {
         if (session && request) viewRequestDetail(which, session, request);
     });
 
-    $('#next-request').click(function () {
+    $('#next-request').click(function() {
         prevNext(+1);
         return false;
     });
 
-    $('#prev-request').click(function () {
+    $('#prev-request').click(function() {
         prevNext(-1);
+        return false;
+    });
+
+    $('#dl-raw').click(function() {
+        let session = $('#requests').data('session');
+        let item = $('#requests .table-success').attr('id');
+        let which = $('.request').hasClass('btn-primary') ? 'request' : 'response';
+        console.log(`Download ${which} ${item} from ${session}`);
+        const url = `/api/export/raw/${session}/${item}/${which}`;
+        console.log(url);
+
+        $("body").append('<iframe src="' + url + '" style="display: none;" ></iframe>');
+
         return false;
     });
 

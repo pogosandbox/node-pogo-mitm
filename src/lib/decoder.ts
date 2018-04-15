@@ -128,31 +128,38 @@ export default class Decoder {
     }
 
     decodeRequestBuffer(buffer: Buffer) {
-        const RequestEnvelope = POGOProtos.Networking.Envelopes.RequestEnvelope;
-        const request = RequestEnvelope.toObject(RequestEnvelope.decode(buffer), { defaults: true });
+        try {
+            const RequestEnvelope = POGOProtos.Networking.Envelopes.RequestEnvelope;
+            const request = RequestEnvelope.toObject(RequestEnvelope.decode(buffer), { defaults: true });
 
-        // decode requests
-        _.each(<any[]>request.requests, req => {
-            let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r === req.request_type);
-            if (reqname) {
-                req.request_name = reqname;
-                reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
-                const requestType = POGOProtos.Networking.Requests.Messages[reqname];
-                if (requestType) {
-                    req.message = requestType.toObject(requestType.decode(req.request_message), { defaults: true });
+            // decode requests
+            _.each(<any[]>request.requests, req => {
+                let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r === req.request_type);
+                if (reqname) {
+                    req.request_name = reqname;
+                    reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
+                    const requestType = POGOProtos.Networking.Requests.Messages[reqname];
+                    if (requestType) {
+                        req.message = requestType.toObject(requestType.decode(req.request_message), { defaults: true });
+                    } else {
+                        logger.error('Unable to find request type %s (%d)', reqname, req.request_type);
+                        req.message = {
+                            base64: req.request_message.toString('base64'),
+                        };
+                    }
+                    delete req.request_message;
                 } else {
-                    logger.error('Unable to find request type %s (%d)', reqname, req.request_type);
-                    req.message = {
-                        base64: req.request_message.toString('base64'),
-                    };
+                    logger.error('Unable to find request type %d', req.request_type);
                 }
-                delete req.request_message;
-            } else {
-                logger.error('Unable to find request type %d', req.request_type);
-            }
-        });
+            });
 
-        return request;
+            return request;
+        } catch (e) {
+            logger.error(e);
+            return {
+                base64: buffer.toString('base64'),
+            };
+        }
     }
 
     async decodeResponse(session: string, requestId: string, force = false): Promise<any> {

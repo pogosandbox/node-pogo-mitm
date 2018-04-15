@@ -45,6 +45,7 @@ class WebUI {
             app.get('/api/request/:session/:request', _.bind(this.decodeRequest, this));
             app.get('/api/response/:session/:request', _.bind(this.decodeResponse, this));
             app.get('/api/export/csv', _.bind(this.exportCsv, this));
+            app.get('/api/export/raw/:session/:request/:which', _.bind(this.exportRaw, this));
             app.post('/api/analyse/:session', _.bind(this.analyse, this));
             app.get('/api/analyse/:session', _.bind(this.analyseResult, this));
             if (config.upload) {
@@ -272,6 +273,14 @@ class WebUI {
                 const file = yield csv.exportRequestsSignature('requests.signatures.csv');
                 res.sendFile(file, { root: 'data' });
             }
+        });
+    }
+    exportRaw(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const type = req.params.which === 'request' ? 'req' : 'res';
+            const json = yield fs.readFile(`data/${req.params.session}/${req.params.request}.${type}.bin`, 'utf8');
+            const data = Buffer.from(JSON.parse(json).data, 'base64');
+            res.set('Content-Disposition', `inline; filename="${req.params.request}.${type}.raw"`).end(data, 'application/octet-stream');
         });
     }
     analyse(req, res, next) {

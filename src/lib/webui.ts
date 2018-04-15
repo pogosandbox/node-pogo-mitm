@@ -46,6 +46,7 @@ export default class WebUI {
             app.get('/api/request/:session/:request', <express.RequestHandler>_.bind(this.decodeRequest, this));
             app.get('/api/response/:session/:request', <express.RequestHandler>_.bind(this.decodeResponse, this));
             app.get('/api/export/csv', <express.RequestHandler>_.bind(this.exportCsv, this));
+            app.get('/api/export/raw/:session/:request/:which', <express.RequestHandler>_.bind(this.exportRaw, this));
             app.post('/api/analyse/:session', <express.RequestHandler>_.bind(this.analyse, this));
             app.get('/api/analyse/:session', <express.RequestHandler>_.bind(this.analyseResult, this));
 
@@ -277,6 +278,14 @@ export default class WebUI {
             const file = await csv.exportRequestsSignature('requests.signatures.csv');
             res.sendFile(file, {root: 'data'});
         }
+    }
+
+    async exportRaw(req: express.Request, res: express.Response, next: Function) {
+        const type = req.params.which === 'request' ? 'req' : 'res';
+        const json = await fs.readFile(`data/${req.params.session}/${req.params.request}.${type}.bin`, 'utf8');
+        const data = Buffer.from(JSON.parse(json).data, 'base64');
+
+        res.set('Content-Disposition', `inline; filename="${req.params.request}.${type}.raw"`).end(data, 'application/octet-stream');
     }
 
     async analyse(req: express.Request, res: express.Response, next: Function): Promise<express.Response> {
