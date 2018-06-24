@@ -136,14 +136,26 @@ class Decoder {
         const RequestEnvelope = POGOProtos.Networking.Envelopes.RequestEnvelope;
         const request = RequestEnvelope.toObject(RequestEnvelope.decode(buffer), { defaults: true });
         // decode requests
-        _.each(request.requests, req => {
-            let reqname = _.findKey(POGOProtos.Networking.Requests.RequestType, r => r === req.request_type);
+        for (const req of request.requests) {
+            let reqname = POGOProtos.Networking.Requests.RequestType[req.request_type];
             if (reqname) {
                 req.request_name = reqname;
                 reqname = _.upperFirst(_.camelCase(reqname)) + 'Message';
                 const requestType = POGOProtos.Networking.Requests.Messages[reqname];
                 if (requestType) {
                     req.message = requestType.toObject(requestType.decode(req.request_message), { defaults: true });
+                    if (reqname === 'ProxySocialActionMessage') {
+                        try {
+                            const actionName = POGOProtos.Enums.SocialAction[req.message.action];
+                            req.message.action_name = actionName;
+                            const actionTypeName = _.upperFirst(_.camelCase(actionName)) + 'Message';
+                            const actionType = POGOProtos.Networking.Requests.Social[actionTypeName];
+                            req.message.payload = actionType.toObject(actionType.decode(req.message.payload), { defaults: true });
+                        }
+                        catch (e) {
+                            logger.error(e);
+                        }
+                    }
                 }
                 else {
                     logger.error('Unable to find request type %s (%d)', reqname, req.request_type);
@@ -156,7 +168,7 @@ class Decoder {
             else {
                 logger.error('Unable to find request type %d', req.request_type);
             }
-        });
+        }
         return request;
     }
     decodeResponse(session, requestId, force = false) {
@@ -273,11 +285,17 @@ class Decoder {
         const allRequests = _.map(request.requests, r => r.request_name);
         if (allRequests.length > 0) {
             decoded.responses = _.map(decoded.returns, (buffer, i) => {
-                const request = allRequests[i];
-                const responseType = POGOProtos.Networking.Responses[_.upperFirst(_.camelCase(request)) + 'Response'];
+                const requestName = allRequests[i];
+                const responseType = POGOProtos.Networking.Responses[_.upperFirst(_.camelCase(requestName)) + 'Response'];
                 if (responseType) {
                     const message = responseType.toObject(responseType.decode(buffer), { defaults: true });
-                    message.request_name = request;
+                    message.request_name = requestName;
+                    if (requestName === 'PROXY_SOCIAL_ACTION') {
+                        const actionName = request.requests[i].message.action_name;
+                        message.action_name = actionName;
+                        const actionType = POGOProtos.Networking.Responses.Social[_.upperFirst(_.camelCase(actionName)) + 'Response'];
+                        message.payload = actionType.toObject(actionType.decode(message.payload), { defaults: true });
+                    }
                     return message;
                 }
                 else {
